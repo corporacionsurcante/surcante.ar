@@ -3,7 +3,7 @@ import { useDolar } from '../hooks/useDolar';
 import { calcPresupuestoTotal, formatARS, formatDate } from '../utils/calculos';
 import { METODOS_PAGO, DATOS_BANCARIOS, WHATSAPP } from '../data/pagos';
 
-const PAY_ICONS = { mercadopago: '💳', tarjeta: '🏦', transferencia: '🏛️', efectivo: '💵' };
+
 
 export default function PasoPresupuesto({ reserva, onBack, onConfirm }) {
   const { dolar, loading } = useDolar();
@@ -21,24 +21,6 @@ export default function PasoPresupuesto({ reserva, onBack, onConfirm }) {
   const montoAhora = Math.round(grandTotal * porcentaje);
   const saldo = grandTotal - montoAhora;
 
-  function handleConfirmar() {
-    if (payMethod === 'efectivo') {
-      // Armar mensaje de WhatsApp
-      const msg = encodeURIComponent(
-        `Hola! Quiero reservar un viaje con Surcante.\n\n` +
-        `📍 Origen: ${origen}\n` +
-        `🏁 Destino: ${destino}\n` +
-        `📅 Salida: ${fechaInicio}\n` +
-        `📅 Regreso: ${fechaFin}\n` +
-        `🚌 Unidades: ${flotaUnidades.length}\n` +
-        `💰 Total: ${formatARS(grandTotal)}\n\n` +
-        `Quiero coordinar el pago en efectivo.`
-      );
-      // Mostrar selector de WhatsApp
-      return;
-    }
-    onConfirm({ grandTotal, sena: montoAhora, saldo, payMethod, porcentaje });
-  }
 
   return (
     <div className="body">
