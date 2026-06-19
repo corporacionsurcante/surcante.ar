@@ -1,10 +1,23 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { formatARS, formatDate } from '../utils/calculos';
+import { crearReserva } from '../firebase/services';
 
 export default function Confirmacion({ reserva, pago, onNueva }) {
-  const { origen, destino, fechaInicio, fechaFin, nights, flotaUnidades } = reserva;
+  const { origen, destino, fechaInicio, fechaFin, nights, flotaUnidades, kmTotal } = reserva;
   const { grandTotal, sena, saldo, payMethod } = pago;
-  const numReserva = 'SRC-' + Date.now().toString().slice(-6);
+  const [numReserva, setNumReserva] = useState('');
+
+  useEffect(() => {
+    crearReserva({
+      origen, destino, fechaInicio, fechaFin, nights, kmTotal,
+      flotaUnidades: flotaUnidades.map(u => ({ id: u.id, label: u.label, tipo: u.tid })),
+      grandTotal, sena, saldo, payMethod,
+    }).then(ref => {
+      setNumReserva('SRC-' + ref.id.slice(-6).toUpperCase());
+    }).catch(() => {
+      setNumReserva('SRC-' + Date.now().toString().slice(-6));
+    });
+  }, []);
 
   return (
     <div className="confirm-page">
@@ -14,9 +27,11 @@ export default function Confirmacion({ reserva, pago, onNueva }) {
         En breve recibís todos los detalles por WhatsApp.
       </div>
 
-      <div className="confirm-num">
-        N° de reserva · <strong>{numReserva}</strong>
-      </div>
+      {numReserva && (
+        <div className="confirm-num">
+          N° de reserva · <strong>{numReserva}</strong>
+        </div>
+      )}
 
       <div className="confirm-detail">
         <div className="confirm-row hl"><span>Total del viaje</span><span style={{ color: '#00C896' }}>{formatARS(grandTotal)}</span></div>
@@ -29,6 +44,7 @@ export default function Confirmacion({ reserva, pago, onNueva }) {
         <div className="confirm-row"><span>Regreso</span><span>{formatDate(fechaFin)}</span></div>
         <div className="confirm-row"><span>Noches</span><span>{nights}</span></div>
         <div className="confirm-row"><span>Unidades</span><span>{flotaUnidades.length}</span></div>
+        <div className="confirm-row"><span>Km totales</span><span>{kmTotal?.toLocaleString('es-AR')} km</span></div>
         <div className="confirm-row"><span>Pago</span><span style={{ textTransform: 'capitalize' }}>{payMethod}</span></div>
       </div>
 
