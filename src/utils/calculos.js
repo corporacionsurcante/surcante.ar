@@ -54,12 +54,12 @@ export function calcPrecioUnidad({ unit, kmTotal, movPorDia, movKmPorDia, dolar 
   };
 }
 
-export function calcPresupuestoTotal({ flotaUnidades, kmTotal, movData, movKmData, syncMode, dolar }) {
+export function calcPresupuestoTotal({ flotaUnidades, kmTotal, movData, movKmData, syncMode, dolar, mismodia, nights }) {
   let grandTotal = 0;
   const detalles = flotaUnidades.map((u) => {
     const movPorDia = syncMode ? movData['_sync'] : (movData[u.id] || []);
     const movKmPorDia = syncMode ? movKmData['_sync'] : (movKmData[u.id] || []);
-    const calc = calcPrecioUnidad({ unit: u.type, kmTotal, movPorDia, movKmPorDia, dolar });
+    const calc = calcPrecioUnidadConMinimo({ unit: u.type, kmTotal, movPorDia, movKmPorDia, dolar, mismodia, nights });
     grandTotal += calc.total;
     return { ...u, ...calc };
   });
@@ -84,34 +84,54 @@ export function formatDate(dateStr) {
 
 
 export const PRECIO_MINIMO_USD = {
-  'MIX 60':    450,
-  'Comun 45':  400,
+  'MIX 60':     450,
+  'Comun 45':   400,
   'Minibus 24': 380,
   'Minibus 19': 380,
 };
 export const KM_MINIMO_THRESHOLD = 300;
 
-export function calcPrecioUnidadConMinimo({ unit, kmTotal, movPorDia, movKmPorDia, dolar, mismodia }) {
+// Descuento por días consecutivos de tarifa mínima
+// Día 1: 0%, Días 2-5: 10%, Día 6+: 20%
+export function getDescuentoDia(dia) {
+  if (dia <= 1) return 0;
+  if (dia <= 5) return 0.10;
+  return 0.20;
+}
+
+// Calcula tarifa mínima total para N días con escala de descuento
+export function calcTarifaMinimaDias(tipoNombre, dias, dolar) {
+  const usdBase = PRECIO_MINIMO_USD[tipoNombre] || 400;
+  let totalNeto = 0;
+  for (let dia = 1; dia <= dias; dia++) {
+    const descuento = getDescuentoDia(dia);
+    totalNeto += usdBase * (1 - descuento) * dolar;
+  }
+  const ivaTotal = totalNeto * IVA;
+  return { totalNeto, ivaTotal, total: totalNeto + ivaTotal };
+}
+
+export function calcPrecioUnidadConMinimo({ unit, kmTotal, movPorDia, movKmPorDia, dolar, mismodia, nights }) {
   const base = calcPrecioUnidad({ unit, kmTotal, movPorDia, movKmPorDia, dolar });
-  
-  // Aplicar precio mínimo solo si es viaje en el día y menos de 300 km
-  if (mismodia && kmTotal < KM_MINIMO_THRESHOLD) {
-    const tipoKey = unit.tipoNombre || unit.tipo || 'Comun 45';
-    const minimoUSD = PRECIO_MINIMO_USD[tipoKey] || 400;
-    const minimoNeto = minimoUSD * dolar;
-    const minimoIva = minimoNeto * IVA;
-    const minimoTotal = minimoNeto + minimoIva;
-    
-    if (minimoTotal > base.total) {
+  const diasViaje = mismodia ? 1 : (nights || 1);
+  const kmPorDia = diasViaje > 0 ? kmTotal / diasViaje : kmTotal;
+  const tipoKey = unit.tipoNombre || unit.tipo || 'Comun 45';
+
+  // Aplica mínimo si los km por día son menos de 300
+  if (kmPorDia < KM_MINIMO_THRESHOLD) {
+    const minimo = calcTarifaMinimaDias(tipoKey, diasViaje, dolar);
+    if (minimo.total > base.total) {
       return {
         ...base,
-        traslNeto: minimoNeto,
-        ivaTotal: minimoIva,
-        total: minimoTotal,
+        traslNeto: minimo.totalNeto,
+        ivaTotal: minimo.ivaTotal,
+        total: minimo.total,
         esPrecioMinimo: true,
-        minimoUSD,
+        tipoKey,
+        diasViaje,
+        kmPorDia: Math.round(kmPorDia),
       };
     }
   }
-  return { ...base, esPrecioMinimo: false };
+  return { ...base, esPrecioMinimo: false, kmPorDia: Math.round(kmPorDia) };
 }
