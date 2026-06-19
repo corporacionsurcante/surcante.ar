@@ -15,20 +15,17 @@ function getTipoConfig(tipo) {
 }
 
 export default function PasoFlota({ onNext }) {
-  const [fechas, setFechas] = useState({ fechaInicio: '', fechaFin: '' });
+  const [fechas, setFechas] = useState({ fechaInicio: '', fechaFin: '', mismodia: false, horaInicio: null, horaFin: null });
   const [qty, setQty] = useState({});
 
   const { disponibilidad, loading } = useDisponibilidad(fechas.fechaInicio, fechas.fechaFin);
 
-  const nights = getNights(fechas.fechaInicio, fechas.fechaFin);
+  const nights = fechas.mismodia ? 0 : getNights(fechas.fechaInicio, fechas.fechaFin);
   const totalUnidades = Object.values(qty).reduce((a, b) => a + b, 0);
   const canContinue = fechas.fechaInicio && fechas.fechaFin && totalUnidades > 0;
 
   function chQty(uid, d) {
-    setQty(prev => ({
-      ...prev,
-      [uid]: Math.max(0, (prev[uid] || 0) + d),
-    }));
+    setQty(prev => ({ ...prev, [uid]: Math.max(0, (prev[uid] || 0) + d) }));
   }
 
   function buildFlota() {
@@ -45,6 +42,7 @@ export default function PasoFlota({ onNext }) {
             name: `${u.tipo} (${u.interno})`,
             icon: u.butacas >= 45 ? '🚌' : '🚐',
             seats: u.butacas,
+            tipoNombre: u.tipo,
           },
           label: `Int. ${u.interno} · ${u.patente}${cant > 1 ? ` #${i+1}` : ''}`,
           unidadId: u.id,
@@ -58,6 +56,9 @@ export default function PasoFlota({ onNext }) {
     onNext({
       fechaInicio: fechas.fechaInicio,
       fechaFin: fechas.fechaFin,
+      mismodia: fechas.mismodia,
+      horaInicio: fechas.horaInicio,
+      horaFin: fechas.horaFin,
       nights,
       qty,
       flotaUnidades: buildFlota(),
@@ -69,7 +70,6 @@ export default function PasoFlota({ onNext }) {
     .map(u => `${qty[u.id]}× Int.${u.interno}`)
     .join(' + ');
 
-  // Agrupar por tipo para mostrar
   const grupos = {};
   disponibilidad.forEach(u => {
     if (!grupos[u.tipo]) grupos[u.tipo] = [];
@@ -83,7 +83,7 @@ export default function PasoFlota({ onNext }) {
 
       <div className="divider" />
       <div className="section-label">
-        Unidades disponibles{nights > 0 ? ` · ${nights} noche${nights !== 1 ? 's' : ''}` : ''}
+        Unidades disponibles{nights > 0 ? ` · ${nights} noche${nights !== 1 ? 's' : ''}` : fechas.mismodia ? ' · viaje en el día' : ''}
       </div>
 
       {loading && fechas.fechaInicio && (
@@ -135,9 +135,7 @@ export default function PasoFlota({ onNext }) {
       ))}
 
       {totalUnidades > 0 && (
-        <div className="flota-pill">
-          🚌 <strong>Flota:</strong> {flotaDesc}
-        </div>
+        <div className="flota-pill">🚌 <strong>Flota:</strong> {flotaDesc}</div>
       )}
 
       <button className="btn-primary" disabled={!canContinue} onClick={handleContinue}>
