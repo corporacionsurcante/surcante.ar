@@ -1,85 +1,148 @@
-import { useState, useEffect } from 'react';
-import { collection, onSnapshot } from 'firebase/firestore';
-import { db } from '../firebase/config';
+import React, { useState } from 'react';
+import { getNights } from '../utils/calculos';
+import Calendario from '../components/Calendario';
+import { useDisponibilidad } from '../hooks/useDisponibilidad';
 
-function addDays(fecha, n) {
-  const d = new Date(fecha + 'T12:00:00');
-  d.setDate(d.getDate() + n);
-  return d.toISOString().split('T')[0];
+const TIPO_UNIT = {
+  'MIX 60':    { usdKm: 2.50, movDesc: 0,    movUSD: [110,170,250] },
+  'Comun 45':  { usdKm: 2.00, movDesc: 0.20, movUSD: [110,170,250] },
+  'Minibus 24':{ usdKm: 1.80, movDesc: 0.30, movUSD: [110,170,250] },
+  'Minibus 19':{ usdKm: 1.80, movDesc: 0.30, movUSD: [110,170,250] },
+};
+
+function getTipoConfig(tipo) {
+  return TIPO_UNIT[tipo] || TIPO_UNIT['Comun 45'];
 }
 
-function daysBetween(desde, hasta) {
-  return Math.round((new Date(hasta + 'T12:00:00') - new Date(desde + 'T12:00:00')) / 86400000);
-}
+export default function PasoFlota({ onNext }) {
+  const [fechas, setFechas] = useState({ fechaInicio: '', fechaFin: '' });
+  const [qty, setQty] = useState({});
 
-// Retorna el conjunto de celdas ocupadas para un período
-function getCeldasOcupadas(viajes, unidadId) {
-  const ocupadas = new Set();
-  viajes
-    .filter(v => v.unidadId === unidadId)
-    .forEach(v => {
-      const dias = daysBetween(v.desde, v.hasta) + 1;
-      for (let i = 0; i < dias; i++) {
-        const fecha = addDays(v.desde, i);
-        const turnoInicio = i === 0 ? v.turnoSalida : 'M';
-        if (turnoInicio === 'M') ocupadas.add(`${fecha}_M`);
-        ocupadas.add(`${fecha}_T`);
+  const { disponibilidad, loading } = useDisponibilidad(fechas.fechaInicio, fechas.fechaFin);
+
+  const nights = getNights(fechas.fechaInicio, fechas.fechaFin);
+  const totalUnidades = Object.values(qty).reduce((a, b) => a + b, 0);
+  const canContinue = fechas.fechaInicio && fechas.fechaFin && totalUnidades > 0;
+
+  function chQty(uid, d) {
+    setQty(prev => ({
+      ...prev,
+      [uid]: Math.max(0, (prev[uid] || 0) + d),
+    }));
+  }
+
+  function buildFlota() {
+    const flota = [];
+    disponibilidad.forEach(u => {
+      const cant = qty[u.id] || 0;
+      for (let i = 0; i < cant; i++) {
+        const config = getTipoConfig(u.tipo);
+        flota.push({
+          id: `${u.id}_${i}`,
+          tid: u.id,
+          type: {
+            ...config,
+            name: `${u.tipo} (${u.interno})`,
+            icon: u.butacas >= 45 ? '🚌' : '🚐',
+            seats: u.butacas,
+          },
+          label: `Int. ${u.interno} · ${u.patente}${cant > 1 ? ` #${i+1}` : ''}`,
+          unidadId: u.id,
+        });
       }
     });
-  return ocupadas;
-}
-
-// Verifica si una unidad está disponible en el período pedido
-function unidadDisponible(viajes, unidadId, fechaInicio, fechaFin) {
-  const ocupadas = getCeldasOcupadas(viajes, unidadId);
-  const dias = daysBetween(fechaInicio, fechaFin) + 1;
-  for (let i = 0; i < dias; i++) {
-    const fecha = addDays(fechaInicio, i);
-    // Verificamos ambos turnos de cada día
-    if (ocupadas.has(`${fecha}_M`) || ocupadas.has(`${fecha}_T`)) {
-      return false;
-    }
+    return flota;
   }
-  return true;
-}
 
-export function useDisponibilidad(fechaInicio, fechaFin) {
-  const [unidades, setUnidades] = useState([]);
-  const [viajes, setViajes] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  const anio = fechaInicio ? fechaInicio.slice(0, 4) : new Date().getFullYear().toString();
-
-  useEffect(() => {
-    // Suscribir a unidades activas
-    const unsub = onSnapshot(collection(db, 'unidades'), snap => {
-      const data = snap.docs
-        .map(d => ({ id: d.id, ...d.data() }))
-        .filter(u => u.activa !== false)
-        .sort((a, b) => a.interno - b.interno);
-      setUnidades(data);
+  function handleContinue() {
+    onNext({
+      fechaInicio: fechas.fechaInicio,
+      fechaFin: fechas.fechaFin,
+      nights,
+      qty,
+      flotaUnidades: buildFlota(),
     });
-    return unsub;
-  }, []);
+  }
 
-  useEffect(() => {
-    if (!fechaInicio || !fechaFin) { setLoading(false); return; }
-    setLoading(true);
-    // Suscribir a viajes del año
-    const unsub = onSnapshot(collection(db, `gantt_${anio}`), snap => {
-      setViajes(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-      setLoading(false);
-    });
-    return unsub;
-  }, [fechaInicio, fechaFin, anio]);
+  const flotaDesc = disponibilidad
+    .filter(u => (qty[u.id] || 0) > 0)
+    .map(u => `${qty[u.id]}× Int.${u.interno}`)
+    .join(' + ');
 
-  // Calcular disponibilidad por unidad
-  const disponibilidad = unidades.map(u => ({
-    ...u,
-    disponible: !fechaInicio || !fechaFin
-      ? true
-      : unidadDisponible(viajes, u.id, fechaInicio, fechaFin),
-  }));
+  // Agrupar por tipo para mostrar
+  const grupos = {};
+  disponibilidad.forEach(u => {
+    if (!grupos[u.tipo]) grupos[u.tipo] = [];
+    grupos[u.tipo].push(u);
+  });
 
-  return { disponibilidad, loading };
+  return (
+    <div className="body">
+      <div className="section-label">Fechas del viaje</div>
+      <Calendario onChange={setFechas} />
+
+      <div className="divider" />
+      <div className="section-label">
+        Unidades disponibles{nights > 0 ? ` · ${nights} noche${nights !== 1 ? 's' : ''}` : ''}
+      </div>
+
+      {loading && fechas.fechaInicio && (
+        <div style={{ textAlign: 'center', padding: '20px 0', color: 'var(--text-3)', fontSize: 13 }}>
+          ⏳ Verificando disponibilidad...
+        </div>
+      )}
+
+      {!loading && disponibilidad.length === 0 && (
+        <div style={{ textAlign: 'center', padding: '20px 0', color: 'var(--text-3)', fontSize: 13 }}>
+          No hay unidades registradas en el sistema.
+        </div>
+      )}
+
+      {Object.entries(grupos).map(([tipo, units]) => (
+        <div key={tipo}>
+          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-3)', letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: 8, marginTop: 4 }}>
+            {tipo}
+          </div>
+          {units.map(u => {
+            const cant = qty[u.id] || 0;
+            const disponible = !fechas.fechaInicio || u.disponible;
+            return (
+              <div key={u.id} className={`unit-card ${cant > 0 ? 'selected' : ''} ${!disponible ? 'unavailable' : ''}`}>
+                <div className="unit-card-header">
+                  <div className="unit-ico">{u.butacas >= 45 ? '🚌' : '🚐'}</div>
+                  <div className="unit-info">
+                    <div className="unit-name">Int. {u.interno} · {u.patente}</div>
+                    <div className="unit-detail">{u.butacas} butacas · {u.empresa}</div>
+                  </div>
+                  <span className={`badge ${!fechas.fechaInicio ? 'badge-avail' : disponible ? 'badge-avail' : 'badge-unavail'}`}>
+                    {!fechas.fechaInicio ? 'Seleccioná fechas' : disponible ? 'Disponible' : 'Ocupado'}
+                  </span>
+                </div>
+                {disponible && (
+                  <div className="qty-row">
+                    <span className="qty-label">Cantidad a contratar</span>
+                    <div className="counter">
+                      <button className="counter-btn" disabled={cant === 0} onClick={() => chQty(u.id, -1)}>−</button>
+                      <span className="counter-val">{cant}</span>
+                      <button className="counter-btn" onClick={() => chQty(u.id, 1)}>+</button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      ))}
+
+      {totalUnidades > 0 && (
+        <div className="flota-pill">
+          🚌 <strong>Flota:</strong> {flotaDesc}
+        </div>
+      )}
+
+      <button className="btn-primary" disabled={!canContinue} onClick={handleContinue}>
+        Continuar →
+      </button>
+    </div>
+  );
 }
