@@ -17,7 +17,7 @@ export default function Confirmacion({ reserva, pago, onNueva }) {
     }).catch(() => {
       setNumReserva('SRC-' + Date.now().toString().slice(-6));
     });
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="confirm-page">
