@@ -1,18 +1,17 @@
 import React, { useState } from 'react';
 import { UNIT_TYPES } from '../data/constants';
 import { getNights } from '../utils/calculos';
+import Calendario from '../components/Calendario';
 
 const DISPONIBILIDAD = { u1: 3, u2: 2, u3: 4 };
 
 export default function PasoFlota({ onNext }) {
-  const today = new Date().toISOString().split('T')[0];
-  const [fechaInicio, setFechaInicio] = useState('');
-  const [fechaFin, setFechaFin] = useState('');
+  const [fechas, setFechas] = useState({ fechaInicio: '', fechaFin: '' });
   const [qty, setQty] = useState({ u1: 0, u2: 0, u3: 0 });
 
-  const nights = getNights(fechaInicio, fechaFin);
+  const nights = getNights(fechas.fechaInicio, fechas.fechaFin);
   const totalUnidades = qty.u1 + qty.u2 + qty.u3;
-  const canContinue = fechaInicio && fechaFin && fechaFin > fechaInicio && totalUnidades > 0;
+  const canContinue = fechas.fechaInicio && fechas.fechaFin && totalUnidades > 0;
 
   function chQty(tid, d) {
     setQty(prev => ({
@@ -37,7 +36,13 @@ export default function PasoFlota({ onNext }) {
   }
 
   function handleContinue() {
-    onNext({ fechaInicio, fechaFin, nights, qty, flotaUnidades: buildFlota() });
+    onNext({
+      fechaInicio: fechas.fechaInicio,
+      fechaFin: fechas.fechaFin,
+      nights,
+      qty,
+      flotaUnidades: buildFlota()
+    });
   }
 
   const flotaDesc = [
@@ -49,31 +54,7 @@ export default function PasoFlota({ onNext }) {
   return (
     <div className="body">
       <div className="section-label">Fechas del viaje</div>
-      <div className="date-row">
-        <div className={`date-box ${fechaInicio ? 'filled' : ''}`}>
-          <div className="date-box-label">📅 Salida</div>
-          <input
-            type="date"
-            min={today}
-            value={fechaInicio}
-            onChange={e => { setFechaInicio(e.target.value); if (fechaFin && e.target.value >= fechaFin) setFechaFin(''); }}
-          />
-        </div>
-        <div className={`date-box ${fechaFin ? 'filled' : ''}`}>
-          <div className="date-box-label">📅 Regreso</div>
-          <input
-            type="date"
-            min={fechaInicio || today}
-            value={fechaFin}
-            onChange={e => setFechaFin(e.target.value)}
-          />
-        </div>
-      </div>
-      {nights > 0 && (
-        <div className="hint" style={{ marginBottom: 4, color: '#6B21D6', fontWeight: 500 }}>
-          {nights} noche{nights !== 1 ? 's' : ''} en destino
-        </div>
-      )}
+      <Calendario onChange={setFechas} />
 
       <div className="divider" />
       <div className="section-label">Seleccioná tu flota</div>
