@@ -2,15 +2,13 @@ import React from 'react';
 
 export default function Topbar() {
   return (
-    <>
-      <div className="topbar">
-        <div className="topbar-logo">
-          <div className="logo-circle">S</div>
-          <span className="logo-name">SURCANTE</span>
-        </div>
-        <span className="lang-badge">ES · EN</span>
-      </div>
-      <div className="purple-strip" />
-    </>
+    <div className="topbar">
+      <img
+        src="/Logo_Surcante_01.png"
+        alt="Surcante"
+        style={{ height: 32, objectFit: 'contain' }}
+      />
+      <span className="lang-badge">ES · EN</span>
+    </div>
   );
 }
