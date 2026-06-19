@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { UNIT_TYPES } from '../data/constants';
-import { formatDate, getNights } from '../utils/calculos';
+import { getNights } from '../utils/calculos';
 
 const DISPONIBILIDAD = { u1: 3, u2: 2, u3: 4 };
 
