@@ -1,21 +1,76 @@
-import React, { useState, useCallback } from 'react';
-import { KM_MOV_INCLUIDOS } from '../data/constants';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
+import { KM_MOV_INCLUIDOS, BASE_COORDS } from '../data/constants';
 
-// KM FIJOS DE EJEMPLO — en producción se calculan con Google Maps API
-// Base (Lomas del Mirador) → Origen ingresado por el cliente
-const KM_BASE_A_ORIGEN_EJEMPLO = 300;
+const MAPS_KEY = process.env.REACT_APP_GOOGLE_MAPS_KEY;
+
+function loadGoogleMaps() {
+  return new Promise((resolve, reject) => {
+    if (window.google && window.google.maps) { resolve(); return; }
+    if (document.getElementById('gmap-script')) {
+      document.getElementById('gmap-script').addEventListener('load', resolve);
+      return;
+    }
+    const s = document.createElement('script');
+    s.id = 'gmap-script';
+    s.src = `https://maps.googleapis.com/maps/api/js?key=${MAPS_KEY}&libraries=places`;
+    s.async = true;
+    s.onload = resolve;
+    s.onerror = reject;
+    document.head.appendChild(s);
+  });
+}
+
+function AutocompleteInput({ placeholder, onSelect, label, icon }) {
+  const inputRef = useRef(null);
+  const [value, setValue] = useState('');
+
+  useEffect(() => {
+    if (!MAPS_KEY) return;
+    loadGoogleMaps().then(() => {
+      const ac = new window.google.maps.places.Autocomplete(inputRef.current, {
+        componentRestrictions: { country: 'ar' },
+        fields: ['geometry', 'formatted_address', 'name'],
+      });
+      ac.addListener('place_changed', () => {
+        const place = ac.getPlace();
+        if (!place.geometry) return;
+        const loc = place.geometry.location;
+        const display = place.name || place.formatted_address;
+        setValue(display);
+        onSelect({ lat: loc.lat(), lng: loc.lng(), display });
+      });
+    }).catch(() => {});
+  }, [onSelect]);
+
+  return (
+    <div className="ruta-field">
+      <label>{label}</label>
+      <input
+        ref={inputRef}
+        placeholder={placeholder}
+        value={value}
+        onChange={e => setValue(e.target.value)}
+      />
+    </div>
+  );
+}
+
+function calcDistanceKm(lat1, lng1, lat2, lng2) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLng/2)**2;
+  return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+}
 
 export default function PasoRecorrido({ reserva, onNext, onBack }) {
   const { nights, flotaUnidades } = reserva;
-  const [origen, setOrigen] = useState('');
-  const [destino, setDestino] = useState('');
-  const [kmBaseOrigen] = useState(KM_BASE_A_ORIGEN_EJEMPLO);
-  const [kmOrigenDestino, setKmOrigenDestino] = useState('');
+  const [origenData, setOrigenData] = useState(null);
+  const [destinoData, setDestinoData] = useState(null);
   const [syncMode, setSyncMode] = useState(true);
   const [tabActivo, setTabActivo] = useState(flotaUnidades[0]?.id || null);
   const [diaEditando, setDiaEditando] = useState(null);
 
-  // movData: { '_sync': [0,0,...], 'u1_0': [...], ... }
   const [movData, setMovData] = useState(() => {
     const d = { '_sync': Array(nights).fill(0) };
     flotaUnidades.forEach(u => { d[u.id] = Array(nights).fill(0); });
@@ -39,29 +94,40 @@ export default function PasoRecorrido({ reserva, onNext, onBack }) {
     setMovKmData(prev => ({ ...prev, [key]: prev[key].map((v, i) => i === idx ? val : v) }));
   }, [key]);
 
-  const kmOD = parseFloat(kmOrigenDestino) || 0;
-  const kmTotal = kmOD > 0 ? (kmBaseOrigen * 2) + (kmOD * 2) : null;
+  const kmBaseOrigen = origenData
+    ? calcDistanceKm(BASE_COORDS.lat, BASE_COORDS.lng, origenData.lat, origenData.lng)
+    : 0;
+  const kmOrigenDestino = origenData && destinoData
+    ? calcDistanceKm(origenData.lat, origenData.lng, destinoData.lat, destinoData.lng)
+    : 0;
+  const kmTotal = kmBaseOrigen > 0 && kmOrigenDestino > 0
+    ? (kmBaseOrigen * 2) + (kmOrigenDestino * 2)
+    : null;
 
   const totalMov = currentMov.reduce((a, b) => a + b, 0);
   const diasConMov = currentMov.filter(x => x > 0).length;
-
   const grupos = { 1: [], 2: [], 3: [] };
   currentMov.forEach((m, i) => { if (m > 0 && m <= 3) grupos[m].push('D' + (i + 1)); });
 
-  const canContinue = origen.trim() && destino.trim() && kmOD > 0;
-
-  function handleNext() {
-    onNext({
-      origen, destino,
-      kmBaseOrigen, kmOrigenDestino: kmOD,
-      kmTotal,
-      syncMode, movData, movKmData,
-    });
-  }
+  const canContinue = origenData && destinoData && kmTotal > 0;
 
   const diaMovVal = diaEditando !== null ? currentMov[diaEditando] : 0;
   const diaKmVal = diaEditando !== null ? currentMovKm[diaEditando] : 0;
   const kmExtra = diaMovVal > 0 ? Math.max(0, diaKmVal - KM_MOV_INCLUIDOS) * diaMovVal : 0;
+
+  const handleOrigenSelect = useCallback((data) => setOrigenData(data), []);
+  const handleDestinoSelect = useCallback((data) => setDestinoData(data), []);
+
+  function handleNext() {
+    onNext({
+      origen: origenData.display,
+      destino: destinoData.display,
+      kmBaseOrigen,
+      kmOrigenDestino,
+      kmTotal,
+      syncMode, movData, movKmData,
+    });
+  }
 
   return (
     <div className="body">
@@ -69,55 +135,29 @@ export default function PasoRecorrido({ reserva, onNext, onBack }) {
       <div className="ruta-box">
         <div className="ruta-row">
           <div className="ruta-dot origen">📍</div>
-          <div className="ruta-field">
-            <label>Punto de carga del contingente</label>
-            <input
-              placeholder="Ciudad o dirección de origen"
-              value={origen}
-              onChange={e => setOrigen(e.target.value)}
-            />
-          </div>
+          <AutocompleteInput
+            label="Punto de carga del contingente"
+            placeholder="Ciudad o dirección de origen"
+            onSelect={handleOrigenSelect}
+          />
         </div>
         <div className="ruta-row">
           <div className="ruta-dot destino">🏁</div>
-          <div className="ruta-field">
-            <label>Destino del viaje</label>
-            <input
-              placeholder="Ciudad o dirección de destino"
-              value={destino}
-              onChange={e => setDestino(e.target.value)}
-            />
-          </div>
-        </div>
-      </div>
-
-      <div style={{ marginBottom: 12 }}>
-        <div className="section-label" style={{ marginBottom: 6 }}>Distancia origen → destino (km)</div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <input
-            type="number"
-            min="1"
-            placeholder="ej: 400"
-            value={kmOrigenDestino}
-            onChange={e => setKmOrigenDestino(e.target.value)}
-            style={{
-              flex: 1, border: '1px solid var(--border)', borderRadius: 8,
-              padding: '10px 12px', fontSize: 14, fontFamily: 'inherit',
-              outline: 'none', color: 'var(--text)',
-            }}
+          <AutocompleteInput
+            label="Destino del viaje"
+            placeholder="Ciudad o dirección de destino"
+            onSelect={handleDestinoSelect}
           />
-          <span style={{ fontSize: 12, color: 'var(--text-3)', whiteSpace: 'nowrap' }}>km</span>
-        </div>
-        <div className="hint" style={{ marginTop: 4 }}>
-          ⚡ En producción se calcula automáticamente con Google Maps
         </div>
       </div>
 
-      {kmTotal && (
+      {kmTotal ? (
         <div className="km-pill">
-          🛣️ Recorrido total: <strong>{kmBaseOrigen * 2} km</strong> (base↔origen) + <strong>{kmOD * 2} km</strong> (origen↔destino) = <strong>{kmTotal} km</strong>
+          🛣️ Base↔Origen: <strong>{kmBaseOrigen * 2} km</strong> · Origen↔Destino: <strong>{kmOrigenDestino * 2} km</strong> · Total: <strong>{kmTotal} km</strong>
         </div>
-      )}
+      ) : origenData && !destinoData ? (
+        <div className="hint">Ahora ingresá el destino para calcular la distancia</div>
+      ) : null}
 
       <div className="divider" />
       <div className="section-label">Movimientos en destino</div>
@@ -130,11 +170,8 @@ export default function PasoRecorrido({ reserva, onNext, onBack }) {
       {!syncMode && flotaUnidades.length > 1 && (
         <div className="tabs-wrap">
           {flotaUnidades.map(u => (
-            <div
-              key={u.id}
-              className={`tab ${tabActivo === u.id ? 'active' : ''}`}
-              onClick={() => { setTabActivo(u.id); setDiaEditando(null); }}
-            >
+            <div key={u.id} className={`tab ${tabActivo === u.id ? 'active' : ''}`}
+              onClick={() => { setTabActivo(u.id); setDiaEditando(null); }}>
               {u.type.icon} {u.label}
             </div>
           ))}
@@ -149,11 +186,9 @@ export default function PasoRecorrido({ reserva, onNext, onBack }) {
         {Array.from({ length: nights }, (_, i) => {
           const m = currentMov[i];
           return (
-            <div
-              key={i}
+            <div key={i}
               className={`dia-chip ${m > 0 ? 'activo' : ''} ${diaEditando === i ? 'editando' : ''}`}
-              onClick={() => setDiaEditando(diaEditando === i ? null : i)}
-            >
+              onClick={() => setDiaEditando(diaEditando === i ? null : i)}>
               <div className="dia-chip-num">D{i + 1}</div>
               <div className="dia-chip-mov">{m === 0 ? '—' : m}</div>
               <div className="dia-chip-lbl">{m === 0 ? '·' : m === 1 ? 'mov' : 'movs'}</div>
@@ -173,17 +208,18 @@ export default function PasoRecorrido({ reserva, onNext, onBack }) {
           <div className="editor-counter">
             <span className="editor-hint">movimientos este día</span>
             <div className="editor-ctrl">
-              <button className="editor-btn" disabled={diaMovVal === 0} onClick={() => { setMov(diaEditando, diaMovVal - 1); if (diaMovVal - 1 === 0) setMovKm(diaEditando, 0); }}>−</button>
+              <button className="editor-btn" disabled={diaMovVal === 0}
+                onClick={() => { setMov(diaEditando, diaMovVal - 1); if (diaMovVal - 1 === 0) setMovKm(diaEditando, 0); }}>−</button>
               <span className="editor-val">{diaMovVal}</span>
-              <button className="editor-btn" disabled={diaMovVal >= 3} onClick={() => setMov(diaEditando, diaMovVal + 1)}>+</button>
+              <button className="editor-btn" disabled={diaMovVal >= 3}
+                onClick={() => setMov(diaEditando, diaMovVal + 1)}>+</button>
             </div>
           </div>
           {diaMovVal > 0 && (
             <div className="editor-km">
               <div className="editor-km-label">Km por movimiento en destino (opcional)</div>
               <div className="editor-km-row">
-                <input
-                  type="number" min="0" max="999"
+                <input type="number" min="0" max="999"
                   className={`editor-km-input ${diaKmVal > KM_MOV_INCLUIDOS ? 'over' : ''}`}
                   placeholder="ej: 40"
                   value={diaKmVal || ''}
@@ -193,7 +229,7 @@ export default function PasoRecorrido({ reserva, onNext, onBack }) {
               </div>
               <div className="hint" style={{ marginTop: 4 }}>50 km incluidos · km extra se cobra al valor del viaje</div>
               {kmExtra > 0 && (
-                <div className="km-extra-alert">⚠️ +{kmExtra} km extra a cotizar (supera los 50 km incluidos)</div>
+                <div className="km-extra-alert">⚠️ +{kmExtra} km extra a cotizar</div>
               )}
             </div>
           )}
