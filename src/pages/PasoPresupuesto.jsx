@@ -2,10 +2,13 @@ import React, { useState } from 'react';
 import { useDolar } from '../hooks/useDolar';
 import { calcPresupuestoTotal, formatARS, formatDate } from '../utils/calculos';
 import { METODOS_PAGO, DATOS_BANCARIOS, WHATSAPP } from '../data/pagos';
+import { crearPreferenciaMercadoPago } from '../hooks/useMercadoPago';
 
 export default function PasoPresupuesto({ reserva, onBack, onConfirm }) {
   const { dolar, loading } = useDolar();
   const [payMethod, setPayMethod] = useState('mercadopago');
+  const [loadingMP, setLoadingMP] = useState(false);
+  const [errorMP, setErrorMP] = useState('');
 
   const { flotaUnidades, syncMode, movData, movKmData, kmTotal,
           origen, destino, fechaInicio, fechaFin, nights } = reserva;
@@ -31,24 +34,39 @@ export default function PasoPresupuesto({ reserva, onBack, onConfirm }) {
     );
   }
 
-  function WhatsAppButtons({ mensaje }) {
+  async function handlePagarMP() {
+    setLoadingMP(true);
+    setErrorMP('');
+    try {
+      const pref = await crearPreferenciaMercadoPago({
+        grandTotal, montoAhora, origen, destino,
+        fechaInicio, fechaFin, flotaUnidades,
+      });
+      // Guardar reserva antes de redirigir
+      onConfirm({ grandTotal, sena: montoAhora, saldo, payMethod, porcentaje, mpPreferenceId: pref.id });
+      // Redirigir a MercadoPago
+      window.location.href = pref.init_point;
+    } catch (e) {
+      setErrorMP('No se pudo conectar con MercadoPago. Intentá con transferencia o efectivo.');
+      setLoadingMP(false);
+    }
+  }
+
+  function WhatsAppButtons({ sufijo }) {
     return (
       <div>
         <div className="section-label" style={{ marginBottom: 8 }}>Enviar por WhatsApp</div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
           {WHATSAPP.map(w => (
-            <a
-              key={w.numero}
-              href={`https://wa.me/${w.numero}?text=${mensaje(w.nombre)}`}
-              target="_blank"
-              rel="noreferrer"
+            <a key={w.numero}
+              href={`https://wa.me/${w.numero}?text=${buildWAMsg(w.nombre)}${sufijo ? encodeURIComponent(sufijo) : ''}`}
+              target="_blank" rel="noreferrer"
               style={{
                 display: 'flex', flexDirection: 'column', alignItems: 'center',
                 padding: '12px 8px', background: '#25D366', borderRadius: 10,
                 color: '#fff', textDecoration: 'none', fontWeight: 600,
                 fontSize: 13, gap: 4, textAlign: 'center',
-              }}
-            >
+              }}>
               <span style={{ fontSize: 20 }}>📱</span>
               {w.label}
             </a>
@@ -62,9 +80,7 @@ export default function PasoPresupuesto({ reserva, onBack, onConfirm }) {
     <div className="body">
       <div className="presup-hero">
         <div className="presup-hero-label">Total del viaje</div>
-        <div className="presup-hero-val">
-          {loading ? 'Calculando...' : formatARS(grandTotal)}
-        </div>
+        <div className="presup-hero-val">{loading ? 'Calculando...' : formatARS(grandTotal)}</div>
         <div className="presup-hero-sub">
           {nights} noches · {flotaUnidades.length} unidad{flotaUnidades.length !== 1 ? 'es' : ''} · IVA incluido
         </div>
@@ -91,17 +107,13 @@ export default function PasoPresupuesto({ reserva, onBack, onConfirm }) {
       <div className="section-label">Método de pago</div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
         {METODOS_PAGO.map(m => (
-          <div
-            key={m.id}
-            onClick={() => setPayMethod(m.id)}
-            style={{
-              border: `1.5px solid ${payMethod === m.id ? 'var(--sp)' : 'var(--border)'}`,
-              borderRadius: 12, padding: '12px 14px',
-              background: payMethod === m.id ? 'var(--spl)' : 'var(--bg)',
-              cursor: 'pointer', display: 'flex', alignItems: 'center',
-              gap: 12, transition: 'all .15s',
-            }}
-          >
+          <div key={m.id} onClick={() => setPayMethod(m.id)} style={{
+            border: `1.5px solid ${payMethod === m.id ? 'var(--sp)' : 'var(--border)'}`,
+            borderRadius: 12, padding: '12px 14px',
+            background: payMethod === m.id ? 'var(--spl)' : 'var(--bg)',
+            cursor: 'pointer', display: 'flex', alignItems: 'center',
+            gap: 12, transition: 'all .15s',
+          }}>
             <span style={{ fontSize: 22 }}>{m.icon}</span>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 14, fontWeight: 600, color: payMethod === m.id ? 'var(--spd)' : 'var(--text)' }}>
@@ -116,12 +128,47 @@ export default function PasoPresupuesto({ reserva, onBack, onConfirm }) {
         ))}
       </div>
 
-      {/* Panel transferencia */}
+      {/* MercadoPago */}
+      {payMethod === 'mercadopago' && (
+        <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 12, padding: 14, marginBottom: 14 }}>
+          <div style={{ fontSize: 13, color: 'var(--text-2)', marginBottom: 12, fontWeight: 500 }}>
+            Pagás el <strong>10%</strong> ({formatARS(montoAhora)}) ahora con MercadoPago. El saldo lo coordinamos antes del viaje.
+          </div>
+          {errorMP && <div style={{ fontSize: 12, color: 'var(--red)', background: 'var(--red-bg)', borderRadius: 8, padding: '8px 12px', marginBottom: 10 }}>{errorMP}</div>}
+          <button onClick={handlePagarMP} disabled={loadingMP || loading || grandTotal === 0}
+            style={{
+              width: '100%', padding: 13, background: '#009EE3', color: '#fff',
+              border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 700,
+              cursor: loadingMP ? 'default' : 'pointer', opacity: loadingMP ? .7 : 1,
+              fontFamily: 'Inter, sans-serif',
+            }}>
+            {loadingMP ? 'Redirigiendo...' : `💳 Pagar ${formatARS(montoAhora)} con MercadoPago`}
+          </button>
+        </div>
+      )}
+
+      {/* Tarjeta — via MP */}
+      {payMethod === 'tarjeta' && (
+        <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 12, padding: 14, marginBottom: 14 }}>
+          <div style={{ fontSize: 13, color: 'var(--text-2)', marginBottom: 12, fontWeight: 500 }}>
+            Pagás el <strong>10%</strong> ({formatARS(montoAhora)}) con tarjeta a través de MercadoPago.
+          </div>
+          {errorMP && <div style={{ fontSize: 12, color: 'var(--red)', background: 'var(--red-bg)', borderRadius: 8, padding: '8px 12px', marginBottom: 10 }}>{errorMP}</div>}
+          <button onClick={handlePagarMP} disabled={loadingMP || loading || grandTotal === 0}
+            style={{
+              width: '100%', padding: 13, background: '#6B21D6', color: '#fff',
+              border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 700,
+              cursor: loadingMP ? 'default' : 'pointer', opacity: loadingMP ? .7 : 1,
+              fontFamily: 'Inter, sans-serif',
+            }}>
+            {loadingMP ? 'Redirigiendo...' : `🏦 Pagar ${formatARS(montoAhora)} con tarjeta`}
+          </button>
+        </div>
+      )}
+
+      {/* Transferencia */}
       {payMethod === 'transferencia' && (
-        <div style={{
-          background: 'var(--bg-2)', border: '1px solid var(--border)',
-          borderRadius: 12, padding: 14, marginBottom: 14,
-        }}>
+        <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 12, padding: 14, marginBottom: 14 }}>
           <div className="section-label" style={{ marginBottom: 10 }}>Datos bancarios</div>
           {[
             ['Titular', DATOS_BANCARIOS.titular],
@@ -130,51 +177,21 @@ export default function PasoPresupuesto({ reserva, onBack, onConfirm }) {
             ['CBU', DATOS_BANCARIOS.cbu],
             ['CUIT', DATOS_BANCARIOS.cuit],
           ].map(([label, value]) => (
-            <div key={label} style={{
-              display: 'flex', justifyContent: 'space-between',
-              padding: '6px 0', borderBottom: '1px solid var(--border)', fontSize: 12,
-            }}>
+            <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid var(--border)', fontSize: 12 }}>
               <span style={{ color: 'var(--text-3)', fontWeight: 500 }}>{label}</span>
               <span style={{ color: 'var(--text)', fontWeight: 600, textAlign: 'right', maxWidth: '60%', wordBreak: 'break-all' }}>{value}</span>
             </div>
           ))}
           <div style={{ marginTop: 14 }}>
-            <WhatsAppButtons mensaje={(nombre) => buildWAMsg(nombre) + encodeURIComponent('\n\n📎 Te envío el comprobante de transferencia.')} />
+            <WhatsAppButtons sufijo={'\n\n📎 Te envío el comprobante de transferencia.'} />
           </div>
         </div>
       )}
 
-      {/* Panel efectivo */}
+      {/* Efectivo */}
       {payMethod === 'efectivo' && (
-        <div style={{
-          background: 'var(--bg-2)', border: '1px solid var(--border)',
-          borderRadius: 12, padding: 14, marginBottom: 14,
-        }}>
-          <WhatsAppButtons mensaje={(nombre) => buildWAMsg(nombre) + encodeURIComponent('\n\nQuiero coordinar el pago en efectivo.')} />
-        </div>
-      )}
-
-      {/* Panel MercadoPago — próximamente */}
-      {payMethod === 'mercadopago' && (
-        <div style={{
-          background: '#FFF8E6', border: '1px solid #FFD166',
-          borderRadius: 12, padding: 14, marginBottom: 14,
-          fontSize: 13, color: '#7A5200', fontWeight: 500, textAlign: 'center',
-        }}>
-          🔧 Integración con MercadoPago en proceso.<br />
-          <span style={{ fontSize: 12, opacity: .8 }}>Por ahora usá transferencia o efectivo.</span>
-        </div>
-      )}
-
-      {/* Panel tarjeta — próximamente */}
-      {payMethod === 'tarjeta' && (
-        <div style={{
-          background: '#FFF8E6', border: '1px solid #FFD166',
-          borderRadius: 12, padding: 14, marginBottom: 14,
-          fontSize: 13, color: '#7A5200', fontWeight: 500, textAlign: 'center',
-        }}>
-          🔧 Pago con tarjeta en proceso.<br />
-          <span style={{ fontSize: 12, opacity: .8 }}>Por ahora usá transferencia o efectivo.</span>
+        <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 12, padding: 14, marginBottom: 14 }}>
+          <WhatsAppButtons sufijo={'\n\nQuiero coordinar el pago en efectivo.'} />
         </div>
       )}
 
@@ -220,11 +237,8 @@ export default function PasoPresupuesto({ reserva, onBack, onConfirm }) {
       </div>
 
       {(payMethod === 'transferencia' || payMethod === 'efectivo') && (
-        <button
-          className="btn-primary green"
-          disabled={loading || grandTotal === 0}
-          onClick={() => onConfirm({ grandTotal, sena: montoAhora, saldo, payMethod, porcentaje })}
-        >
+        <button className="btn-primary green" disabled={loading || grandTotal === 0}
+          onClick={() => onConfirm({ grandTotal, sena: montoAhora, saldo, payMethod, porcentaje })}>
           ✓ Confirmar reserva
         </button>
       )}
