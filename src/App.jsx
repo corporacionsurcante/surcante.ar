@@ -8,10 +8,7 @@ import Confirmacion from './pages/Confirmacion';
 import AdminApp from './admin/pages/AdminApp';
 import './index.css';
 
-export default function App() {
-  const isAdmin = window.location.pathname.startsWith('/admin');
-  if (isAdmin) return <AdminApp />;
-
+function CotizadorApp() {
   const [step, setStep] = useState(1);
   const [reserva, setReserva] = useState(null);
   const [pago, setPago] = useState(null);
@@ -31,4 +28,10 @@ export default function App() {
       {step === 4 && <Confirmacion reserva={reserva} pago={pago} onNueva={handleNueva} />}
     </div>
   );
+}
+
+export default function App() {
+  const isAdmin = window.location.pathname.startsWith('/admin');
+  if (isAdmin) return <AdminApp />;
+  return <CotizadorApp />;
 }
