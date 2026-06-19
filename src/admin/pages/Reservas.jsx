@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { suscribirReservas, actualizarEstadoReserva } from '../../firebase/services';
-import { formatARS, formatDate } from '../../utils/calculos';
+import { formatARS } from '../../utils/calculos';
 
 const ESTADOS = [
   { key: 'seña_pendiente', label: 'Seña pendiente', clase: 'estado-saldo' },
