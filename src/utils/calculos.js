@@ -81,3 +81,37 @@ export function formatDate(dateStr) {
   const d = new Date(dateStr + 'T12:00:00');
   return d.toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' });
 }
+
+
+export const PRECIO_MINIMO_USD = {
+  'MIX 60':    450,
+  'Comun 45':  400,
+  'Minibus 24': 380,
+  'Minibus 19': 380,
+};
+export const KM_MINIMO_THRESHOLD = 300;
+
+export function calcPrecioUnidadConMinimo({ unit, kmTotal, movPorDia, movKmPorDia, dolar, mismodia }) {
+  const base = calcPrecioUnidad({ unit, kmTotal, movPorDia, movKmPorDia, dolar });
+  
+  // Aplicar precio mínimo solo si es viaje en el día y menos de 300 km
+  if (mismodia && kmTotal < KM_MINIMO_THRESHOLD) {
+    const tipoKey = unit.tipoNombre || unit.tipo || 'Comun 45';
+    const minimoUSD = PRECIO_MINIMO_USD[tipoKey] || 400;
+    const minimoNeto = minimoUSD * dolar;
+    const minimoIva = minimoNeto * IVA;
+    const minimoTotal = minimoNeto + minimoIva;
+    
+    if (minimoTotal > base.total) {
+      return {
+        ...base,
+        traslNeto: minimoNeto,
+        ivaTotal: minimoIva,
+        total: minimoTotal,
+        esPrecioMinimo: true,
+        minimoUSD,
+      };
+    }
+  }
+  return { ...base, esPrecioMinimo: false };
+}
