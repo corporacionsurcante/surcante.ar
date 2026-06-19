@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { collection, query, where, getDocs, onSnapshot } from 'firebase/firestore';
+import { collection, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase/config';
 
 function addDays(fecha, n) {
@@ -22,7 +22,6 @@ function getCeldasOcupadas(viajes, unidadId) {
       for (let i = 0; i < dias; i++) {
         const fecha = addDays(v.desde, i);
         const turnoInicio = i === 0 ? v.turnoSalida : 'M';
-        const turnoFin = i === dias - 1 ? v.turnoRegreso : 'T';
         if (turnoInicio === 'M') ocupadas.add(`${fecha}_M`);
         ocupadas.add(`${fecha}_T`);
       }
