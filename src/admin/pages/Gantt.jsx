@@ -11,8 +11,6 @@ function diasEnMes(mes, anio) {
   return DIAS_MES[mes];
 }
 
-function fechaToKey(fecha) { return fecha.replace(/-/g, ''); }
-function keyToFecha(key) { return `${key.slice(0,4)}-${key.slice(4,6)}-${key.slice(6,8)}`; }
 function addDays(fecha, n) {
   const d = new Date(fecha + 'T12:00:00');
   d.setDate(d.getDate() + n);
