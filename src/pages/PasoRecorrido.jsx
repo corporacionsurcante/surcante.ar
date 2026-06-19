@@ -20,7 +20,32 @@ function loadGoogleMaps() {
   });
 }
 
-function AutocompleteInput({ placeholder, onSelect, label, icon }) {
+// Usa Directions API para obtener la ruta más rápida (igual que Google Maps)
+// avoidFerries: true, avoidHighways: false = usa autopistas, sin ferries
+function calcRouteKm(origin, destination) {
+  return new Promise((resolve, reject) => {
+    const service = new window.google.maps.DirectionsService();
+    service.route({
+      origin,
+      destination,
+      travelMode: window.google.maps.TravelMode.DRIVING,
+      avoidFerries: true,
+      avoidTolls: false,
+      avoidHighways: false,
+      provideRouteAlternatives: false,
+      optimizeWaypoints: false,
+    }, (result, status) => {
+      if (status !== 'OK') { reject(status); return; }
+      // Toma la primera ruta (la más rápida, igual que Google Maps)
+      const leg = result.routes[0]?.legs[0];
+      if (!leg) { reject('NO_LEG'); return; }
+      const km = Math.round(leg.distance.value / 1000);
+      resolve(km);
+    });
+  });
+}
+
+function AutocompleteInput({ placeholder, label, onSelect }) {
   const inputRef = useRef(null);
   const [value, setValue] = useState('');
 
@@ -37,7 +62,7 @@ function AutocompleteInput({ placeholder, onSelect, label, icon }) {
         const loc = place.geometry.location;
         const display = place.name || place.formatted_address;
         setValue(display);
-        onSelect({ lat: loc.lat(), lng: loc.lng(), display });
+        onSelect({ lat: loc.lat(), lng: loc.lng(), display, placeId: place.place_id });
       });
     }).catch(() => {});
   }, [onSelect]);
@@ -55,18 +80,14 @@ function AutocompleteInput({ placeholder, onSelect, label, icon }) {
   );
 }
 
-function calcDistanceKm(lat1, lng1, lat2, lng2) {
-  const R = 6371;
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLng = (lng2 - lng1) * Math.PI / 180;
-  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLng/2)**2;
-  return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
-}
-
 export default function PasoRecorrido({ reserva, onNext, onBack }) {
   const { nights, flotaUnidades } = reserva;
   const [origenData, setOrigenData] = useState(null);
   const [destinoData, setDestinoData] = useState(null);
+  const [kmBaseOrigen, setKmBaseOrigen] = useState(null);
+  const [kmOrigenDestino, setKmOrigenDestino] = useState(null);
+  const [calculando, setCalculando] = useState(false);
+  const [errorCalculo, setErrorCalculo] = useState(false);
   const [syncMode, setSyncMode] = useState(true);
   const [tabActivo, setTabActivo] = useState(flotaUnidades[0]?.id || null);
   const [diaEditando, setDiaEditando] = useState(null);
@@ -82,6 +103,45 @@ export default function PasoRecorrido({ reserva, onNext, onBack }) {
     return d;
   });
 
+  // Calcula base→origen apenas se selecciona el origen
+  useEffect(() => {
+    if (!origenData) return;
+    setKmBaseOrigen(null);
+    loadGoogleMaps().then(() => {
+      const base = new window.google.maps.LatLng(BASE_COORDS.lat, BASE_COORDS.lng);
+      const origen = new window.google.maps.LatLng(origenData.lat, origenData.lng);
+      calcRouteKm(base, origen)
+        .then(km => setKmBaseOrigen(km))
+        .catch(() => {});
+    });
+  }, [origenData]);
+
+  // Calcula origen→destino cuando están ambos
+  useEffect(() => {
+    if (!origenData || !destinoData) return;
+    setCalculando(true);
+    setErrorCalculo(false);
+    setKmOrigenDestino(null);
+
+    loadGoogleMaps().then(() => {
+      const origen = new window.google.maps.LatLng(origenData.lat, origenData.lng);
+      const destino = new window.google.maps.LatLng(destinoData.lat, destinoData.lng);
+      calcRouteKm(origen, destino)
+        .then(km => {
+          setKmOrigenDestino(km);
+          setCalculando(false);
+        })
+        .catch(() => {
+          setErrorCalculo(true);
+          setCalculando(false);
+        });
+    });
+  }, [origenData, destinoData]);
+
+  const kmTotal = kmBaseOrigen && kmOrigenDestino
+    ? (kmBaseOrigen * 2) + (kmOrigenDestino * 2)
+    : null;
+
   const key = syncMode ? '_sync' : (tabActivo || '_sync');
   const currentMov = movData[key] || Array(nights).fill(0);
   const currentMovKm = movKmData[key] || Array(nights).fill(0);
@@ -94,29 +154,26 @@ export default function PasoRecorrido({ reserva, onNext, onBack }) {
     setMovKmData(prev => ({ ...prev, [key]: prev[key].map((v, i) => i === idx ? val : v) }));
   }, [key]);
 
-  const kmBaseOrigen = origenData
-    ? calcDistanceKm(BASE_COORDS.lat, BASE_COORDS.lng, origenData.lat, origenData.lng)
-    : 0;
-  const kmOrigenDestino = origenData && destinoData
-    ? calcDistanceKm(origenData.lat, origenData.lng, destinoData.lat, destinoData.lng)
-    : 0;
-  const kmTotal = kmBaseOrigen > 0 && kmOrigenDestino > 0
-    ? (kmBaseOrigen * 2) + (kmOrigenDestino * 2)
-    : null;
-
   const totalMov = currentMov.reduce((a, b) => a + b, 0);
   const diasConMov = currentMov.filter(x => x > 0).length;
   const grupos = { 1: [], 2: [], 3: [] };
   currentMov.forEach((m, i) => { if (m > 0 && m <= 3) grupos[m].push('D' + (i + 1)); });
 
-  const canContinue = origenData && destinoData && kmTotal > 0;
-
   const diaMovVal = diaEditando !== null ? currentMov[diaEditando] : 0;
   const diaKmVal = diaEditando !== null ? currentMovKm[diaEditando] : 0;
   const kmExtra = diaMovVal > 0 ? Math.max(0, diaKmVal - KM_MOV_INCLUIDOS) * diaMovVal : 0;
 
-  const handleOrigenSelect = useCallback((data) => setOrigenData(data), []);
-  const handleDestinoSelect = useCallback((data) => setDestinoData(data), []);
+  const canContinue = origenData && destinoData && kmTotal > 0 && !calculando;
+
+  const handleOrigenSelect = useCallback((data) => {
+    setOrigenData(data);
+    setKmOrigenDestino(null);
+  }, []);
+
+  const handleDestinoSelect = useCallback((data) => {
+    setDestinoData(data);
+    setKmOrigenDestino(null);
+  }, []);
 
   function handleNext() {
     onNext({
@@ -151,18 +208,32 @@ export default function PasoRecorrido({ reserva, onNext, onBack }) {
         </div>
       </div>
 
-      {kmTotal ? (
-        <div className="km-pill">
-          🛣️ Base↔Origen: <strong>{kmBaseOrigen * 2} km</strong> · Origen↔Destino: <strong>{kmOrigenDestino * 2} km</strong> · Total: <strong>{kmTotal} km</strong>
+      {calculando && (
+        <div className="km-pill" style={{ color: 'var(--sp)' }}>
+          ⏳ Calculando ruta real...
         </div>
-      ) : origenData && !destinoData ? (
-        <div className="hint">Ahora ingresá el destino para calcular la distancia</div>
-      ) : null}
+      )}
+
+      {errorCalculo && (
+        <div className="km-pill" style={{ background: 'var(--red-bg)', color: 'var(--red-text)' }}>
+          ⚠️ No se pudo calcular la ruta. Verificá los puntos ingresados.
+        </div>
+      )}
+
+      {kmTotal && !calculando && (
+        <div className="km-pill">
+          🛣️ Base↔Origen: <strong>{kmBaseOrigen * 2} km</strong> · Origen↔Destino: <strong>{kmOrigenDestino * 2} km</strong> · <strong>Total: {kmTotal} km</strong>
+          <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 3 }}>
+            Ruta más rápida · sin ferries · apto omnibus
+          </div>
+        </div>
+      )}
 
       <div className="divider" />
       <div className="section-label">Movimientos en destino</div>
 
-      <div className={`sync-toggle ${syncMode ? 'on' : ''}`} onClick={() => { setSyncMode(s => !s); setDiaEditando(null); }}>
+      <div className={`sync-toggle ${syncMode ? 'on' : ''}`}
+        onClick={() => { setSyncMode(s => !s); setDiaEditando(null); }}>
         <div className="toggle-track"><div className="toggle-thumb" /></div>
         <span className="toggle-text">Todas las unidades hacen los mismos movimientos</span>
       </div>
@@ -179,7 +250,9 @@ export default function PasoRecorrido({ reserva, onNext, onBack }) {
       )}
 
       <div className="hint">
-        {syncMode ? 'Configurando para todas las unidades' : `Configurando: ${flotaUnidades.find(u => u.id === tabActivo)?.label || ''}`}
+        {syncMode
+          ? 'Configurando para todas las unidades'
+          : `Configurando: ${flotaUnidades.find(u => u.id === tabActivo)?.label || ''}`}
       </div>
 
       <div className="grid-dias">
@@ -201,7 +274,10 @@ export default function PasoRecorrido({ reserva, onNext, onBack }) {
         <div className="editor-panel">
           <div className="editor-header">
             <span className="editor-title">
-              Día {diaEditando + 1}{syncMode ? ' — todas las unidades' : ` — ${flotaUnidades.find(u => u.id === tabActivo)?.label || ''}`}
+              Día {diaEditando + 1}
+              {syncMode
+                ? ' — todas las unidades'
+                : ` — ${flotaUnidades.find(u => u.id === tabActivo)?.label || ''}`}
             </span>
             <button className="editor-close" onClick={() => setDiaEditando(null)}>✕</button>
           </div>
@@ -227,7 +303,9 @@ export default function PasoRecorrido({ reserva, onNext, onBack }) {
                 />
                 <span className="editor-km-unit">km por mov.</span>
               </div>
-              <div className="hint" style={{ marginTop: 4 }}>50 km incluidos · km extra se cobra al valor del viaje</div>
+              <div className="hint" style={{ marginTop: 4 }}>
+                50 km incluidos · km extra se cobra al valor del viaje
+              </div>
               {kmExtra > 0 && (
                 <div className="km-extra-alert">⚠️ +{kmExtra} km extra a cotizar</div>
               )}
