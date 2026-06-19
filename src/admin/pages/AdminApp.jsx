@@ -7,10 +7,12 @@ import Dashboard from './Dashboard';
 import Reservas from './Reservas';
 import Flota from './Flota';
 import Precios from './Precios';
+import Gantt from './Gantt';
 import '../admin.css';
 
 const NAV = [
   { id: 'dashboard', label: 'Dashboard', icon: '📊' },
+  { id: 'gantt',     label: 'Diagrama',  icon: '📅' },
   { id: 'reservas',  label: 'Reservas',  icon: '📋' },
   { id: 'flota',     label: 'Flota',     icon: '🚌' },
   { id: 'precios',   label: 'Precios',   icon: '💰' },
@@ -67,8 +69,9 @@ export default function AdminApp() {
         ))}
       </div>
 
-      <div className="admin-content">
+      <div className={tab === 'gantt' ? '' : 'admin-content'} style={tab === 'gantt' ? { padding: '20px 16px', overflowX: 'auto' } : {}}>
         {tab === 'dashboard' && <Dashboard />}
+        {tab === 'gantt'     && <Gantt />}
         {tab === 'reservas'  && <Reservas />}
         {tab === 'flota'     && <Flota />}
         {tab === 'precios'   && <Precios />}
