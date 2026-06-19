@@ -1,34 +1,53 @@
 import React, { useState } from 'react';
-import { UNIT_TYPES } from '../data/constants';
 import { getNights } from '../utils/calculos';
 import Calendario from '../components/Calendario';
+import { useDisponibilidad } from '../hooks/useDisponibilidad';
 
-const DISPONIBILIDAD = { u1: 3, u2: 2, u3: 4 };
+const TIPO_UNIT = {
+  'MIX 60':    { usdKm: 2.50, movDesc: 0,    movUSD: [110,170,250] },
+  'Comun 45':  { usdKm: 2.00, movDesc: 0.20, movUSD: [110,170,250] },
+  'Minibus 24':{ usdKm: 1.80, movDesc: 0.30, movUSD: [110,170,250] },
+  'Minibus 19':{ usdKm: 1.80, movDesc: 0.30, movUSD: [110,170,250] },
+};
+
+function getTipoConfig(tipo) {
+  return TIPO_UNIT[tipo] || TIPO_UNIT['Comun 45'];
+}
 
 export default function PasoFlota({ onNext }) {
   const [fechas, setFechas] = useState({ fechaInicio: '', fechaFin: '' });
-  const [qty, setQty] = useState({ u1: 0, u2: 0, u3: 0 });
+  const [qty, setQty] = useState({});
+
+  const { disponibilidad, loading } = useDisponibilidad(fechas.fechaInicio, fechas.fechaFin);
 
   const nights = getNights(fechas.fechaInicio, fechas.fechaFin);
-  const totalUnidades = qty.u1 + qty.u2 + qty.u3;
+  const totalUnidades = Object.values(qty).reduce((a, b) => a + b, 0);
   const canContinue = fechas.fechaInicio && fechas.fechaFin && totalUnidades > 0;
 
-  function chQty(tid, d) {
+  function chQty(uid, d) {
     setQty(prev => ({
       ...prev,
-      [tid]: Math.max(0, Math.min(DISPONIBILIDAD[tid], prev[tid] + d))
+      [uid]: Math.max(0, (prev[uid] || 0) + d),
     }));
   }
 
   function buildFlota() {
     const flota = [];
-    ['u1', 'u2', 'u3'].forEach(tid => {
-      for (let i = 0; i < qty[tid]; i++) {
+    disponibilidad.forEach(u => {
+      const cant = qty[u.id] || 0;
+      for (let i = 0; i < cant; i++) {
+        const config = getTipoConfig(u.tipo);
         flota.push({
-          id: `${tid}_${i}`,
-          tid,
-          type: UNIT_TYPES[tid],
-          label: UNIT_TYPES[tid].name + (qty[tid] > 1 ? ` #${i + 1}` : ''),
+          id: `${u.id}_${i}`,
+          tid: u.id,
+          type: {
+            ...config,
+            name: `${u.tipo} (${u.interno})`,
+            icon: u.butacas >= 45 ? '🚌' : '🚐',
+            seats: u.butacas,
+          },
+          label: `Int. ${u.interno} · ${u.patente}${cant > 1 ? ` #${i+1}` : ''}`,
+          unidadId: u.id,
         });
       }
     });
@@ -41,15 +60,21 @@ export default function PasoFlota({ onNext }) {
       fechaFin: fechas.fechaFin,
       nights,
       qty,
-      flotaUnidades: buildFlota()
+      flotaUnidades: buildFlota(),
     });
   }
 
-  const flotaDesc = [
-    qty.u1 > 0 && `${qty.u1}× OmPrem`,
-    qty.u2 > 0 && `${qty.u2}× OmEst`,
-    qty.u3 > 0 && `${qty.u3}× Minibus`,
-  ].filter(Boolean).join(' + ');
+  const flotaDesc = disponibilidad
+    .filter(u => (qty[u.id] || 0) > 0)
+    .map(u => `${qty[u.id]}× Int.${u.interno}`)
+    .join(' + ');
+
+  // Agrupar por tipo para mostrar
+  const grupos = {};
+  disponibilidad.forEach(u => {
+    if (!grupos[u.tipo]) grupos[u.tipo] = [];
+    grupos[u.tipo].push(u);
+  });
 
   return (
     <div className="body">
@@ -57,26 +82,55 @@ export default function PasoFlota({ onNext }) {
       <Calendario onChange={setFechas} />
 
       <div className="divider" />
-      <div className="section-label">Seleccioná tu flota</div>
+      <div className="section-label">
+        Unidades disponibles{nights > 0 ? ` · ${nights} noche${nights !== 1 ? 's' : ''}` : ''}
+      </div>
 
-      {Object.values(UNIT_TYPES).map(u => (
-        <div key={u.id} className={`unit-card ${qty[u.id] > 0 ? 'selected' : ''}`}>
-          <div className="unit-card-header">
-            <div className="unit-ico">{u.icon}</div>
-            <div className="unit-info">
-              <div className="unit-name">{u.name}</div>
-              <div className="unit-detail">{u.seats} butacas · {u.features}</div>
-            </div>
-            <span className="badge badge-avail">{DISPONIBILIDAD[u.id]} dispon.</span>
+      {loading && fechas.fechaInicio && (
+        <div style={{ textAlign: 'center', padding: '20px 0', color: 'var(--text-3)', fontSize: 13 }}>
+          ⏳ Verificando disponibilidad...
+        </div>
+      )}
+
+      {!loading && disponibilidad.length === 0 && (
+        <div style={{ textAlign: 'center', padding: '20px 0', color: 'var(--text-3)', fontSize: 13 }}>
+          No hay unidades registradas en el sistema.
+        </div>
+      )}
+
+      {Object.entries(grupos).map(([tipo, units]) => (
+        <div key={tipo}>
+          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-3)', letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: 8, marginTop: 4 }}>
+            {tipo}
           </div>
-          <div className="qty-row">
-            <span className="qty-label">Cantidad a contratar</span>
-            <div className="counter">
-              <button className="counter-btn" disabled={qty[u.id] === 0} onClick={() => chQty(u.id, -1)}>−</button>
-              <span className="counter-val">{qty[u.id]}</span>
-              <button className="counter-btn" disabled={qty[u.id] >= DISPONIBILIDAD[u.id]} onClick={() => chQty(u.id, 1)}>+</button>
-            </div>
-          </div>
+          {units.map(u => {
+            const cant = qty[u.id] || 0;
+            const disponible = !fechas.fechaInicio || u.disponible;
+            return (
+              <div key={u.id} className={`unit-card ${cant > 0 ? 'selected' : ''} ${!disponible ? 'unavailable' : ''}`}>
+                <div className="unit-card-header">
+                  <div className="unit-ico">{u.butacas >= 45 ? '🚌' : '🚐'}</div>
+                  <div className="unit-info">
+                    <div className="unit-name">Int. {u.interno} · {u.patente}</div>
+                    <div className="unit-detail">{u.butacas} butacas · {u.empresa}</div>
+                  </div>
+                  <span className={`badge ${!fechas.fechaInicio ? 'badge-avail' : disponible ? 'badge-avail' : 'badge-unavail'}`}>
+                    {!fechas.fechaInicio ? 'Seleccioná fechas' : disponible ? 'Disponible' : 'Ocupado'}
+                  </span>
+                </div>
+                {disponible && (
+                  <div className="qty-row">
+                    <span className="qty-label">Cantidad a contratar</span>
+                    <div className="counter">
+                      <button className="counter-btn" disabled={cant === 0} onClick={() => chQty(u.id, -1)}>−</button>
+                      <span className="counter-val">{cant}</span>
+                      <button className="counter-btn" onClick={() => chQty(u.id, 1)}>+</button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       ))}
 
