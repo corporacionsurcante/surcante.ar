@@ -11,10 +11,10 @@ export default function PasoPresupuesto({ reserva, onBack, onConfirm }) {
   const [errorMP, setErrorMP] = useState('');
 
   const { flotaUnidades, syncMode, movData, movKmData, kmTotal,
-          origen, destino, fechaInicio, fechaFin, nights } = reserva;
+          origen, destino, fechaInicio, fechaFin, nights, mismodia, horaInicio, horaFin } = reserva;
 
   const { grandTotal, detalles } = dolar
-    ? calcPresupuestoTotal({ flotaUnidades, kmTotal, movData, movKmData, syncMode, dolar })
+    ? calcPresupuestoTotal({ flotaUnidades, kmTotal, movData, movKmData, syncMode, dolar, mismodia, nights })
     : { grandTotal: 0, detalles: [] };
 
   const metodoActual = METODOS_PAGO.find(m => m.id === payMethod);
@@ -200,7 +200,10 @@ export default function PasoPresupuesto({ reserva, onBack, onConfirm }) {
         <div className="prow"><span>📍 Origen</span><span style={{ fontWeight: 600 }}>{origen}</span></div>
         <div className="prow"><span>🏁 Destino</span><span style={{ fontWeight: 600 }}>{destino}</span></div>
         <div className="prow"><span>📅 Salida</span><span>{formatDate(fechaInicio)}</span></div>
-        <div className="prow"><span>📅 Regreso</span><span>{formatDate(fechaFin)}</span></div>
+        <div className="prow"><span>📅 Regreso</span><span>{mismodia ? `Mismo día${horaFin ? ' · ' + horaFin : ''}` : formatDate(fechaFin)}</span></div>
+        {mismodia && horaInicio && (
+          <div className="prow"><span>🕐 Horario</span><span>{horaInicio} → {horaFin}</span></div>
+        )}
       </div>
 
       <div className="section-label">Detalle por unidad</div>
@@ -214,7 +217,14 @@ export default function PasoPresupuesto({ reserva, onBack, onConfirm }) {
                 <span>{d.type.icon} {d.label}</span>
                 <span>{formatARS(d.total)}</span>
               </div>
-              <div className="prow sub"><span>Recorrido {d.kmTotalConExtra?.toLocaleString('es-AR')} km</span><span>{formatARS(d.traslNeto)}</span></div>
+              {d.esPrecioMinimo ? (
+                <div className="prow sub" style={{ color: 'var(--sp)' }}>
+                  <span>⚡ Tarifa mínima ({d.diasViaje} día{d.diasViaje > 1 ? 's' : ''} · {d.kmPorDia} km/día)</span>
+                  <span>{formatARS(d.traslNeto)}</span>
+                </div>
+              ) : (
+                <div className="prow sub"><span>Recorrido {d.kmTotalConExtra?.toLocaleString('es-AR')} km</span><span>{formatARS(d.traslNeto)}</span></div>
+              )}
               {d.movNeto > 0 && (
                 <>
                   <div className="prow sub"><span>Movimientos en destino</span><span>{formatARS(d.movNeto)}</span></div>
