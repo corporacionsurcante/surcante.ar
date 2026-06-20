@@ -11,10 +11,10 @@ export default function PasoPresupuesto({ reserva, onBack, onConfirm }) {
   const [errorMP, setErrorMP] = useState('');
 
   const { flotaUnidades, syncMode, movData, movKmData, kmTotal,
-          origen, destino, fechaInicio, fechaFin, nights, mismodia, horaInicio, horaFin } = reserva;
+          origen, destino, fechaInicio, fechaFin, dias, mismodia, horaInicio, horaFin } = reserva;
 
   const { grandTotal, detalles } = dolar
-    ? calcPresupuestoTotal({ flotaUnidades, kmTotal, movData, movKmData, syncMode, dolar, mismodia, nights })
+    ? calcPresupuestoTotal({ flotaUnidades, kmTotal, movData, movKmData, syncMode, dolar, mismodia, dias })
     : { grandTotal: 0, detalles: [] };
 
   const metodoActual = METODOS_PAGO.find(m => m.id === payMethod);
@@ -82,7 +82,7 @@ export default function PasoPresupuesto({ reserva, onBack, onConfirm }) {
         <div className="presup-hero-label">Total del viaje</div>
         <div className="presup-hero-val">{loading ? 'Calculando...' : formatARS(grandTotal)}</div>
         <div className="presup-hero-sub">
-          {nights} noches · {flotaUnidades.length} unidad{flotaUnidades.length !== 1 ? 'es' : ''} · IVA incluido
+          {dias} día{dias !== 1 ? 's' : ''} de servicio · {flotaUnidades.length} unidad{flotaUnidades.length !== 1 ? 'es' : ''} · IVA incluido
         </div>
         {!loading && (
           <div className="sena-box">
@@ -97,8 +97,8 @@ export default function PasoPresupuesto({ reserva, onBack, onConfirm }) {
             </div>
             <div className="sena-divider" />
             <div className="sena-item">
-              <div className="sena-label">Km totales</div>
-              <div className="sena-val">{kmTotal?.toLocaleString('es-AR')}</div>
+              <div className="sena-label">Días servicio</div>
+              <div className="sena-val">{dias}</div>
             </div>
           </div>
         )}
