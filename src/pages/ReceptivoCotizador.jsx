@@ -109,7 +109,6 @@ export default function ReceptivoCotizador({ onBack }) {
   const subtotal = Array.from({ length: dias }, (_, i) => getPrecioDia(i + 1)).reduce((a, b) => a + b, 0);
   const iva = subtotal * 0.21;
   const total = subtotal + iva;
-  const sena = total * 0.30;
   const diasConPrograma = programa.filter(p => p.items && p.items.length > 0).length;
 
   // ---- PASO 3: PRESUPUESTO ----
