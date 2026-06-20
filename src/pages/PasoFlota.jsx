@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { getNights } from '../utils/calculos';
+import { getDiasServicio } from '../utils/calculos';
 import Calendario from '../components/Calendario';
 import { useDisponibilidad } from '../hooks/useDisponibilidad';
 
@@ -20,7 +20,7 @@ export default function PasoFlota({ onNext }) {
 
   const { disponibilidad, loading } = useDisponibilidad(fechas.fechaInicio, fechas.fechaFin);
 
-  const nights = fechas.mismodia ? 0 : getNights(fechas.fechaInicio, fechas.fechaFin);
+  const dias = fechas.mismodia ? 1 : getDiasServicio(fechas.fechaInicio, fechas.fechaFin);
   const totalUnidades = Object.values(qty).reduce((a, b) => a + b, 0);
   const canContinue = fechas.fechaInicio && fechas.fechaFin && totalUnidades > 0;
 
@@ -59,7 +59,7 @@ export default function PasoFlota({ onNext }) {
       mismodia: fechas.mismodia,
       horaInicio: fechas.horaInicio,
       horaFin: fechas.horaFin,
-      nights,
+      dias,
       qty,
       flotaUnidades: buildFlota(),
     });
