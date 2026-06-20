@@ -113,6 +113,36 @@ export default function ReceptivoCotizador({ onBack }) {
   const diasConPrograma = programa.filter(p => p.items && p.items.length > 0).length;
 
   // ---- PASO 3: PRESUPUESTO ----
+  const METODOS = [
+    { id: 'transferencia', label: 'Transferencia', icon: '🏛️', desc: '30% para confirmar', porc: 0.30 },
+    { id: 'efectivo',      label: 'Efectivo',      icon: '💵', desc: 'Coordinás por WhatsApp', porc: 0.30 },
+    { id: 'mercadopago',   label: 'MercadoPago',   icon: '💳', desc: '10% ahora online', porc: 0.10 },
+    { id: 'tarjeta',       label: 'Tarjeta',       icon: '🏦', desc: '10% ahora online', porc: 0.10 },
+  ];
+  const metodoActual = METODOS.find(m => m.id === payMethod) || METODOS[0];
+  const montoAhora = Math.round(total * metodoActual.porc);
+  const saldoPendiente = total - montoAhora;
+
+  const DATOS_BANCARIOS = {
+    titular: 'SURCANTE S.R.L', banco: 'Banco Macro · Suc. 544',
+    cuenta: 'Cta Cte $ 3-5440941641566-6', cbu: '2850544230094164156661', cuit: '30-71098078-7',
+  };
+  const WHATSAPP_LIST = [
+    { label: 'José', numero: '5491158100414', nombre: 'José Bournissen' },
+    { label: 'Sebastián', numero: '5492984524724', nombre: 'Sebastián Machado' },
+  ];
+
+  function buildWAMsg(nombre) {
+    return encodeURIComponent(
+      `Hola ${nombre}! Quiero reservar servicio receptivo con Surcante.\n\n` +
+      `📅 Fechas: ${fechas.fechaInicio} → ${fechas.fechaFin}\n` +
+      `🚌 Unidad: ${unidadSel?.tipo} · Int. ${unidadSel?.interno}\n` +
+      `💰 Total: ${formatARS(total)}\n` +
+      `💳 Método: ${metodoActual.label}\n` +
+      `✅ Pago ahora: ${formatARS(montoAhora)}`
+    );
+  }
+
   if (step === 3) {
     return (
       <div className="body">
@@ -125,13 +155,13 @@ export default function ReceptivoCotizador({ onBack }) {
           {!loadingDolar && (
             <div className="sena-box">
               <div className="sena-item">
-                <div className="sena-label">Seña (30%)</div>
-                <div className="sena-val green">{formatARS(sena)}</div>
+                <div className="sena-label">Pagás ahora</div>
+                <div className="sena-val green">{formatARS(montoAhora)}</div>
               </div>
               <div className="sena-divider" />
               <div className="sena-item">
                 <div className="sena-label">Saldo</div>
-                <div className="sena-val">{formatARS(total - sena)}</div>
+                <div className="sena-val">{formatARS(saldoPendiente)}</div>
               </div>
               <div className="sena-divider" />
               <div className="sena-item">
@@ -172,12 +202,8 @@ export default function ReceptivoCotizador({ onBack }) {
         </div>
 
         <div className="section-label">Método de pago</div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
-          {[
-            { id: 'mercadopago', label: 'MercadoPago', icon: '💳', desc: '10% ahora online' },
-            { id: 'transferencia', label: 'Transferencia', icon: '🏛️', desc: '30% para confirmar' },
-            { id: 'efectivo', label: 'Efectivo', icon: '💵', desc: 'Coordinás por WhatsApp' },
-          ].map(m => (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 14 }}>
+          {METODOS.map(m => (
             <div key={m.id} onClick={() => setPayMethod(m.id)}
               style={{
                 border: `1.5px solid ${payMethod === m.id ? 'var(--sp)' : 'var(--border)'}`,
@@ -191,15 +217,75 @@ export default function ReceptivoCotizador({ onBack }) {
                 <div style={{ fontSize: 12, color: 'var(--text-3)' }}>{m.desc}</div>
               </div>
               <div style={{ fontSize: 14, fontWeight: 700, color: payMethod === m.id ? 'var(--sp)' : 'var(--text-2)' }}>
-                {formatARS(Math.round(total * (m.id === 'mercadopago' ? 0.10 : 0.30)))}
+                {formatARS(Math.round(total * m.porc))}
               </div>
             </div>
           ))}
         </div>
 
-        <button className="btn-primary green" disabled={total === 0 || diasConPrograma === 0}>
-          ✓ Confirmar y reservar
-        </button>
+        {/* Panel transferencia */}
+        {payMethod === 'transferencia' && (
+          <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 12, padding: 14, marginBottom: 14 }}>
+            <div className="section-label" style={{ marginBottom: 10 }}>Datos bancarios</div>
+            {Object.entries(DATOS_BANCARIOS).map(([k, v]) => (
+              <div key={k} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid var(--border)', fontSize: 12 }}>
+                <span style={{ color: 'var(--text-3)', fontWeight: 500, textTransform: 'capitalize' }}>{k}</span>
+                <span style={{ color: 'var(--text)', fontWeight: 600, textAlign: 'right', maxWidth: '65%', wordBreak: 'break-all' }}>{v}</span>
+              </div>
+            ))}
+            <div style={{ marginTop: 14 }}>
+              <div className="section-label" style={{ marginBottom: 8 }}>Enviar comprobante por WhatsApp</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                {WHATSAPP_LIST.map(w => (
+                  <a key={w.numero} href={`https://wa.me/${w.numero}?text=${buildWAMsg(w.nombre)}${encodeURIComponent('\n\n📎 Te envío el comprobante.')}`}
+                    target="_blank" rel="noreferrer"
+                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '12px 8px', background: '#25D366', borderRadius: 10, color: '#fff', textDecoration: 'none', fontWeight: 600, fontSize: 13, gap: 4 }}>
+                    <span style={{ fontSize: 20 }}>📱</span>{w.label}
+                  </a>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Panel efectivo */}
+        {payMethod === 'efectivo' && (
+          <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 12, padding: 14, marginBottom: 14 }}>
+            <div className="section-label" style={{ marginBottom: 8 }}>Contactar por WhatsApp</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              {WHATSAPP_LIST.map(w => (
+                <a key={w.numero} href={`https://wa.me/${w.numero}?text=${buildWAMsg(w.nombre)}${encodeURIComponent('\n\nQuiero coordinar el pago en efectivo.')}`}
+                  target="_blank" rel="noreferrer"
+                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '12px 8px', background: '#25D366', borderRadius: 10, color: '#fff', textDecoration: 'none', fontWeight: 600, fontSize: 13, gap: 4 }}>
+                  <span style={{ fontSize: 20 }}>📱</span>{w.label}
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Panel MP */}
+        {(payMethod === 'mercadopago' || payMethod === 'tarjeta') && (
+          <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 12, padding: 14, marginBottom: 14, fontSize: 13, color: 'var(--text-2)', fontWeight: 500 }}>
+            Pagás el <strong>{payMethod === 'mercadopago' ? '10%' : '10%'}</strong> ({formatARS(montoAhora)}) ahora online. El saldo lo coordinamos antes del servicio.
+          </div>
+        )}
+
+        {(payMethod === 'transferencia' || payMethod === 'efectivo') && (
+          <button className="btn-primary green"
+            onClick={() => alert('¡Reserva registrada! Nos contactamos a la brevedad.')}>
+            ✓ Confirmar y reservar
+          </button>
+        )}
+
+        {(payMethod === 'mercadopago' || payMethod === 'tarjeta') && (
+          <button className="btn-primary"
+            style={{ background: payMethod === 'mercadopago' ? '#009EE3' : '#6B21D6' }}
+            onClick={() => alert('Integración MercadoPago en proceso. Por favor usá transferencia o efectivo.')}>
+            {payMethod === 'mercadopago' ? '💳' : '🏦'} Pagar {formatARS(montoAhora)} {payMethod === 'mercadopago' ? 'con MercadoPago' : 'con tarjeta'}
+          </button>
+        )}
+
         <button className="btn-secondary" onClick={() => setStep(2)}>← Modificar programa</button>
       </div>
     );
