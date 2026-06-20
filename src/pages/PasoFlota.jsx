@@ -83,7 +83,7 @@ export default function PasoFlota({ onNext }) {
 
       <div className="divider" />
       <div className="section-label">
-        Unidades disponibles{nights > 0 ? ` · ${nights} noche${nights !== 1 ? 's' : ''}` : fechas.mismodia ? ' · viaje en el día' : ''}
+        Unidades disponibles{dias > 0 ? ` · ${dias} noche${dias !== 1 ? 's' : ''}` : fechas.mismodia ? ' · viaje en el día' : ''}
       </div>
 
       {loading && fechas.fechaInicio && (
