@@ -258,8 +258,8 @@ export default function ReceptivoCotizador({ onBack }) {
             {tieneItem(diaEditando, 'city', 'city') && <span style={{ color: '#fff', fontWeight: 700 }}>✓</span>}
           </div>
 
-          {/* Circuitos */}
-          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-3)', letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: 6, marginTop: 4 }}>Circuitos especiales</div>
+          {/* Circuitos — TERCERO */}
+          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-3)', letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: 6, marginTop: 8 }}>Circuitos especiales</div>
           {circuitosActivos.map(c => (
             <div key={c.id} onClick={() => asignarDia('circuito', c.id, c.nombre)}
               style={{
