@@ -117,15 +117,25 @@ export function calcPrecioUnidadConMinimo({ unit, kmTotal, movPorDia, movKmPorDi
   const kmPorDia = diasViaje > 0 ? kmTotal / diasViaje : kmTotal;
   const tipoKey = unit.tipoNombre || unit.tipo || 'Comun 45';
 
-  // Aplica mínimo si los km por día son menos de 300
+  // Aplica mínimo solo al traslado (km) si los km por día son menos de 300
+  // Los movimientos SIEMPRE se suman aparte
   if (kmPorDia < KM_MINIMO_THRESHOLD) {
     const minimo = calcTarifaMinimaDias(tipoKey, diasViaje, dolar);
-    if (minimo.total > base.total) {
+    
+    // Comparar solo el costo de traslado (sin movimientos)
+    const traslNeto = kmTotal * unit.usdKm * dolar;
+    
+    if (minimo.totalNeto > traslNeto) {
+      // Usar tarifa mínima para traslado + sumar movimientos aparte
+      const subtotal = minimo.totalNeto + base.movNeto;
+      const ivaTotal = subtotal * IVA;
+      const total = subtotal + ivaTotal;
       return {
         ...base,
         traslNeto: minimo.totalNeto,
-        ivaTotal: minimo.ivaTotal,
-        total: minimo.total,
+        subtotal,
+        ivaTotal,
+        total,
         esPrecioMinimo: true,
         tipoKey,
         diasViaje,
