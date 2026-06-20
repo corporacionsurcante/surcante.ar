@@ -8,6 +8,7 @@ import Reservas from './Reservas';
 import Flota from './Flota';
 import Precios from './Precios';
 import Gantt from './Gantt';
+import Receptivo from './Receptivo';
 import '../admin.css';
 
 const NAV = [
@@ -16,6 +17,7 @@ const NAV = [
   { id: 'reservas',  label: 'Reservas',  icon: '📋' },
   { id: 'flota',     label: 'Flota',     icon: '🚌' },
   { id: 'precios',   label: 'Precios',   icon: '💰' },
+  { id: 'receptivo', label: 'Receptivo', icon: '🏛️' },
 ];
 
 export default function AdminApp() {
@@ -75,6 +77,7 @@ export default function AdminApp() {
         {tab === 'reservas'  && <Reservas />}
         {tab === 'flota'     && <Flota />}
         {tab === 'precios'   && <Precios />}
+        {tab === 'receptivo' && <Receptivo />}
       </div>
     </div>
   );
