@@ -135,7 +135,7 @@ export default function PasoPresupuesto({ reserva, onBack, onConfirm }) {
             Pagás el <strong>10%</strong> ({formatARS(montoAhora)}) ahora con MercadoPago. El saldo lo coordinamos antes del viaje.
           </div>
           {errorMP && <div style={{ fontSize: 12, color: 'var(--red)', background: 'var(--red-bg)', borderRadius: 8, padding: '8px 12px', marginBottom: 10 }}>{errorMP}</div>}
-          <button onClick={handlePagarMP} disabled={loadingMP || loading || grandTotal === 0}
+          <button onClick={handlePagarMP} disabled={loadingMP || loading}
             style={{
               width: '100%', padding: 13, background: '#009EE3', color: '#fff',
               border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 700,
@@ -154,7 +154,7 @@ export default function PasoPresupuesto({ reserva, onBack, onConfirm }) {
             Pagás el <strong>10%</strong> ({formatARS(montoAhora)}) con tarjeta a través de MercadoPago.
           </div>
           {errorMP && <div style={{ fontSize: 12, color: 'var(--red)', background: 'var(--red-bg)', borderRadius: 8, padding: '8px 12px', marginBottom: 10 }}>{errorMP}</div>}
-          <button onClick={handlePagarMP} disabled={loadingMP || loading || grandTotal === 0}
+          <button onClick={handlePagarMP} disabled={loadingMP || loading}
             style={{
               width: '100%', padding: 13, background: '#6B21D6', color: '#fff',
               border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 700,
@@ -247,7 +247,7 @@ export default function PasoPresupuesto({ reserva, onBack, onConfirm }) {
       </div>
 
       {(payMethod === 'transferencia' || payMethod === 'efectivo') && (
-        <button className="btn-primary green" disabled={loading || grandTotal === 0}
+        <button className="btn-primary green" disabled={loading}
           onClick={() => onConfirm({ grandTotal, sena: montoAhora, saldo, payMethod, porcentaje })}>
           ✓ Confirmar reserva
         </button>
@@ -255,4 +255,3 @@ export default function PasoPresupuesto({ reserva, onBack, onConfirm }) {
       <button className="btn-secondary" onClick={onBack}>← Modificar recorrido</button>
     </div>
   );
-}
