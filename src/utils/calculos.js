@@ -54,12 +54,12 @@ export function calcPrecioUnidad({ unit, kmTotal, movPorDia, movKmPorDia, dolar 
   };
 }
 
-export function calcPresupuestoTotal({ flotaUnidades, kmTotal, movData, movKmData, syncMode, dolar, mismodia, nights }) {
+export function calcPresupuestoTotal({ flotaUnidades, kmTotal, movData, movKmData, syncMode, dolar, mismodia, dias }) {
   let grandTotal = 0;
   const detalles = flotaUnidades.map((u) => {
     const movPorDia = syncMode ? movData['_sync'] : (movData[u.id] || []);
     const movKmPorDia = syncMode ? movKmData['_sync'] : (movKmData[u.id] || []);
-    const calc = calcPrecioUnidadConMinimo({ unit: u.type, kmTotal, movPorDia, movKmPorDia, dolar, mismodia, nights });
+    const calc = calcPrecioUnidadConMinimo({ unit: u.type, kmTotal, movPorDia, movKmPorDia, dolar, mismodia, dias });
     grandTotal += calc.total;
     return { ...u, ...calc };
   });
@@ -74,6 +74,13 @@ export function getNights(fechaInicio, fechaFin) {
   if (!fechaInicio || !fechaFin) return 0;
   const ms = new Date(fechaFin) - new Date(fechaInicio);
   return Math.max(0, Math.round(ms / (1000 * 60 * 60 * 24)));
+}
+
+// Días de servicio inclusive (salida y regreso cuentan como días de trabajo)
+export function getDiasServicio(fechaInicio, fechaFin) {
+  if (!fechaInicio || !fechaFin) return 0;
+  const ms = new Date(fechaFin) - new Date(fechaInicio);
+  return Math.max(1, Math.round(ms / (1000 * 60 * 60 * 24)) + 1);
 }
 
 export function formatDate(dateStr) {
@@ -111,9 +118,9 @@ export function calcTarifaMinimaDias(tipoNombre, dias, dolar) {
   return { totalNeto, ivaTotal, total: totalNeto + ivaTotal };
 }
 
-export function calcPrecioUnidadConMinimo({ unit, kmTotal, movPorDia, movKmPorDia, dolar, mismodia, nights }) {
+export function calcPrecioUnidadConMinimo({ unit, kmTotal, movPorDia, movKmPorDia, dolar, mismodia, dias }) {
   const base = calcPrecioUnidad({ unit, kmTotal, movPorDia, movKmPorDia, dolar });
-  const diasViaje = mismodia ? 1 : (nights || 1);
+  const diasViaje = mismodia ? 1 : (dias || 1);
   const kmPorDia = diasViaje > 0 ? kmTotal / diasViaje : kmTotal;
   const tipoKey = unit.tipoNombre || unit.tipo || 'Comun 45';
 
