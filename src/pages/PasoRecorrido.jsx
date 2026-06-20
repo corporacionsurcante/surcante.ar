@@ -143,8 +143,8 @@ export default function PasoRecorrido({ reserva, onNext, onBack }) {
     : null;
 
   const key = syncMode ? '_sync' : (tabActivo || '_sync');
-  const currentMov = movData[key] || Array(nights).fill(0);
-  const currentMovKm = movKmData[key] || Array(nights).fill(0);
+  const currentMov = movData[key] || Array(dias).fill(0);
+  const currentMovKm = movKmData[key] || Array(dias).fill(0);
 
   const setMov = useCallback((idx, val) => {
     setMovData(prev => ({ ...prev, [key]: prev[key].map((v, i) => i === idx ? val : v) }));
