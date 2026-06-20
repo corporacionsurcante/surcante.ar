@@ -9,7 +9,7 @@ export default function Confirmacion({ reserva, pago, onNueva }) {
 
   useEffect(() => {
     crearReserva({
-      origen, destino, fechaInicio, fechaFin, nights, kmTotal,
+      origen, destino, fechaInicio, fechaFin, dias, kmTotal,
       flotaUnidades: flotaUnidades.map(u => ({ id: u.id, label: u.label, tipo: u.tid })),
       grandTotal, sena, saldo, payMethod, dias,
     }).then(ref => {
