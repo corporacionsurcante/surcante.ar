@@ -236,13 +236,19 @@ export default function PasoPresupuesto({ reserva, onBack, onConfirm }) {
               </div>
               {d.esPrecioMinimo ? (
                 <div className="prow sub" style={{ color: 'var(--sp)' }}>
-                  <span>⚡ Tarifa mínima ({d.diasViaje} día{d.diasViaje > 1 ? 's' : ''} · {d.kmPorDia} km/día)</span>
+                  <span>⚡ Tarifa mínima · {d.kmPorDia} km</span>
                   <span>{formatARS(d.traslNeto)}</span>
                 </div>
               ) : (
                 <div className="prow sub">
                   <span>Recorrido {d.kmTotalConExtra?.toLocaleString('es-AR')} km</span>
                   <span>{formatARS(d.traslNeto)}</span>
+                </div>
+              )}
+              {d.esEstadia && d.estadiaNeto > 0 && (
+                <div className="prow sub" style={{ color: 'var(--sp)' }}>
+                  <span>🏨 Estadía unidad ({d.diasEstadia} día{d.diasEstadia > 1 ? 's' : ''} desde día 3)</span>
+                  <span>{formatARS(d.estadiaNeto)}</span>
                 </div>
               )}
               {d.movNeto > 0 && (
