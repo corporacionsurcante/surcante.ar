@@ -241,7 +241,7 @@ export default function ReceptivoCotizador({ onBack }) {
           </div>
 
           {/* City Tour */}
-          <div onClick={() => asignarDia('city', 'city', 'City Tour CABA')}
+          <div onClick={() => toggleItem('city', 'city', 'City Tour CABA')}
             style={{
               border: `1.5px solid ${itemDiaActual?.tipo === 'city' ? 'var(--sp)' : 'var(--spm)'}`,
               borderRadius: 10, padding: '10px 12px', marginBottom: 8, cursor: 'pointer',
@@ -261,7 +261,7 @@ export default function ReceptivoCotizador({ onBack }) {
           {/* Circuitos — TERCERO */}
           <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-3)', letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: 6, marginTop: 8 }}>Circuitos especiales</div>
           {circuitosActivos.map(c => (
-            <div key={c.id} onClick={() => asignarDia('circuito', c.id, c.nombre)}
+            <div key={c.id} onClick={() => toggleItem('circuito', c.id, c.nombre)}
               style={{
                 border: `1.5px solid ${itemDiaActual?.id === c.id ? 'var(--sp)' : 'var(--spm)'}`,
                 borderRadius: 10, padding: '10px 12px', marginBottom: 6, cursor: 'pointer',
@@ -285,7 +285,7 @@ export default function ReceptivoCotizador({ onBack }) {
           {/* Transfers */}
           <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-3)', letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: 6, marginTop: 8 }}>Transfer aeropuerto</div>
           {transfersActivos.map(t => (
-            <div key={t.id} onClick={() => asignarDia('transfer', t.id, t.nombre)}
+            <div key={t.id} onClick={() => toggleItem('transfer', t.id, t.nombre)}
               style={{
                 border: `1.5px solid ${itemDiaActual?.id === t.id ? 'var(--sp)' : 'var(--spm)'}`,
                 borderRadius: 10, padding: '10px 12px', marginBottom: 6, cursor: 'pointer',
