@@ -153,7 +153,7 @@ export default function ReceptivoCotizador({ onBack }) {
             const diaNum = i + 1;
             const diaData = programa.find(p => p.dia === diaNum);
             const items = diaData?.items || [];
-            const precio = getPrecioDia(diaNum);
+
             return (
               <div key={diaNum}>
                 {items.length === 0 ? (
