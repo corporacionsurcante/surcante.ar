@@ -1,6 +1,6 @@
 import {
   collection, doc, addDoc, updateDoc, deleteDoc,
-  onSnapshot, serverTimestamp, setDoc, getDoc
+  onSnapshot, serverTimestamp, setDoc
 } from 'firebase/firestore';
 import { db } from './config';
 import { CITY_TOUR_USD, CIRCUITOS, TRANSFERS_AEROPUERTO } from '../data/receptivo';
