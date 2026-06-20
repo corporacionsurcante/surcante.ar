@@ -18,6 +18,12 @@ export default function ReceptivoCotizador({ onBack }) {
   const [cityTourPrecios, setCityTourPrecios] = useState(null);
   const [circuitosDB, setCircuitosDB] = useState(null);
   const [transfersDB, setTransfersDB] = useState(null);
+  const [step, setStep] = useState(1);
+  const [fechas, setFechas] = useState({ fechaInicio: '', fechaFin: '', mismodia: false, dias: 1 });
+  const [unidadSel, setUnidadSel] = useState(null);
+  const [programa, setPrograma] = useState([]);
+  const [diaEditando, setDiaEditando] = useState(1);
+  const [payMethod, setPayMethod] = useState('transferencia');
 
   useEffect(() => {
     const u1 = suscribirPreciosCityTour(setCityTourPrecios);
@@ -26,21 +32,12 @@ export default function ReceptivoCotizador({ onBack }) {
     return () => { u1(); u2(); u3(); };
   }, []);
 
-  // Usar datos de Firebase si existen, sino usar defaults del archivo
   const preciosCityTour = cityTourPrecios || CITY_TOUR_USD;
   const circuitosActivos = (circuitosDB || CIRCUITOS).filter(c => c.activo !== false);
   const transfersActivos = (transfersDB || TRANSFERS_AEROPUERTO).filter(t => t.activo !== false);
-  const [step, setStep] = useState(1);
-  const [fechas, setFechas] = useState({ fechaInicio: '', fechaFin: '', mismodia: false, dias: 1 });
-  const [unidadSel, setUnidadSel] = useState(null);
-  const [programa, setPrograma] = useState([]); // array de { dia: N, items: [{tipo, id, nombre}] }
-  const [diaEditando, setDiaEditando] = useState(1);
-  const [payMethod, setPayMethod] = useState('transferencia');
-
   const { disponibilidad, loading: loadingDisp } = useDisponibilidad(fechas.fechaInicio, fechas.fechaFin);
   const dias = fechas.dias || 1;
 
-  // Calcular precio de un día sumando TODOS los items
   function getPrecioItem(item) {
     if (!unidadSel || !dolar) return 0;
     const tipo = unidadSel.tipo;
@@ -81,22 +78,17 @@ export default function ReceptivoCotizador({ onBack }) {
     return dia.items.map(getNombreItem).filter(Boolean).join(' + ');
   }
 
-  const subtotal = Array.from({ length: dias }, (_, i) => getPrecioDia(i + 1)).reduce((a, b) => a + b, 0);
-  const iva = subtotal * 0.21;
-  const total = subtotal + iva;
-  const sena = total * 0.30;
-  const diasConPrograma = programa.filter(p => p.items && p.items.length > 0).length;
-
   function tieneItem(diaNum, tipo, id) {
     const dia = programa.find(p => p.dia === diaNum);
     if (!dia || !dia.items) return false;
-    return dia.items.some(i => i.tipo === tipo && i.id === (id || tipo));
+    const itemId = id || tipo;
+    return dia.items.some(i => i.tipo === tipo && i.id === itemId);
   }
 
   function toggleItem(tipo, id, nombre) {
     setPrograma(prev => {
-      const diaActual = prev.find(p => p.dia === diaEditando);
       const itemId = id || tipo;
+      const diaActual = prev.find(p => p.dia === diaEditando);
       if (!diaActual) {
         return [...prev, { dia: diaEditando, items: [{ tipo, id: itemId, nombre }] }];
       }
@@ -114,7 +106,13 @@ export default function ReceptivoCotizador({ onBack }) {
     setPrograma(prev => prev.filter(p => p.dia !== diaNum));
   }
 
-  // PASO 3 — Presupuesto
+  const subtotal = Array.from({ length: dias }, (_, i) => getPrecioDia(i + 1)).reduce((a, b) => a + b, 0);
+  const iva = subtotal * 0.21;
+  const total = subtotal + iva;
+  const sena = total * 0.30;
+  const diasConPrograma = programa.filter(p => p.items && p.items.length > 0).length;
+
+  // ---- PASO 3: PRESUPUESTO ----
   if (step === 3) {
     return (
       <div className="body">
@@ -153,7 +151,6 @@ export default function ReceptivoCotizador({ onBack }) {
             const diaNum = i + 1;
             const diaData = programa.find(p => p.dia === diaNum);
             const items = diaData?.items || [];
-
             return (
               <div key={diaNum}>
                 {items.length === 0 ? (
@@ -208,8 +205,10 @@ export default function ReceptivoCotizador({ onBack }) {
     );
   }
 
-  // PASO 2 — Programa día por día
+  // ---- PASO 2: PROGRAMA DÍA POR DÍA ----
   if (step === 2) {
+    const itemsDiaActual = programa.find(p => p.dia === diaEditando)?.items || [];
+
     return (
       <div className="body">
         <div className="section-label">Programa del servicio · {dias} día{dias > 1 ? 's' : ''}</div>
@@ -218,103 +217,132 @@ export default function ReceptivoCotizador({ onBack }) {
         <div className="grid-dias" style={{ marginBottom: 14 }}>
           {Array.from({ length: dias }, (_, i) => {
             const diaNum = i + 1;
+            const cantItems = programa.find(p => p.dia === diaNum)?.items?.length || 0;
             const nombre = getNombreDia(diaNum);
             return (
               <div key={diaNum}
-                className={`dia-chip ${nombre ? 'activo' : ''} ${diaEditando === diaNum ? 'editando' : ''}`}
+                className={`dia-chip ${cantItems > 0 ? 'activo' : ''} ${diaEditando === diaNum ? 'editando' : ''}`}
                 onClick={() => setDiaEditando(diaNum)}>
                 <div className="dia-chip-num">D{diaNum}</div>
-                <div className="dia-chip-mov" style={{ fontSize: 11 }}>{programa.find(p=>p.dia===diaNum)?.items?.length || '—'}</div>
+                <div className="dia-chip-mov" style={{ fontSize: 11 }}>{cantItems || '—'}</div>
                 <div className="dia-chip-lbl" style={{ fontSize: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {nombre ? nombre.split(' ').slice(1).join(' ').slice(0, 6) : 'elegir'}
+                  {nombre ? nombre.slice(0, 6) : 'elegir'}
                 </div>
               </div>
             );
           })}
         </div>
 
-        {/* Editor del día seleccionado */}
+        {/* Panel del día */}
         <div style={{ background: 'var(--spl)', border: '1px solid var(--spm)', borderRadius: 12, padding: 14, marginBottom: 14 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--spd)', marginBottom: 12 }}>
-            Día {diaEditando} — ¿qué hace el grupo?
-          </div>
-          {/* Transfers — PRIMERO */}
-          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-3)', letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: 6 }}>Transfer aeropuerto</div>
-          {transfersActivos.map(t => (
-            <div key={t.id} onClick={() => toggleItem('transfer', t.id, t.nombre)}
-              style={{
-                border: `1.5px solid ${tieneItem(diaEditando, 'transfer', t.id) ? 'var(--sp)' : 'var(--spm)'}`,
-                borderRadius: 10, padding: '10px 12px', marginBottom: 6, cursor: 'pointer',
-                background: tieneItem(diaEditando, 'transfer', t.id) ? 'var(--sp)' : '#fff',
-                display: 'flex', alignItems: 'center', gap: 10,
-              }}>
-              <span style={{ fontSize: 18 }}>{t.emoji}</span>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: tieneItem(diaEditando, 'transfer', t.id) ? '#fff' : 'var(--spd)' }}>{t.nombre}</div>
-                <div style={{ fontSize: 11, color: tieneItem(diaEditando, 'transfer', t.id) ? 'rgba(255,255,255,.7)' : 'var(--text-3)' }}>{t.descripcion}</div>
-              </div>
-              <div style={{ textAlign: 'right' }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: tieneItem(diaEditando, 'transfer', t.id) ? '#fff' : 'var(--sp)' }}>
-                  {formatARS(t.precioUSD * (dolar || 0))}
-                </div>
-                {tieneItem(diaEditando, 'transfer', t.id) && <div style={{ color: '#fff', fontSize: 12, fontWeight: 700 }}>✓</div>}
-              </div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--spd)' }}>
+              Día {diaEditando} — ¿qué hace el grupo?
             </div>
-          ))}
-
-          {programa.find(p => p.dia === diaEditando)?.items?.length > 0 && (
-            <button onClick={() => limpiarDia(diaEditando)}
-              style={{ width: '100%', padding: 8, background: 'transparent', border: '1px solid var(--spm)', borderRadius: 8, color: 'var(--sp)', fontSize: 12, fontWeight: 600, cursor: 'pointer', marginTop: 6, fontFamily: 'Inter, sans-serif' }}>
-          {/* City Tour — SEGUNDO */}
-          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-3)', letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: 6, marginTop: 8 }}>City Tour CABA</div>
-          <div onClick={() => toggleItem('city', 'city', 'City Tour CABA')}
-            style={{
-              border: `1.5px solid ${tieneItem(diaEditando, 'city', 'city') ? 'var(--sp)' : 'var(--spm)'}`,
-              borderRadius: 10, padding: '10px 12px', marginBottom: 8, cursor: 'pointer',
-              background: tieneItem(diaEditando, 'city', 'city') ? 'var(--sp)' : '#fff',
-              display: 'flex', alignItems: 'center', gap: 10,
-            }}>
-            <span style={{ fontSize: 20 }}>🏛️</span>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: tieneItem(diaEditando, 'city', 'city') ? '#fff' : 'var(--spd)' }}>City Tour CABA</div>
-              <div style={{ fontSize: 11, color: tieneItem(diaEditando, 'city', 'city') ? 'rgba(255,255,255,.7)' : 'var(--sp)' }}>
-                {formatARS((preciosCityTour[unidadSel?.tipo] || 0) * (dolar || 0))} · con IVA
-              </div>
-            </div>
-            {tieneItem(diaEditando, 'city', 'city') && <span style={{ color: '#fff', fontWeight: 700 }}>✓</span>}
+            {itemsDiaActual.length > 0 && (
+              <button
+                onClick={() => limpiarDia(diaEditando)}
+                style={{ background: 'none', border: '1px solid var(--spm)', borderRadius: 7, padding: '4px 10px', color: 'var(--sp)', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
+                ✕ Limpiar
+              </button>
+            )}
           </div>
 
-          {/* Circuitos — TERCERO */}
-          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-3)', letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: 6, marginTop: 8 }}>Circuitos especiales</div>
-          {circuitosActivos.map(c => (
-            <div key={c.id} onClick={() => toggleItem('circuito', c.id, c.nombre)}
-              style={{
-                border: `1.5px solid ${tieneItem(diaEditando, 'circuito', c.id) ? 'var(--sp)' : 'var(--spm)'}`,
-                borderRadius: 10, padding: '10px 12px', marginBottom: 6, cursor: 'pointer',
-                background: tieneItem(diaEditando, 'circuito', c.id) ? 'var(--sp)' : '#fff',
-                display: 'flex', alignItems: 'center', gap: 10,
-              }}>
-              <span style={{ fontSize: 18 }}>{c.emoji}</span>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: tieneItem(diaEditando, 'circuito', c.id) ? '#fff' : 'var(--spd)' }}>{c.nombre}</div>
-                <div style={{ fontSize: 11, color: tieneItem(diaEditando, 'circuito', c.id) ? 'rgba(255,255,255,.7)' : 'var(--text-3)' }}>{c.descripcion}</div>
-              </div>
-              <div style={{ textAlign: 'right' }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: tieneItem(diaEditando, 'circuito', c.id) ? '#fff' : 'var(--sp)' }}>
-                  {formatARS((c.precioUSD?.[unidadSel?.tipo] || 0) * (dolar || 0))}
+          {/* SECCIÓN 1: Transfer aeropuerto */}
+          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-3)', letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: 6 }}>
+            Transfer aeropuerto
+          </div>
+          {transfersActivos.map(t => {
+            const sel = tieneItem(diaEditando, 'transfer', t.id);
+            return (
+              <div key={t.id}
+                onClick={() => toggleItem('transfer', t.id, t.nombre)}
+                style={{
+                  border: `1.5px solid ${sel ? 'var(--sp)' : 'var(--spm)'}`,
+                  borderRadius: 10, padding: '10px 12px', marginBottom: 6, cursor: 'pointer',
+                  background: sel ? 'var(--sp)' : '#fff',
+                  display: 'flex', alignItems: 'center', gap: 10,
+                }}>
+                <span style={{ fontSize: 18 }}>{t.emoji}</span>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: sel ? '#fff' : 'var(--spd)' }}>{t.nombre}</div>
+                  <div style={{ fontSize: 11, color: sel ? 'rgba(255,255,255,.7)' : 'var(--text-3)' }}>{t.descripcion}</div>
                 </div>
-                {tieneItem(diaEditando, 'circuito', c.id) && <div style={{ color: '#fff', fontSize: 12, fontWeight: 700 }}>✓</div>}
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: sel ? '#fff' : 'var(--sp)' }}>
+                    {formatARS(t.precioUSD * (dolar || 0))}
+                  </div>
+                  {sel && <div style={{ color: '#fff', fontSize: 12 }}>✓</div>}
+                </div>
               </div>
+            );
+          })}
+
+          {/* SECCIÓN 2: City Tour */}
+          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-3)', letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: 6, marginTop: 12 }}>
+            City Tour CABA
+          </div>
+          {(() => {
+            const sel = tieneItem(diaEditando, 'city', 'city');
+            return (
+              <div
+                onClick={() => toggleItem('city', 'city', 'City Tour CABA')}
+                style={{
+                  border: `1.5px solid ${sel ? 'var(--sp)' : 'var(--spm)'}`,
+                  borderRadius: 10, padding: '10px 12px', marginBottom: 8, cursor: 'pointer',
+                  background: sel ? 'var(--sp)' : '#fff',
+                  display: 'flex', alignItems: 'center', gap: 10,
+                }}>
+                <span style={{ fontSize: 20 }}>🏛️</span>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: sel ? '#fff' : 'var(--spd)' }}>City Tour CABA</div>
+                  <div style={{ fontSize: 11, color: sel ? 'rgba(255,255,255,.7)' : 'var(--sp)' }}>
+                    {formatARS((preciosCityTour[unidadSel?.tipo] || 0) * (dolar || 0))} · con IVA
+                  </div>
+                </div>
+                {sel && <span style={{ color: '#fff', fontWeight: 700 }}>✓</span>}
+              </div>
+            );
+          })()}
+
+          {/* SECCIÓN 3: Circuitos especiales */}
+          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-3)', letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: 6, marginTop: 12 }}>
+            Circuitos especiales
+          </div>
+          {circuitosActivos.map(c => {
+            const sel = tieneItem(diaEditando, 'circuito', c.id);
+            return (
+              <div key={c.id}
+                onClick={() => toggleItem('circuito', c.id, c.nombre)}
+                style={{
+                  border: `1.5px solid ${sel ? 'var(--sp)' : 'var(--spm)'}`,
+                  borderRadius: 10, padding: '10px 12px', marginBottom: 6, cursor: 'pointer',
+                  background: sel ? 'var(--sp)' : '#fff',
+                  display: 'flex', alignItems: 'center', gap: 10,
+                }}>
+                <span style={{ fontSize: 18 }}>{c.emoji}</span>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: sel ? '#fff' : 'var(--spd)' }}>{c.nombre}</div>
+                  <div style={{ fontSize: 11, color: sel ? 'rgba(255,255,255,.7)' : 'var(--text-3)' }}>{c.descripcion}</div>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: sel ? '#fff' : 'var(--sp)' }}>
+                    {formatARS((c.precioUSD?.[unidadSel?.tipo] || 0) * (dolar || 0))}
+                  </div>
+                  {sel && <div style={{ color: '#fff', fontSize: 12 }}>✓</div>}
+                </div>
+              </div>
+            );
+          })}
+
+          {/* Resumen de items seleccionados del día */}
+          {itemsDiaActual.length > 0 && (
+            <div style={{ marginTop: 10, padding: '8px 12px', background: 'rgba(107,33,214,.08)', borderRadius: 8, fontSize: 12, color: 'var(--spd)', fontWeight: 500 }}>
+              ✓ {itemsDiaActual.length} servicio{itemsDiaActual.length > 1 ? 's' : ''} seleccionado{itemsDiaActual.length > 1 ? 's' : ''} · {formatARS(getPrecioDia(diaEditando))}
             </div>
-          ))}
-
-
-              ✕ Limpiar día {diaEditando}
-            </button>
           )}
         </div>
 
-        {/* Resumen */}
         {diasConPrograma > 0 && (
           <div className="resumen-pill">
             <strong>{diasConPrograma} de {dias} días asignados</strong> · Total parcial: {formatARS(subtotal + iva)}
@@ -329,7 +357,7 @@ export default function ReceptivoCotizador({ onBack }) {
     );
   }
 
-  // PASO 1 — Selección de unidad y fechas
+  // ---- PASO 1: SELECCIÓN DE UNIDAD Y FECHAS ----
   return (
     <div className="body">
       <div className="section-label">Fechas del servicio</div>
@@ -346,8 +374,7 @@ export default function ReceptivoCotizador({ onBack }) {
         const disponible = !fechas.fechaInicio || u.disponible;
         const seleccionada = unidadSel?.id === u.id;
         const tipoInfo = TIPO_UNIT[u.tipo] || { icon: '🚌', label: u.tipo };
-        const precioDia = dolar ? (CITY_TOUR_USD[u.tipo] || 0) * dolar : null;
-
+        const precioDia = dolar ? (preciosCityTour[u.tipo] || 0) * dolar : null;
         return (
           <div key={u.id}
             className={`unit-card ${seleccionada ? 'selected' : ''} ${!disponible ? 'unavailable' : ''}`}
