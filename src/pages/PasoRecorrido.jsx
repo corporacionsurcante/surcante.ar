@@ -81,7 +81,7 @@ function AutocompleteInput({ placeholder, label, onSelect }) {
 }
 
 export default function PasoRecorrido({ reserva, onNext, onBack }) {
-  const { nights, flotaUnidades } = reserva;
+  const { dias, flotaUnidades } = reserva;
   const [origenData, setOrigenData] = useState(null);
   const [destinoData, setDestinoData] = useState(null);
   const [kmBaseOrigen, setKmBaseOrigen] = useState(null);
@@ -93,13 +93,13 @@ export default function PasoRecorrido({ reserva, onNext, onBack }) {
   const [diaEditando, setDiaEditando] = useState(null);
 
   const [movData, setMovData] = useState(() => {
-    const d = { '_sync': Array(nights).fill(0) };
-    flotaUnidades.forEach(u => { d[u.id] = Array(nights).fill(0); });
+    const d = { '_sync': Array(dias || 1).fill(0) };
+    flotaUnidades.forEach(u => { d[u.id] = Array(dias || 1).fill(0); });
     return d;
   });
   const [movKmData, setMovKmData] = useState(() => {
-    const d = { '_sync': Array(nights).fill(0) };
-    flotaUnidades.forEach(u => { d[u.id] = Array(nights).fill(0); });
+    const d = { '_sync': Array(dias || 1).fill(0) };
+    flotaUnidades.forEach(u => { d[u.id] = Array(dias || 1).fill(0); });
     return d;
   });
 
@@ -256,7 +256,7 @@ export default function PasoRecorrido({ reserva, onNext, onBack }) {
       </div>
 
       <div className="grid-dias">
-        {Array.from({ length: nights }, (_, i) => {
+        {Array.from({ length: dias || 1 }, (_, i) => {
           const m = currentMov[i];
           return (
             <div key={i}
