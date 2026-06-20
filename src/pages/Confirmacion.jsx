@@ -11,7 +11,7 @@ export default function Confirmacion({ reserva, pago, onNueva }) {
     crearReserva({
       origen, destino, fechaInicio, fechaFin, dias, kmTotal,
       flotaUnidades: flotaUnidades.map(u => ({ id: u.id, label: u.label, tipo: u.tid })),
-      grandTotal, sena, saldo, payMethod, dias,
+      grandTotal, sena, saldo, payMethod,
     }).then(ref => {
       setNumReserva('SRC-' + ref.id.slice(-6).toUpperCase());
     }).catch(() => {
