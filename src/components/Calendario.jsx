@@ -31,6 +31,11 @@ export default function Calendario({ onChange }) {
 
   function fmt(dt) { return dt ? dt.toISOString().split('T')[0] : ''; }
 
+  function calcDias(i, f, md) {
+    if (md || !f) return 1;
+    return Math.round((f - i) / 86400000) + 1;
+  }
+
   function notifyChange(i, f, md, hi, hf) {
     if (!i) return;
     onChange && onChange({
@@ -39,6 +44,7 @@ export default function Calendario({ onChange }) {
       mismodia: md,
       horaInicio: md ? hi : null,
       horaFin: md ? hf : null,
+      dias: calcDias(i, f || i, md),
     });
   }
 
@@ -101,8 +107,9 @@ export default function Calendario({ onChange }) {
     return d.getDate() + ' ' + MESES[d.getMonth()].slice(0,3) + ' ' + d.getFullYear();
   }
 
-  const nights = inicio && fin && !mismodia
-    ? Math.round((fin - inicio) / 86400000)
+  // Días de servicio = días inclusive entre salida y regreso
+  const diasServicio = inicio && fin && !mismodia
+    ? Math.round((fin - inicio) / 86400000) + 1
     : null;
 
   return (
@@ -136,11 +143,11 @@ export default function Calendario({ onChange }) {
       {/* Chips resumen */}
       <div className="cal-summary">
         <div className={`cal-chip ${inicio ? 'filled' : ''}`}>
-          <div className="cal-chip-label">Salida</div>
+          <div className="cal-chip-label">Primer día de servicio</div>
           <div className="cal-chip-value">{formatShort(inicio)}</div>
         </div>
         <div className={`cal-chip ${fin ? 'filled' : ''}`}>
-          <div className="cal-chip-label">Regreso</div>
+          <div className="cal-chip-label">Último día de servicio</div>
           <div className="cal-chip-value">{mismodia ? 'Mismo día' : formatShort(fin)}</div>
         </div>
       </div>
@@ -172,9 +179,9 @@ export default function Calendario({ onChange }) {
         </div>
       )}
 
-      {nights > 0 && (
+      {diasServicio > 0 && (
         <div className="cal-nights">
-          {nights} noche{nights !== 1 ? 's' : ''} en destino
+          🚌 {diasServicio} día{diasServicio !== 1 ? 's' : ''} de servicio
         </div>
       )}
 
