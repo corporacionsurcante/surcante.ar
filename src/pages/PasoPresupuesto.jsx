@@ -6,7 +6,7 @@ import { crearPreferenciaMercadoPago } from '../hooks/useMercadoPago';
 
 export default function PasoPresupuesto({ reserva, onBack, onConfirm }) {
   const { dolar, loading } = useDolar();
-  const [payMethod, setPayMethod] = useState('mercadopago');
+  const [payMethod, setPayMethod] = useState('transferencia');
   const [loadingMP, setLoadingMP] = useState(false);
   const [errorMP, setErrorMP] = useState('');
 
@@ -42,14 +42,16 @@ export default function PasoPresupuesto({ reserva, onBack, onConfirm }) {
         grandTotal, montoAhora, origen, destino,
         fechaInicio, fechaFin, flotaUnidades,
       });
-      // Guardar reserva antes de redirigir
       onConfirm({ grandTotal, sena: montoAhora, saldo, payMethod, porcentaje, mpPreferenceId: pref.id });
-      // Redirigir a MercadoPago
       window.location.href = pref.init_point;
     } catch (e) {
       setErrorMP('No se pudo conectar con MercadoPago. Intentá con transferencia o efectivo.');
       setLoadingMP(false);
     }
+  }
+
+  function handleConfirmarReserva() {
+    onConfirm({ grandTotal, sena: montoAhora, saldo, payMethod, porcentaje });
   }
 
   function WhatsAppButtons({ sufijo }) {
@@ -134,8 +136,14 @@ export default function PasoPresupuesto({ reserva, onBack, onConfirm }) {
           <div style={{ fontSize: 13, color: 'var(--text-2)', marginBottom: 12, fontWeight: 500 }}>
             Pagás el <strong>10%</strong> ({formatARS(montoAhora)}) ahora con MercadoPago. El saldo lo coordinamos antes del viaje.
           </div>
-          {errorMP && <div style={{ fontSize: 12, color: 'var(--red)', background: 'var(--red-bg)', borderRadius: 8, padding: '8px 12px', marginBottom: 10 }}>{errorMP}</div>}
-          <button onClick={handlePagarMP} disabled={loadingMP || loading}
+          {errorMP && (
+            <div style={{ fontSize: 12, color: '#CF1322', background: '#FFF1F0', borderRadius: 8, padding: '8px 12px', marginBottom: 10 }}>
+              {errorMP}
+            </div>
+          )}
+          <button
+            onClick={handlePagarMP}
+            disabled={loadingMP || loading}
             style={{
               width: '100%', padding: 13, background: '#009EE3', color: '#fff',
               border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 700,
@@ -147,14 +155,20 @@ export default function PasoPresupuesto({ reserva, onBack, onConfirm }) {
         </div>
       )}
 
-      {/* Tarjeta — via MP */}
+      {/* Tarjeta */}
       {payMethod === 'tarjeta' && (
         <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 12, padding: 14, marginBottom: 14 }}>
           <div style={{ fontSize: 13, color: 'var(--text-2)', marginBottom: 12, fontWeight: 500 }}>
             Pagás el <strong>10%</strong> ({formatARS(montoAhora)}) con tarjeta a través de MercadoPago.
           </div>
-          {errorMP && <div style={{ fontSize: 12, color: 'var(--red)', background: 'var(--red-bg)', borderRadius: 8, padding: '8px 12px', marginBottom: 10 }}>{errorMP}</div>}
-          <button onClick={handlePagarMP} disabled={loadingMP || loading}
+          {errorMP && (
+            <div style={{ fontSize: 12, color: '#CF1322', background: '#FFF1F0', borderRadius: 8, padding: '8px 12px', marginBottom: 10 }}>
+              {errorMP}
+            </div>
+          )}
+          <button
+            onClick={handlePagarMP}
+            disabled={loadingMP || loading}
             style={{
               width: '100%', padding: 13, background: '#6B21D6', color: '#fff',
               border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 700,
@@ -200,7 +214,10 @@ export default function PasoPresupuesto({ reserva, onBack, onConfirm }) {
         <div className="prow"><span>📍 Origen</span><span style={{ fontWeight: 600 }}>{origen}</span></div>
         <div className="prow"><span>🏁 Destino</span><span style={{ fontWeight: 600 }}>{destino}</span></div>
         <div className="prow"><span>📅 Salida</span><span>{formatDate(fechaInicio)}</span></div>
-        <div className="prow"><span>📅 Regreso</span><span>{mismodia ? `Mismo día${horaFin ? ' · ' + horaFin : ''}` : formatDate(fechaFin)}</span></div>
+        <div className="prow">
+          <span>📅 Regreso</span>
+          <span>{mismodia ? `Mismo día${horaFin ? ' · ' + horaFin : ''}` : formatDate(fechaFin)}</span>
+        </div>
         {mismodia && horaInicio && (
           <div className="prow"><span>🕐 Horario</span><span>{horaInicio} → {horaFin}</span></div>
         )}
@@ -214,7 +231,7 @@ export default function PasoPresupuesto({ reserva, onBack, onConfirm }) {
             <div key={d.id}>
               {idx > 0 && <div style={{ height: 6 }} />}
               <div className={`prow hl ${idx > 0 ? 'sep' : ''}`}>
-                <span>{d.type.icon} {d.label}</span>
+                <span>{d.type?.icon} {d.label}</span>
                 <span>{formatARS(d.total)}</span>
               </div>
               {d.esPrecioMinimo ? (
@@ -223,7 +240,10 @@ export default function PasoPresupuesto({ reserva, onBack, onConfirm }) {
                   <span>{formatARS(d.traslNeto)}</span>
                 </div>
               ) : (
-                <div className="prow sub"><span>Recorrido {d.kmTotalConExtra?.toLocaleString('es-AR')} km</span><span>{formatARS(d.traslNeto)}</span></div>
+                <div className="prow sub">
+                  <span>Recorrido {d.kmTotalConExtra?.toLocaleString('es-AR')} km</span>
+                  <span>{formatARS(d.traslNeto)}</span>
+                </div>
               )}
               {d.movNeto > 0 && (
                 <>
@@ -231,13 +251,16 @@ export default function PasoPresupuesto({ reserva, onBack, onConfirm }) {
                   {[1,2,3].map(m => grupos[m] > 0 ? (
                     <div key={m} className="prow sub" style={{ paddingLeft: 24 }}>
                       <span>{grupos[m]} día{grupos[m]>1?'s':''} × {m} mov.</span>
-                      <span>{formatARS(d.type.movUSD[m-1]*(1-d.type.movDesc)*dolar*grupos[m])}</span>
+                      <span>{formatARS(d.type?.movUSD[m-1]*(1-d.type?.movDesc)*dolar*grupos[m])}</span>
                     </div>
                   ) : null)}
                 </>
               )}
               {d.kmExtra > 0 && (
-                <div className="prow sub"><span>Km extra movimientos</span><span>{formatARS(d.kmExtra*d.type.usdKm*dolar)}</span></div>
+                <div className="prow sub">
+                  <span>Km extra movimientos</span>
+                  <span>{formatARS(d.kmExtra*d.type?.usdKm*dolar)}</span>
+                </div>
               )}
               <div className="prow sub"><span>IVA (21%)</span><span>{formatARS(d.ivaTotal)}</span></div>
             </div>
@@ -246,12 +269,17 @@ export default function PasoPresupuesto({ reserva, onBack, onConfirm }) {
         <div className="prow total"><span>Total general</span><span>{formatARS(grandTotal)}</span></div>
       </div>
 
+      {/* Botón confirmar para transferencia y efectivo */}
       {(payMethod === 'transferencia' || payMethod === 'efectivo') && (
-        <button className="btn-primary green" disabled={loading}
-          onClick={() => onConfirm({ grandTotal, sena: montoAhora, saldo, payMethod, porcentaje })}>
+        <button
+          className="btn-primary green"
+          disabled={loading}
+          onClick={handleConfirmarReserva}>
           ✓ Confirmar reserva
         </button>
       )}
+
       <button className="btn-secondary" onClick={onBack}>← Modificar recorrido</button>
     </div>
   );
+}
