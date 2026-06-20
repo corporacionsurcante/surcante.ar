@@ -5,6 +5,7 @@ import { getDiasServicio, formatARS, formatDate } from '../utils/calculos';
 import { CITY_TOUR_USD, CIRCUITOS, TRANSFERS_AEROPUERTO } from '../data/receptivo';
 import { suscribirPreciosCityTour, suscribirCircuitos, suscribirTransfers } from '../firebase/receptivoServices';
 import Calendario from '../components/Calendario';
+import { crearPreferenciaMercadoPago } from '../hooks/useMercadoPago';
 
 const TIPO_UNIT = {
   'MIX 60':     { icon: '🚌', label: 'Omnibus doble piso / 60 but.' },
@@ -24,6 +25,8 @@ export default function ReceptivoCotizador({ onBack }) {
   const [programa, setPrograma] = useState([]);
   const [diaEditando, setDiaEditando] = useState(1);
   const [payMethod, setPayMethod] = useState('transferencia');
+  const [loadingMP, setLoadingMP] = useState(false);
+  const [errorMP, setErrorMP] = useState('');
 
   useEffect(() => {
     const u1 = suscribirPreciosCityTour(setCityTourPrecios);
@@ -263,25 +266,51 @@ export default function ReceptivoCotizador({ onBack }) {
           </div>
         )}
 
-        {/* Panel MP */}
+        {/* Panel MP / Tarjeta */}
         {(payMethod === 'mercadopago' || payMethod === 'tarjeta') && (
-          <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 12, padding: 14, marginBottom: 14, fontSize: 13, color: 'var(--text-2)', fontWeight: 500 }}>
-            Pagás el <strong>{payMethod === 'mercadopago' ? '10%' : '10%'}</strong> ({formatARS(montoAhora)}) ahora online. El saldo lo coordinamos antes del servicio.
+          <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 12, padding: 14, marginBottom: 14 }}>
+            <div style={{ fontSize: 13, color: 'var(--text-2)', marginBottom: 12, fontWeight: 500 }}>
+              Pagás el <strong>10%</strong> ({formatARS(montoAhora)}) ahora online. El saldo lo coordinamos antes del servicio.
+            </div>
+            {errorMP && (
+              <div style={{ fontSize: 12, color: '#CF1322', background: '#FFF1F0', borderRadius: 8, padding: '8px 12px', marginBottom: 10 }}>
+                {errorMP}
+              </div>
+            )}
           </div>
         )}
 
         {(payMethod === 'transferencia' || payMethod === 'efectivo') && (
           <button className="btn-primary green"
-            onClick={() => alert('¡Reserva registrada! Nos contactamos a la brevedad.')}>
+            onClick={() => alert('¡Reserva recibida! Te contactamos a la brevedad para confirmar.')}>
             ✓ Confirmar y reservar
           </button>
         )}
 
         {(payMethod === 'mercadopago' || payMethod === 'tarjeta') && (
           <button className="btn-primary"
-            style={{ background: payMethod === 'mercadopago' ? '#009EE3' : '#6B21D6' }}
-            onClick={() => alert('Integración MercadoPago en proceso. Por favor usá transferencia o efectivo.')}>
-            {payMethod === 'mercadopago' ? '💳' : '🏦'} Pagar {formatARS(montoAhora)} {payMethod === 'mercadopago' ? 'con MercadoPago' : 'con tarjeta'}
+            disabled={loadingMP || loadingDolar}
+            style={{ background: payMethod === 'mercadopago' ? '#009EE3' : '#6B21D6', opacity: loadingMP ? .7 : 1 }}
+            onClick={async () => {
+              setLoadingMP(true);
+              setErrorMP('');
+              try {
+                const pref = await crearPreferenciaMercadoPago({
+                  grandTotal: total,
+                  montoAhora,
+                  origen: 'Buenos Aires',
+                  destino: 'Receptivo CABA',
+                  fechaInicio: fechas.fechaInicio,
+                  fechaFin: fechas.fechaFin,
+                  flotaUnidades: [{ id: unidadSel?.id, label: `Int. ${unidadSel?.interno}` }],
+                });
+                window.location.href = pref.init_point;
+              } catch (e) {
+                setErrorMP('No se pudo conectar con MercadoPago. Intentá con transferencia o efectivo.');
+                setLoadingMP(false);
+              }
+            }}>
+            {loadingMP ? 'Redirigiendo...' : `${payMethod === 'mercadopago' ? '💳' : '🏦'} Pagar ${formatARS(montoAhora)} ${payMethod === 'mercadopago' ? 'con MercadoPago' : 'con tarjeta'}`}
           </button>
         )}
 
