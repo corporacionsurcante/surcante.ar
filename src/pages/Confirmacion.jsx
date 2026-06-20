@@ -3,7 +3,7 @@ import { formatARS, formatDate } from '../utils/calculos';
 import { crearReserva } from '../firebase/services';
 
 export default function Confirmacion({ reserva, pago, onNueva }) {
-  const { origen, destino, fechaInicio, fechaFin, nights, flotaUnidades, kmTotal } = reserva;
+  const { origen, destino, fechaInicio, fechaFin, dias, flotaUnidades, kmTotal } = reserva;
   const { grandTotal, sena, saldo, payMethod } = pago;
   const [numReserva, setNumReserva] = useState('');
 
@@ -11,7 +11,7 @@ export default function Confirmacion({ reserva, pago, onNueva }) {
     crearReserva({
       origen, destino, fechaInicio, fechaFin, nights, kmTotal,
       flotaUnidades: flotaUnidades.map(u => ({ id: u.id, label: u.label, tipo: u.tid })),
-      grandTotal, sena, saldo, payMethod,
+      grandTotal, sena, saldo, payMethod, dias,
     }).then(ref => {
       setNumReserva('SRC-' + ref.id.slice(-6).toUpperCase());
     }).catch(() => {
@@ -42,7 +42,7 @@ export default function Confirmacion({ reserva, pago, onNueva }) {
         <div className="confirm-row"><span>Destino</span><span style={{ color: 'rgba(255,255,255,.8)' }}>{destino}</span></div>
         <div className="confirm-row"><span>Salida</span><span>{formatDate(fechaInicio)}</span></div>
         <div className="confirm-row"><span>Regreso</span><span>{formatDate(fechaFin)}</span></div>
-        <div className="confirm-row"><span>Noches</span><span>{nights}</span></div>
+        <div className="confirm-row"><span>Días de servicio</span><span>{dias}</span></div>
         <div className="confirm-row"><span>Unidades</span><span>{flotaUnidades.length}</span></div>
         <div className="confirm-row"><span>Km totales</span><span>{kmTotal?.toLocaleString('es-AR')} km</span></div>
         <div className="confirm-row"><span>Pago</span><span style={{ textTransform: 'capitalize' }}>{payMethod}</span></div>
