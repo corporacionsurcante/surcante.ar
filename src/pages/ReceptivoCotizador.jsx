@@ -210,7 +210,6 @@ export default function ReceptivoCotizador({ onBack }) {
 
   // PASO 2 — Programa día por día
   if (step === 2) {
-    const itemDiaActual = programa.find(p => p.dia === diaEditando);
     return (
       <div className="body">
         <div className="section-label">Programa del servicio · {dias} día{dias > 1 ? 's' : ''}</div>
@@ -244,7 +243,7 @@ export default function ReceptivoCotizador({ onBack }) {
           {transfersActivos.map(t => (
             <div key={t.id} onClick={() => toggleItem('transfer', t.id, t.nombre)}
               style={{
-                border: `1.5px solid ${itemDiaActual?.id === t.id ? 'var(--sp)' : 'var(--spm)'}`,
+                border: `1.5px solid ${tieneItem(diaEditando, 'transfer', t.id) ? 'var(--sp)' : 'var(--spm)'}`,
                 borderRadius: 10, padding: '10px 12px', marginBottom: 6, cursor: 'pointer',
                 background: tieneItem(diaEditando, 'transfer', t.id) ? 'var(--sp)' : '#fff',
                 display: 'flex', alignItems: 'center', gap: 10,
@@ -270,7 +269,7 @@ export default function ReceptivoCotizador({ onBack }) {
           <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-3)', letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: 6, marginTop: 8 }}>City Tour CABA</div>
           <div onClick={() => toggleItem('city', 'city', 'City Tour CABA')}
             style={{
-              border: `1.5px solid ${itemDiaActual?.tipo === 'city' ? 'var(--sp)' : 'var(--spm)'}`,
+              border: `1.5px solid ${tieneItem(diaEditando, 'city', 'city') ? 'var(--sp)' : 'var(--spm)'}`,
               borderRadius: 10, padding: '10px 12px', marginBottom: 8, cursor: 'pointer',
               background: tieneItem(diaEditando, 'city', 'city') ? 'var(--sp)' : '#fff',
               display: 'flex', alignItems: 'center', gap: 10,
@@ -290,7 +289,7 @@ export default function ReceptivoCotizador({ onBack }) {
           {circuitosActivos.map(c => (
             <div key={c.id} onClick={() => toggleItem('circuito', c.id, c.nombre)}
               style={{
-                border: `1.5px solid ${itemDiaActual?.id === c.id ? 'var(--sp)' : 'var(--spm)'}`,
+                border: `1.5px solid ${tieneItem(diaEditando, 'circuito', c.id) ? 'var(--sp)' : 'var(--spm)'}`,
                 borderRadius: 10, padding: '10px 12px', marginBottom: 6, cursor: 'pointer',
                 background: tieneItem(diaEditando, 'circuito', c.id) ? 'var(--sp)' : '#fff',
                 display: 'flex', alignItems: 'center', gap: 10,
@@ -309,7 +308,7 @@ export default function ReceptivoCotizador({ onBack }) {
             </div>
           ))}
 
-          {/* Transfers */}
+
               ✕ Limpiar día {diaEditando}
             </button>
           )}
