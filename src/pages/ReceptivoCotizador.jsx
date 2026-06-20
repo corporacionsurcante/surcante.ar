@@ -5,7 +5,6 @@ import { getDiasServicio, formatARS, formatDate } from '../utils/calculos';
 import { CITY_TOUR_USD, CIRCUITOS, TRANSFERS_AEROPUERTO } from '../data/receptivo';
 import Calendario from '../components/Calendario';
 
-const PASOS = ['Unidad', 'Programa', 'Presupuesto'];
 const TIPO_UNIT = {
   'MIX 60':     { icon: '🚌', label: 'Omnibus doble piso / 60 but.' },
   'Comun 45':   { icon: '🚌', label: 'Omnibus 45 butacas' },
