@@ -239,8 +239,35 @@ export default function ReceptivoCotizador({ onBack }) {
           <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--spd)', marginBottom: 12 }}>
             Día {diaEditando} — ¿qué hace el grupo?
           </div>
+          {/* Transfers — PRIMERO */}
+          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-3)', letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: 6 }}>Transfer aeropuerto</div>
+          {transfersActivos.map(t => (
+            <div key={t.id} onClick={() => toggleItem('transfer', t.id, t.nombre)}
+              style={{
+                border: `1.5px solid ${itemDiaActual?.id === t.id ? 'var(--sp)' : 'var(--spm)'}`,
+                borderRadius: 10, padding: '10px 12px', marginBottom: 6, cursor: 'pointer',
+                background: tieneItem(diaEditando, 'transfer', t.id) ? 'var(--sp)' : '#fff',
+                display: 'flex', alignItems: 'center', gap: 10,
+              }}>
+              <span style={{ fontSize: 18 }}>{t.emoji}</span>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: tieneItem(diaEditando, 'transfer', t.id) ? '#fff' : 'var(--spd)' }}>{t.nombre}</div>
+                <div style={{ fontSize: 11, color: tieneItem(diaEditando, 'transfer', t.id) ? 'rgba(255,255,255,.7)' : 'var(--text-3)' }}>{t.descripcion}</div>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: tieneItem(diaEditando, 'transfer', t.id) ? '#fff' : 'var(--sp)' }}>
+                  {formatARS(t.precioUSD * (dolar || 0))}
+                </div>
+                {tieneItem(diaEditando, 'transfer', t.id) && <div style={{ color: '#fff', fontSize: 12, fontWeight: 700 }}>✓</div>}
+              </div>
+            </div>
+          ))}
 
-          {/* City Tour */}
+          {programa.find(p => p.dia === diaEditando)?.items?.length > 0 && (
+            <button onClick={() => limpiarDia(diaEditando)}
+              style={{ width: '100%', padding: 8, background: 'transparent', border: '1px solid var(--spm)', borderRadius: 8, color: 'var(--sp)', fontSize: 12, fontWeight: 600, cursor: 'pointer', marginTop: 6, fontFamily: 'Inter, sans-serif' }}>
+          {/* City Tour — SEGUNDO */}
+          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-3)', letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: 6, marginTop: 8 }}>City Tour CABA</div>
           <div onClick={() => toggleItem('city', 'city', 'City Tour CABA')}
             style={{
               border: `1.5px solid ${itemDiaActual?.tipo === 'city' ? 'var(--sp)' : 'var(--spm)'}`,
@@ -283,32 +310,6 @@ export default function ReceptivoCotizador({ onBack }) {
           ))}
 
           {/* Transfers */}
-          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-3)', letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: 6, marginTop: 8 }}>Transfer aeropuerto</div>
-          {transfersActivos.map(t => (
-            <div key={t.id} onClick={() => toggleItem('transfer', t.id, t.nombre)}
-              style={{
-                border: `1.5px solid ${itemDiaActual?.id === t.id ? 'var(--sp)' : 'var(--spm)'}`,
-                borderRadius: 10, padding: '10px 12px', marginBottom: 6, cursor: 'pointer',
-                background: tieneItem(diaEditando, 'transfer', t.id) ? 'var(--sp)' : '#fff',
-                display: 'flex', alignItems: 'center', gap: 10,
-              }}>
-              <span style={{ fontSize: 18 }}>{t.emoji}</span>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: tieneItem(diaEditando, 'transfer', t.id) ? '#fff' : 'var(--spd)' }}>{t.nombre}</div>
-                <div style={{ fontSize: 11, color: tieneItem(diaEditando, 'transfer', t.id) ? 'rgba(255,255,255,.7)' : 'var(--text-3)' }}>{t.descripcion}</div>
-              </div>
-              <div style={{ textAlign: 'right' }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: tieneItem(diaEditando, 'transfer', t.id) ? '#fff' : 'var(--sp)' }}>
-                  {formatARS(t.precioUSD * (dolar || 0))}
-                </div>
-                {tieneItem(diaEditando, 'transfer', t.id) && <div style={{ color: '#fff', fontSize: 12, fontWeight: 700 }}>✓</div>}
-              </div>
-            </div>
-          ))}
-
-          {programa.find(p => p.dia === diaEditando)?.items?.length > 0 && (
-            <button onClick={() => limpiarDia(diaEditando)}
-              style={{ width: '100%', padding: 8, background: 'transparent', border: '1px solid var(--spm)', borderRadius: 8, color: 'var(--sp)', fontSize: 12, fontWeight: 600, cursor: 'pointer', marginTop: 6, fontFamily: 'Inter, sans-serif' }}>
               ✕ Limpiar día {diaEditando}
             </button>
           )}
