@@ -3,6 +3,7 @@ import { useDolar } from '../hooks/useDolar';
 import { useDisponibilidad } from '../hooks/useDisponibilidad';
 import { getDiasServicio, formatARS, formatDate } from '../utils/calculos';
 import { CITY_TOUR_USD, CIRCUITOS, TRANSFERS_AEROPUERTO } from '../data/receptivo';
+import { suscribirPreciosCityTour, suscribirCircuitos, suscribirTransfers } from '../firebase/receptivoServices';
 import Calendario from '../components/Calendario';
 
 const TIPO_UNIT = {
@@ -14,6 +15,21 @@ const TIPO_UNIT = {
 
 export default function ReceptivoCotizador({ onBack }) {
   const { dolar, loading: loadingDolar } = useDolar();
+  const [cityTourPrecios, setCityTourPrecios] = useState(null);
+  const [circuitosDB, setCircuitosDB] = useState(null);
+  const [transfersDB, setTransfersDB] = useState(null);
+
+  useEffect(() => {
+    const u1 = suscribirPreciosCityTour(setCityTourPrecios);
+    const u2 = suscribirCircuitos(setCircuitosDB);
+    const u3 = suscribirTransfers(setTransfersDB);
+    return () => { u1(); u2(); u3(); };
+  }, []);
+
+  // Usar datos de Firebase si existen, sino usar defaults del archivo
+  const preciosCityTour = cityTourPrecios || CITY_TOUR_USD;
+  const circuitosActivos = (circuitosDB || CIRCUITOS).filter(c => c.activo !== false);
+  const transfersActivos = (transfersDB || TRANSFERS_AEROPUERTO).filter(t => t.activo !== false);
   const [step, setStep] = useState(1);
   const [fechas, setFechas] = useState({ fechaInicio: '', fechaFin: '', mismodia: false, dias: 1 });
   const [unidadSel, setUnidadSel] = useState(null);
@@ -29,13 +45,13 @@ export default function ReceptivoCotizador({ onBack }) {
     const item = programa.find(p => p.dia === diaNum);
     if (!item || !unidadSel || !dolar) return 0;
     const tipo = unidadSel.tipo;
-    if (item.tipo === 'city') return (CITY_TOUR_USD[tipo] || 0) * dolar;
+    if (item.tipo === 'city') return (preciosCityTour[tipo] || 0) * dolar;
     if (item.tipo === 'circuito') {
-      const circ = CIRCUITOS.find(c => c.id === item.id);
+      const circ = circuitosActivos.find(c => c.id === item.id);
       return circ ? (circ.precioUSD[tipo] || 0) * dolar : 0;
     }
     if (item.tipo === 'transfer') {
-      const tr = TRANSFERS_AEROPUERTO.find(t => t.id === item.id);
+      const tr = transfersActivos.find(t => t.id === item.id);
       return tr ? tr.precioUSD * dolar : 0;
     }
     return 0;
@@ -46,11 +62,11 @@ export default function ReceptivoCotizador({ onBack }) {
     if (!item) return null;
     if (item.tipo === 'city') return '🏛️ City Tour CABA';
     if (item.tipo === 'circuito') {
-      const circ = CIRCUITOS.find(c => c.id === item.id);
+      const circ = circuitosActivos.find(c => c.id === item.id);
       return circ ? `${circ.emoji} ${circ.nombre}` : item.nombre;
     }
     if (item.tipo === 'transfer') {
-      const tr = TRANSFERS_AEROPUERTO.find(t => t.id === item.id);
+      const tr = transfersActivos.find(t => t.id === item.id);
       return tr ? `${tr.emoji} ${tr.nombre}` : item.nombre;
     }
     return null;
@@ -203,7 +219,7 @@ export default function ReceptivoCotizador({ onBack }) {
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 13, fontWeight: 600, color: itemDiaActual?.tipo === 'city' ? '#fff' : 'var(--spd)' }}>City Tour CABA</div>
               <div style={{ fontSize: 11, color: itemDiaActual?.tipo === 'city' ? 'rgba(255,255,255,.7)' : 'var(--sp)' }}>
-                {formatARS((CITY_TOUR_USD[unidadSel?.tipo] || 0) * (dolar || 0))} · con IVA
+                {formatARS((preciosCityTour[unidadSel?.tipo] || 0) * (dolar || 0))} · con IVA
               </div>
             </div>
             {itemDiaActual?.tipo === 'city' && <span style={{ color: '#fff', fontWeight: 700 }}>✓</span>}
@@ -211,7 +227,7 @@ export default function ReceptivoCotizador({ onBack }) {
 
           {/* Circuitos */}
           <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-3)', letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: 6, marginTop: 4 }}>Circuitos especiales</div>
-          {CIRCUITOS.map(c => (
+          {circuitosActivos.map(c => (
             <div key={c.id} onClick={() => asignarDia('circuito', c.id, c.nombre)}
               style={{
                 border: `1.5px solid ${itemDiaActual?.id === c.id ? 'var(--sp)' : 'var(--spm)'}`,
@@ -226,7 +242,7 @@ export default function ReceptivoCotizador({ onBack }) {
               </div>
               <div style={{ textAlign: 'right' }}>
                 <div style={{ fontSize: 12, fontWeight: 700, color: itemDiaActual?.id === c.id ? '#fff' : 'var(--sp)' }}>
-                  {formatARS((c.precioUSD[unidadSel?.tipo] || 0) * (dolar || 0))}
+                  {formatARS((c.precioUSD?.[unidadSel?.tipo] || 0) * (dolar || 0))}
                 </div>
                 {itemDiaActual?.id === c.id && <div style={{ color: '#fff', fontSize: 12, fontWeight: 700 }}>✓</div>}
               </div>
@@ -235,7 +251,7 @@ export default function ReceptivoCotizador({ onBack }) {
 
           {/* Transfers */}
           <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-3)', letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: 6, marginTop: 8 }}>Transfer aeropuerto</div>
-          {TRANSFERS_AEROPUERTO.map(t => (
+          {transfersActivos.map(t => (
             <div key={t.id} onClick={() => asignarDia('transfer', t.id, t.nombre)}
               style={{
                 border: `1.5px solid ${itemDiaActual?.id === t.id ? 'var(--sp)' : 'var(--spm)'}`,
