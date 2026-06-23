@@ -140,7 +140,7 @@ export default function Gantt() {
 
   const ganttContent = (
     <div ref={containerRef} style={{
-      background: fullscreen ? '#0A0A0F' : 'transparent',
+      background: '#fff',
       padding: fullscreen ? 16 : 0,
       height: fullscreen ? '100vh' : 'auto',
       display: 'flex', flexDirection: 'column',
@@ -149,12 +149,12 @@ export default function Gantt() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <button onClick={() => setMesActual(m => Math.max(0, m-1))}
-            style={{ width: 32, height: 32, borderRadius: '50%', border: '1px solid rgba(255,255,255,.15)', background: fullscreen ? 'rgba(255,255,255,.08)' : '#fff', cursor: 'pointer', fontSize: 18, color: fullscreen ? '#fff' : '#333' }}>‹</button>
-          <span style={{ fontSize: 18, fontWeight: 800, color: fullscreen ? '#fff' : '#0A0A0F', minWidth: 200, textAlign: 'center' }}>
+            style={{ width: 32, height: 32, borderRadius: '50%', border: '1px solid rgba(255,255,255,.15)', background: '#fff', cursor: 'pointer', fontSize: 18, color: '#333' }}>‹</button>
+          <span style={{ fontSize: 18, fontWeight: 800, color: '#0A0A0F', minWidth: 200, textAlign: 'center' }}>
             {MESES[mesActual]} {anio}
           </span>
           <button onClick={() => setMesActual(m => Math.min(11, m+1))}
-            style={{ width: 32, height: 32, borderRadius: '50%', border: '1px solid rgba(255,255,255,.15)', background: fullscreen ? 'rgba(255,255,255,.08)' : '#fff', cursor: 'pointer', fontSize: 18, color: fullscreen ? '#fff' : '#333' }}>›</button>
+            style={{ width: 32, height: 32, borderRadius: '50%', border: '1px solid rgba(255,255,255,.15)', background: '#fff', cursor: 'pointer', fontSize: 18, color: '#333' }}>›</button>
         </div>
 
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
@@ -185,7 +185,7 @@ export default function Gantt() {
       {/* Leyenda usuarios */}
       <div style={{ display: 'flex', gap: 12, marginBottom: 8, flexWrap: 'wrap' }}>
         {[...new Set(viajes.map(v => v.cargadoPor).filter(Boolean))].map(email => (
-          <div key={email} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: fullscreen ? 'rgba(255,255,255,.6)' : '#555' }}>
+          <div key={email} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: '#555' }}>
             <span style={{ width: 20, height: 20, borderRadius: '50%', background: getUserColor(email), color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 800 }}>
               {getUserLabel(email)}
             </span>
@@ -195,7 +195,7 @@ export default function Gantt() {
       </div>
 
       {/* Tabla Gantt */}
-      <div style={{ overflowX: 'auto', flex: 1, borderRadius: 10, border: `1px solid ${fullscreen ? 'rgba(255,255,255,.1)' : '#EDE8F8'}` }}>
+      <div style={{ overflowX: 'auto', flex: 1, borderRadius: 10, border: '1px solid #EDE8F8' }}>
         <table style={{ borderCollapse: 'collapse', width: '100%', fontSize: 11 }}>
           <thead>
             <tr>
@@ -235,10 +235,10 @@ export default function Gantt() {
           </thead>
           <tbody>
             {unidades.map((u, uidx) => (
-              <tr key={u.id} style={{ background: uidx % 2 === 0 ? (fullscreen ? '#111118' : '#fff') : (fullscreen ? '#0D0D14' : '#FAF8FF') }}>
+              <tr key={u.id} style={{ background: uidx % 2 === 0 ? '#fff' : '#FAF8FF' }}>
                 <td style={{
                   padding: '6px 12px', fontWeight: 600, fontSize: 11,
-                  background: uidx % 2 === 0 ? (fullscreen ? '#111118' : '#fff') : (fullscreen ? '#0D0D14' : '#FAF8FF'),
+                  background: uidx % 2 === 0 ? '#fff' : '#FAF8FF',
                   position: 'sticky', left: 0, zIndex: 2,
                   borderRight: '2px solid #7B2FBE', borderBottom: `1px solid ${fullscreen ? 'rgba(255,255,255,.06)' : '#F0EDF8'}`,
                 }}>
@@ -249,8 +249,8 @@ export default function Gantt() {
                       display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
                     }}>{u.interno}</span>
                     <div>
-                      <div style={{ color: fullscreen ? '#fff' : '#0A0A0F', fontWeight: 700 }}>{u.patente}</div>
-                      <div style={{ color: fullscreen ? 'rgba(255,255,255,.4)' : '#9090B0', fontSize: 10 }}>{u.tipo}</div>
+                      <div style={{ color: '#0A0A0F', fontWeight: 700 }}>{u.patente}</div>
+                      <div style={{ color: '#9090B0', fontSize: 10 }}>{u.tipo}</div>
                     </div>
                   </div>
                 </td>
@@ -266,8 +266,8 @@ export default function Gantt() {
                         style={{
                           width: 14, height: 32, padding: 0, cursor: 'pointer',
                           background: viaje ? viaje.color : 'transparent',
-                          borderRight: turno === 'T' ? `1px solid ${fullscreen ? 'rgba(255,255,255,.06)' : '#F0EDF8'}` : `1px solid ${fullscreen ? 'rgba(255,255,255,.03)' : '#F8F6FF'}`,
-                          borderBottom: `1px solid ${fullscreen ? 'rgba(255,255,255,.06)' : '#F0EDF8'}`,
+                          borderRight: turno === 'T' ? '1px solid #F0EDF8' : '1px solid #F8F6FF',
+                          borderBottom: '1px solid #F0EDF8',
                           position: 'relative',
                         }}
                         title={viaje ? `${viaje.destino} · ${viaje.desde} → ${viaje.hasta} · Cargado por: ${viaje.cargadoPor || 'desconocido'}` : `${fecha} ${turno}`}>
@@ -296,12 +296,12 @@ export default function Gantt() {
       {/* Leyenda tipos */}
       <div style={{ display: 'flex', gap: 16, marginTop: 10, flexWrap: 'wrap', alignItems: 'center' }}>
         {Object.entries(TIPO_COLOR).map(([tipo, color]) => (
-          <div key={tipo} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: fullscreen ? 'rgba(255,255,255,.5)' : '#4A4A6A', fontWeight: 500 }}>
+          <div key={tipo} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: '#4A4A6A', fontWeight: 500 }}>
             <span style={{ width: 14, height: 14, borderRadius: 3, background: color, display: 'inline-block' }} />
             {tipo}
           </div>
         ))}
-        <div style={{ fontSize: 11, color: fullscreen ? 'rgba(255,255,255,.3)' : '#9090B0', marginLeft: 'auto' }}>
+        <div style={{ fontSize: 11, color: '#9090B0', marginLeft: 'auto' }}>
           Click en celda vacía para asignar · Click en viaje para editar
         </div>
       </div>
