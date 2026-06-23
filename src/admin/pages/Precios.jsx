@@ -44,15 +44,19 @@ export default function Precios() {
     setTimeout(() => setSaved(false), 2000);
   }
 
-  // Conversor simple: el campo ARS es siempre editable y libre
-  // El campo USD muestra el valor del estado real
+  // Conversor USD ↔ ARS
+  // Campo ARS usa ref (no controlado) para permitir escritura libre sin interferencia de React
   function Conversor({ usdValue, onChangeUSD }) {
-    const [modoARS, setModoARS] = useState(false);
-    const [arsInput, setArsInput] = useState('');
+    const arsRef = React.useRef(null);
+
+    // Cuando el USD cambia desde afuera, actualizar el campo ARS solo si no está enfocado
+    React.useEffect(() => {
+      if (arsRef.current && document.activeElement !== arsRef.current) {
+        arsRef.current.value = dolar && usdValue ? String(Math.round(usdValue * dolar)) : '';
+      }
+    }); // eslint-disable-line react-hooks/exhaustive-deps
 
     if (loadingDolar) return null;
-
-    const arsCalculado = dolar && usdValue ? Math.round(usdValue * dolar) : 0;
 
     return (
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6, padding: '8px 10px', background: '#F4F2FA', borderRadius: 8 }}>
@@ -63,8 +67,7 @@ export default function Precios() {
             value={usdValue || ''}
             onChange={e => {
               const n = parseFloat(e.target.value) || 0;
-              setModoARS(false);
-              setArsInput('');
+              if (arsRef.current) arsRef.current.value = dolar ? String(Math.round(n * dolar)) : '';
               if (onChangeUSD) onChangeUSD(n);
             }}
             style={{ border: '1.5px solid #7B2FBE', borderRadius: 6, padding: '6px 8px', fontSize: 13, fontFamily: 'Inter, sans-serif', outline: 'none', fontWeight: 600, color: '#4A0FA8', width: '100%' }}
@@ -74,16 +77,13 @@ export default function Precios() {
         <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
           <label style={{ fontSize: 9, fontWeight: 700, color: '#9090B0', letterSpacing: '.06em', textTransform: 'uppercase', marginBottom: 3 }}>$ ARS</label>
           <input
+            ref={arsRef}
             type="number" step="1" min="0"
-            value={modoARS ? arsInput : (arsCalculado || '')}
-            onFocus={() => { setModoARS(true); setArsInput(String(arsCalculado || '')); }}
+            defaultValue={dolar && usdValue ? Math.round(usdValue * dolar) : ''}
             onChange={e => {
-              const val = e.target.value;
-              setArsInput(val);
-              const n = parseFloat(val) || 0;
+              const n = parseFloat(e.target.value) || 0;
               if (dolar && onChangeUSD) onChangeUSD(parseFloat((n / dolar).toFixed(2)));
             }}
-            onBlur={() => setModoARS(false)}
             placeholder="ej: 500000"
             style={{ border: '1.5px solid #00C896', borderRadius: 6, padding: '6px 8px', fontSize: 13, fontFamily: 'Inter, sans-serif', outline: 'none', fontWeight: 600, color: '#007A5A', width: '100%' }}
           />
