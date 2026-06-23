@@ -55,7 +55,7 @@ export default function Precios() {
         setUsdInput(String(usdValue));
         if (dolar) setArsInput(Math.round(usdValue * dolar).toLocaleString('es-AR'));
       }
-    }, [usdValue, dolar, modo]);
+    }, [usdValue, modo]); // eslint-disable-line react-hooks/exhaustive-deps
 
     function handleUSD(val) {
       setModo('usd');
