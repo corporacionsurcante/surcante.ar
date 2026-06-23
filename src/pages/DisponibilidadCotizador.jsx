@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useDolar } from '../hooks/useDolar';
 import { formatARS } from '../utils/calculos';
-import { calcPrecioDisponibilidad, DISPONIBILIDAD_HORA_EXTRA_USD } from '../data/receptivo';
+import { calcPrecioDisponibilidad } from '../data/receptivo';
 import { useDisponibilidad } from '../hooks/useDisponibilidad';
 import { DATOS_BANCARIOS, WHATSAPP } from '../data/pagos';
 
