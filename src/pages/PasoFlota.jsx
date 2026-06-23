@@ -1,9 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { getDiasServicio } from '../utils/calculos';
 import Calendario from '../components/Calendario';
 import { useDisponibilidad } from '../hooks/useDisponibilidad';
 import { suscribirPrecios } from '../firebase/services';
-import { useEffect, useState } from 'react';
 
 // Defaults mientras carga Firebase
 const TIPO_UNIT_DEFAULT = {
