@@ -53,7 +53,6 @@ function AutocompleteInput({ placeholder, label, onSelect }) {
     if (!MAPS_KEY) return;
     loadGoogleMaps().then(() => {
       const ac = new window.google.maps.places.Autocomplete(inputRef.current, {
-        componentRestrictions: { country: 'ar' },
         fields: ['geometry', 'formatted_address', 'name'],
       });
       ac.addListener('place_changed', () => {
