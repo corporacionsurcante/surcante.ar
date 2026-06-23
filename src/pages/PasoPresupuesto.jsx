@@ -4,7 +4,7 @@ import { calcPresupuestoTotal, formatARS, formatDate } from '../utils/calculos';
 import { METODOS_PAGO, DATOS_BANCARIOS, WHATSAPP } from '../data/pagos';
 import { crearPreferenciaMercadoPago } from '../hooks/useMercadoPago';
 
-export default function PasoPresupuesto({ reserva, onBack, onConfirm }) {
+export default function PasoPresupuesto({ reserva, onBack, onConfirm, isAdmin }) {
   const { dolar, loading } = useDolar();
   const [payMethod, setPayMethod] = useState('transferencia');
   const [loadingMP, setLoadingMP] = useState(false);
@@ -242,6 +242,50 @@ export default function PasoPresupuesto({ reserva, onBack, onConfirm }) {
         })}
         <div className="prow total"><span>Total general</span><span>{formatARS(grandTotal)}</span></div>
       </div>
+
+      {/* Panel desglose interno — solo visible para admins */}
+      {isAdmin && !loading && detalles.length > 0 && (
+        <div style={{
+          background: '#0A0A0F', border: '1px solid rgba(123,47,190,.3)',
+          borderRadius: 14, padding: 16, marginBottom: 16,
+        }}>
+          <div style={{ fontSize: 11, fontWeight: 800, color: '#7B2FBE', letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 12 }}>
+            🔍 Desglose interno (solo admin)
+          </div>
+          {detalles.map((d, idx) => (
+            <div key={d.id} style={{ marginBottom: idx < detalles.length - 1 ? 12 : 0 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: '#fff', marginBottom: 6 }}>
+                {d.type?.icon} {d.label}
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4 }}>
+                {[
+                  ['Km totales', `${d.kmTotalConExtra?.toLocaleString('es-AR')} km`],
+                  ['USD/km', `USD ${d.type?.usdKm}`],
+                  ['Traslado neto', formatARS(d.traslNeto)],
+                  d.esValorBase && d.baseNeto > 0 ? ['Valor base', `${d.diasOcupacion} días × USD ${d.valorBaseUSD}`] : null,
+                  d.esEstadia && d.estadiaNeto > 0 ? ['Estadía', `${d.diasEstadia} días desde D3`] : null,
+                  d.movNeto > 0 ? ['Movimientos', formatARS(d.movNeto)] : null,
+                  ['Subtotal neto', formatARS(d.subtotal)],
+                  ['IVA 21%', formatARS(d.ivaTotal)],
+                  ['Total unidad', formatARS(d.total)],
+                ].filter(Boolean).map(([label, value]) => (
+                  <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 6px', background: 'rgba(255,255,255,.04)', borderRadius: 5 }}>
+                    <span style={{ fontSize: 10, color: 'rgba(255,255,255,.4)', fontWeight: 500 }}>{label}</span>
+                    <span style={{ fontSize: 10, color: 'rgba(255,255,255,.8)', fontWeight: 600 }}>{value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+          <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid rgba(255,255,255,.1)', display: 'flex', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: 11, color: 'rgba(255,255,255,.4)', fontWeight: 600 }}>TOTAL GENERAL</span>
+            <span style={{ fontSize: 14, color: '#7B2FBE', fontWeight: 800 }}>{formatARS(grandTotal)}</span>
+          </div>
+          <div style={{ marginTop: 6, fontSize: 10, color: 'rgba(255,255,255,.25)', textAlign: 'right' }}>
+            Dólar BNA: ${dolar?.toLocaleString('es-AR')} · {new Date().toLocaleDateString('es-AR')}
+          </div>
+        </div>
+      )}
 
       {/* Botón confirmar para transferencia y efectivo */}
       {(payMethod === 'transferencia' || payMethod === 'efectivo') && (
