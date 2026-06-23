@@ -2,19 +2,45 @@ import React, { useState } from 'react';
 import { getDiasServicio } from '../utils/calculos';
 import Calendario from '../components/Calendario';
 import { useDisponibilidad } from '../hooks/useDisponibilidad';
+import { suscribirPrecios } from '../firebase/services';
+import { useEffect, useState } from 'react';
 
-const TIPO_UNIT = {
-  'MIX 60':    { usdKm: 2.50, movDesc: 0,    movUSD: [110,170,250] },
-  'Comun 45':  { usdKm: 2.00, movDesc: 0.20, movUSD: [110,170,250] },
-  'Minibus 24':{ usdKm: 1.80, movDesc: 0.30, movUSD: [110,170,250] },
-  'Minibus 19':{ usdKm: 1.80, movDesc: 0.30, movUSD: [110,170,250] },
+// Defaults mientras carga Firebase
+const TIPO_UNIT_DEFAULT = {
+  'MIX 60':    { usdKm: 2.50, movDesc: 0,    movUSD: [110,170,250], valorBaseUSD: 320 },
+  'Comun 45':  { usdKm: 2.00, movDesc: 0.20, movUSD: [110,170,250], valorBaseUSD: 280 },
+  'Minibus 24':{ usdKm: 1.80, movDesc: 0.30, movUSD: [110,170,250], valorBaseUSD: 245 },
+  'Minibus 19':{ usdKm: 1.80, movDesc: 0.30, movUSD: [110,170,250], valorBaseUSD: 245 },
 };
 
-function getTipoConfig(tipo) {
-  return TIPO_UNIT[tipo] || TIPO_UNIT['Comun 45'];
+// Mapeo tipo → id Firebase
+const TIPO_TO_ID = { 'MIX 60': 'u1', 'Comun 45': 'u2', 'Minibus 24': 'u3', 'Minibus 19': 'u3' };
+
+function usePreciosFirebase() {
+  const [precios, setPrecios] = useState(null);
+  useEffect(() => {
+    const unsub = suscribirPrecios(setPrecios);
+    return unsub;
+  }, []);
+  return precios;
+}
+
+function getTipoConfig(tipo, preciosDB) {
+  const id = TIPO_TO_ID[tipo];
+  if (preciosDB && id && preciosDB[id]) {
+    const p = preciosDB[id];
+    return {
+      usdKm: p.usdKm || TIPO_UNIT_DEFAULT[tipo]?.usdKm || 2.00,
+      movDesc: p.movDesc || 0,
+      movUSD: p.movUSD || [110,170,250],
+      valorBaseUSD: p.valorBaseUSD || TIPO_UNIT_DEFAULT[tipo]?.valorBaseUSD || 280,
+    };
+  }
+  return TIPO_UNIT_DEFAULT[tipo] || TIPO_UNIT_DEFAULT['Comun 45'];
 }
 
 export default function PasoFlota({ onNext }) {
+  const preciosDB = usePreciosFirebase();
   const [fechas, setFechas] = useState({ fechaInicio: '', fechaFin: '', mismodia: false, horaInicio: null, horaFin: null });
   const [qty, setQty] = useState({});
 
