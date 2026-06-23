@@ -8,6 +8,7 @@ import PasoPresupuesto from './pages/PasoPresupuesto';
 import Confirmacion from './pages/Confirmacion';
 import ReceptivoCotizador from './pages/ReceptivoCotizador';
 import DisponibilidadCotizador from './pages/DisponibilidadCotizador';
+import MovimientosCotizador from './pages/MovimientosCotizador';
 import AdminApp from './admin/pages/AdminApp';
 import { useState as useAuthState, useEffect as useAuthEffect } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -40,6 +41,15 @@ function CotizadorApp() {
   function handleNueva() { setReserva(null); setPago(null); setStep(1); setTipoServicio(null); }
 
   // Receptivo tiene su propio flujo completo
+  if (tipoServicio === 'movimientos') {
+    return (
+      <div className="app-shell">
+        <Topbar onHome={() => setTipoServicio(null)} />
+        <MovimientosCotizador onBack={() => setTipoServicio(null)} />
+      </div>
+    );
+  }
+
   if (tipoServicio === 'disponibilidad') {
     return (
       <div className="app-shell">
