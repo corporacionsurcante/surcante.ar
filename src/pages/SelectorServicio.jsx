@@ -1,6 +1,17 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { doc, onSnapshot } from 'firebase/firestore';
+import { db } from '../firebase/config';
 
 export default function SelectorServicio({ onSelect }) {
+  const [modulos, setModulos] = useState({ charter: true, disponibilidad: true, receptivo: true });
+
+  useEffect(() => {
+    const unsub = onSnapshot(doc(db, 'config', 'modulos'), snap => {
+      if (snap.exists()) setModulos(snap.data());
+    });
+    return unsub;
+  }, []);
+
   return (
     <div className="body" style={{ paddingTop: 24 }}>
       <div style={{ textAlign: 'center', marginBottom: 28 }}>
@@ -10,7 +21,7 @@ export default function SelectorServicio({ onSelect }) {
       </div>
 
       {/* Charter */}
-      <div
+      {modulos.charter !== false && <div
         onClick={() => onSelect('charter')}
         style={{
           border: '1.5px solid var(--border)', borderRadius: 16,
@@ -37,10 +48,10 @@ export default function SelectorServicio({ onSelect }) {
           ))}
           <span style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 20, padding: '3px 10px', fontSize: 11, color: 'var(--text-2)', fontWeight: 500 }}>y más...</span>
         </div>
-      </div>
+      </div>}
 
       {/* Receptivo a disponibilidad */}
-      <div
+      {modulos.disponibilidad !== false && <div
         onClick={() => onSelect('disponibilidad')}
         style={{
           border: '1.5px solid var(--border)', borderRadius: 16,
@@ -66,10 +77,10 @@ export default function SelectorServicio({ onSelect }) {
             <span key={d} style={{ background: '#FFF8E6', border: '1px solid #FFD166', borderRadius: 20, padding: '3px 10px', fontSize: 11, color: '#7A5200', fontWeight: 500 }}>{d}</span>
           ))}
         </div>
-      </div>
+      </div>}
 
       {/* Receptivo */}
-      <div
+      {modulos.receptivo !== false && <div
         onClick={() => onSelect('receptivo')}
         style={{
           border: '1.5px solid var(--border)', borderRadius: 16,
@@ -95,7 +106,7 @@ export default function SelectorServicio({ onSelect }) {
             <span key={d} style={{ background: 'var(--spl)', border: '1px solid var(--spm)', borderRadius: 20, padding: '3px 10px', fontSize: 11, color: 'var(--spd)', fontWeight: 500 }}>{d}</span>
           ))}
         </div>
-      </div>
+      </div>}
     </div>
   );
 }
