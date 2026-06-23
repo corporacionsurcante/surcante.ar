@@ -114,3 +114,44 @@ export const TRANSFERS_AEROPUERTO = [
     precioUSD: 1400,
   },
 ];
+
+// ---- DISPONIBILIDAD POR HORAS ----
+// Paquetes base
+export const DISPONIBILIDAD_PAQUETES = [
+  { id: 'disp-6h',  horas: 6,  label: '6 horas',  precioUSD: 400,  descripcion: 'Hasta 6 horas de servicio' },
+  { id: 'disp-12h', horas: 12, label: '12 horas', precioUSD: 1200, descripcion: 'Hasta 12 horas de servicio' },
+  { id: 'disp-24h', horas: 24, label: '24 horas', precioUSD: 1800, descripcion: 'Hasta 24 horas de servicio' },
+];
+
+// Precio por hora extra (fracción entre paquetes)
+export const DISPONIBILIDAD_HORA_EXTRA_USD = 150; // por hora entre 6-12hs y 12-15hs
+
+// Lógica de cálculo:
+// 1-3 horas → sin paquete, se cobra por hora ($150 c/u)
+// 4-6 horas → paquete 6hs ($400)  [desde hora 4 conviene paquete]
+// 7-12 horas → paquete 12hs ($1200) [se cobran horas a $150 entre 6 y 12]
+// 13-15 horas → paquete 12hs + horas extra
+// 16-24 horas → paquete 24hs ($1800)
+
+export function calcPrecioDisponibilidad(horas) {
+  if (horas <= 0) return { precioUSD: 0, descripcion: '', paquete: null };
+  if (horas <= 3) {
+    // Por hora a $150
+    return { precioUSD: horas * DISPONIBILIDAD_HORA_EXTRA_USD, descripcion: `${horas} hora${horas > 1 ? 's' : ''} × USD ${DISPONIBILIDAD_HORA_EXTRA_USD}`, paquete: null };
+  }
+  if (horas <= 6) {
+    // Paquete 6hs
+    return { precioUSD: 400, descripcion: 'Paquete 6 horas', paquete: DISPONIBILIDAD_PAQUETES[0] };
+  }
+  if (horas <= 12) {
+    // Paquete 12hs
+    return { precioUSD: 1200, descripcion: 'Paquete 12 horas', paquete: DISPONIBILIDAD_PAQUETES[1] };
+  }
+  if (horas <= 15) {
+    // Paquete 12hs + horas extra
+    const extra = horas - 12;
+    return { precioUSD: 1200 + extra * DISPONIBILIDAD_HORA_EXTRA_USD, descripcion: `Paquete 12hs + ${extra}h extra × USD ${DISPONIBILIDAD_HORA_EXTRA_USD}`, paquete: DISPONIBILIDAD_PAQUETES[1] };
+  }
+  // Paquete 24hs
+  return { precioUSD: 1800, descripcion: 'Paquete 24 horas', paquete: DISPONIBILIDAD_PAQUETES[2] };
+}
