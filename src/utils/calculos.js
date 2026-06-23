@@ -8,33 +8,30 @@ export function calcKmTotal(kmBaseOrigen, kmOrigenDestino) {
   return kmBaseOrigen * 2 + kmOrigenDestino * 2;
 }
 
-export function calcKmExtra(movPorDia, movKmPorDia) {
-  let extra = 0;
-  movPorDia.forEach((movs, i) => {
-    if (movs > 0) {
-      const kmMov = movKmPorDia[i] || 0;
-      const excedente = Math.max(0, kmMov - KM_MOV_INCLUIDOS);
-      extra += excedente * movs;
-    }
-  });
-  return extra;
-}
-
 export function calcPrecioUnidad({ unit, kmTotal, movPorDia, movKmPorDia, dolar }) {
-  const kmExtra = calcKmExtra(movPorDia, movKmPorDia);
-  const kmTotalConExtra = kmTotal + kmExtra;
+  // Traslado base — solo km ida y vuelta, sin sumar km de movimientos
+  const traslNeto = kmTotal * unit.usdKm * dolar;
 
-  // Traslado base
-  const traslNeto = kmTotalConExtra * unit.usdKm * dolar;
-
-  // Movimientos
+  // Movimientos en destino
+  // Precio fijo según cantidad de movimientos por día
+  // Si el total de km del día supera 150 km → se cobran km extra × precio/km
   let movNeto = 0;
-  const grupos = { 1: 0, 2: 0, 3: 0 };
-  movPorDia.forEach((m) => { if (m > 0 && m <= 3) grupos[m]++; });
-  [1, 2, 3].forEach((m) => {
-    if (grupos[m] > 0) {
-      const usdDia = unit.movUSD[m - 1] * (1 - unit.movDesc);
-      movNeto += usdDia * dolar * grupos[m];
+  let kmExtraMovTotal = 0;
+
+  movPorDia.forEach((movs, i) => {
+    if (movs <= 0) return;
+    const kmMov = movKmPorDia[i] || 0;
+
+    // Precio fijo del movimiento (por cantidad: 1, 2, 3+)
+    const cantIdx = Math.min(movs, 3) - 1;
+    const usdMovFijo = unit.movUSD[cantIdx] * (1 - unit.movDesc);
+    movNeto += usdMovFijo * dolar;
+
+    // Si los km del día superan 150, se cobran km extra × precio/km
+    const kmExtraDia = Math.max(0, kmMov - KM_MOV_INCLUIDOS);
+    if (kmExtraDia > 0) {
+      kmExtraMovTotal += kmExtraDia;
+      movNeto += kmExtraDia * unit.usdKm * dolar;
     }
   });
 
@@ -43,14 +40,13 @@ export function calcPrecioUnidad({ unit, kmTotal, movPorDia, movKmPorDia, dolar 
   const total = subtotal + ivaTotal;
 
   return {
-    kmTotalConExtra,
-    kmExtra,
+    kmTotalConExtra: kmTotal, // ya no sumamos km de movimientos al traslado
+    kmExtra: kmExtraMovTotal,
     traslNeto,
     movNeto,
     subtotal,
     ivaTotal,
     total,
-    grupos,
   };
 }
 
