@@ -51,14 +51,13 @@ export default function Precios() {
     const prevUsdRef = React.useRef(usdValue);
 
     // Sincronizar desde afuera SOLO cuando el valor USD cambia por otra causa
-    // (no cuando el propio conversor lo cambió)
     useEffect(() => {
       if (prevUsdRef.current !== usdValue) {
         prevUsdRef.current = usdValue;
         setUsdLocal(usdValue != null ? String(usdValue) : '');
         setArsLocal(dolar && usdValue ? String(Math.round(usdValue * dolar)) : '');
       }
-    }); // sin array de deps — corre siempre pero solo actúa si cambió desde afuera
+    }, [usdValue]); // eslint-disable-line react-hooks/exhaustive-deps
 
     function handleUSDChange(val) {
       setUsdLocal(val);
