@@ -152,7 +152,7 @@ export default function ReceptivoCotizador({ onBack }) {
           <div className="presup-hero-label">Total del servicio</div>
           <div className="presup-hero-val">{loadingDolar ? 'Calculando...' : formatARS(total)}</div>
           <div className="presup-hero-sub">
-            {dias} día{dias > 1 ? 's' : ''} de servicio · {unidadSel?.tipo} · IVA incluido
+            {dias} día{dias > 1 ? 's' : ''} de servicio · {unidadSel?.tipo} · Impuestos incluidos
           </div>
           {!loadingDolar && (
             <div className="sena-box">
@@ -199,7 +199,7 @@ export default function ReceptivoCotizador({ onBack }) {
               </div>
             );
           })}
-          <div className="prow"><span>Impuestos (21%)</span><span>{formatARS(iva)}</span></div>
+          <div className="prow"><span>Con impuestos</span><span>{formatARS(iva)}</span></div>
           <div className="prow total"><span>Total</span><span>{formatARS(total)}</span></div>
         </div>
 
@@ -411,7 +411,7 @@ export default function ReceptivoCotizador({ onBack }) {
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 13, fontWeight: 600, color: sel ? '#fff' : 'var(--spd)' }}>City Tour CABA</div>
                   <div style={{ fontSize: 11, color: sel ? 'rgba(255,255,255,.7)' : 'var(--sp)' }}>
-                    {formatARS((preciosCityTour[unidadSel?.tipo] || 0) * (dolar || 0))} · con IVA
+                    {formatARS((preciosCityTour[unidadSel?.tipo] || 0) * (dolar || 0))} · con impuestos
                   </div>
                 </div>
                 {sel && <span style={{ color: '#fff', fontWeight: 700 }}>✓</span>}
