@@ -65,7 +65,7 @@ export default function Precios() {
       if (!isNaN(n)) {
         setArsLocal(dolar ? String(Math.round(n * dolar)) : '');
         prevUsdRef.current = n;
-        onChangeUSD(n);
+        if (onChangeUSD) onChangeUSD(n);
       } else {
         setArsLocal('');
       }
@@ -78,7 +78,7 @@ export default function Precios() {
         const usd = parseFloat((n / dolar).toFixed(2));
         setUsdLocal(String(usd));
         prevUsdRef.current = usd;
-        onChangeUSD(usd);
+        if (onChangeUSD) onChangeUSD(usd);
       }
     }
 
@@ -172,7 +172,7 @@ export default function Precios() {
                     value={precios[u.id]?.movUSD?.[i] || ''}
                     onChange={e => updateMov(u.id, i, e.target.value)}
                   />
-                  <Conversor usdValue={precios[u.id]?.movUSD?.[i]} />
+                  <Conversor usdValue={precios[u.id]?.movUSD?.[i]} onChangeUSD={v => updateMov(u.id, i, String(v))} />
                 </div>
               ))}
             </div>
