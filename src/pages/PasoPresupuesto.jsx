@@ -231,7 +231,7 @@ export default function PasoPresupuesto({ reserva, onBack, onConfirm }) {
               {idx > 0 && <div style={{ height: 6 }} />}
               <div className={`prow hl ${idx > 0 ? 'sep' : ''}`}>
                 <span>{d.type?.icon} {d.label}</span>
-                <span>{formatARS(d.total)}</span>
+                <span>{formatARS(d.subtotal)}</span>
               </div>
               {d.movNeto > 0 && (
                 <div className="prow sub"><span>Movimientos en destino</span><span>{formatARS(d.movNeto)}</span></div>
