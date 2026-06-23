@@ -199,7 +199,7 @@ export default function ReceptivoCotizador({ onBack }) {
               </div>
             );
           })}
-          <div className="prow"><span>IVA (21%)</span><span>{formatARS(iva)}</span></div>
+          <div className="prow"><span>Impuestos (21%)</span><span>{formatARS(iva)}</span></div>
           <div className="prow total"><span>Total</span><span>{formatARS(total)}</span></div>
         </div>
 
