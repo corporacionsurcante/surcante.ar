@@ -73,6 +73,12 @@ export default function Precios() {
 
     function handleARSChange(val) {
       setArsLocal(val);
+      if (val === '' || val === '0') {
+        setUsdLocal('');
+        prevUsdRef.current = 0;
+        if (onChangeUSD) onChangeUSD(0);
+        return;
+      }
       const n = parseFloat(val);
       if (!isNaN(n) && dolar) {
         const usd = parseFloat((n / dolar).toFixed(2));
