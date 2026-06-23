@@ -58,7 +58,7 @@ export default function PasoFlota({ onNext }) {
     disponibilidad.forEach(u => {
       const cant = qty[u.id] || 0;
       for (let i = 0; i < cant; i++) {
-        const config = getTipoConfig(u.tipo);
+        const config = getTipoConfig(u.tipo, preciosDB);
         flota.push({
           id: `${u.id}_${i}`,
           tid: u.id,
