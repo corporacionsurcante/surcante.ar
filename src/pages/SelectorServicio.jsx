@@ -79,6 +79,35 @@ export default function SelectorServicio({ onSelect }) {
         </div>
       </div>}
 
+      {/* Movimientos CABA/GBA */}
+      {modulos.movimientos !== false && <div
+        onClick={() => onSelect('movimientos')}
+        style={{
+          border: '1.5px solid var(--border)', borderRadius: 16,
+          padding: 20, marginBottom: 14, cursor: 'pointer',
+          background: 'var(--bg)', transition: 'all .15s',
+        }}
+        onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--sp)'; e.currentTarget.style.background = 'var(--spl)'; }}
+        onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.background = 'var(--bg)'; }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 10 }}>
+          <span style={{ fontSize: 36 }}>🚐</span>
+          <div>
+            <div style={{ fontSize: 17, fontWeight: 800, color: 'var(--text)' }}>Movimientos CABA / GBA</div>
+            <div style={{ fontSize: 12, color: 'var(--text-3)', fontWeight: 500 }}>Traslados puntuales · Capital y Conurbano</div>
+          </div>
+          <span style={{ marginLeft: 'auto', fontSize: 20, color: 'var(--sp)' }}>→</span>
+        </div>
+        <div style={{ fontSize: 12, color: 'var(--text-2)', lineHeight: 1.6 }}>
+          Para cualquier traslado dentro de Capital Federal o Gran Buenos Aires que no sea city tour ni transfer de aeropuerto.
+        </div>
+        <div style={{ display: 'flex', gap: 6, marginTop: 10, flexWrap: 'wrap' }}>
+          {['Eventos', 'Estadios', 'Restaurants', 'Entre hoteles', 'Traslados especiales'].map(d => (
+            <span key={d} style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 20, padding: '3px 10px', fontSize: 11, color: 'var(--text-2)', fontWeight: 500 }}>{d}</span>
+          ))}
+        </div>
+      </div>}
+
       {/* Receptivo */}
       {modulos.receptivo !== false && <div
         onClick={() => onSelect('receptivo')}
