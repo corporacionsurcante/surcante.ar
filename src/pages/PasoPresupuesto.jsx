@@ -84,7 +84,7 @@ export default function PasoPresupuesto({ reserva, onBack, onConfirm }) {
         <div className="presup-hero-label">Total del viaje</div>
         <div className="presup-hero-val">{loading ? 'Calculando...' : formatARS(grandTotal)}</div>
         <div className="presup-hero-sub">
-          {dias} día{dias !== 1 ? 's' : ''} de servicio · {flotaUnidades.length} unidad{flotaUnidades.length !== 1 ? 'es' : ''} · IVA incluido
+          {dias} día{dias !== 1 ? 's' : ''} de servicio · {flotaUnidades.length} unidad{flotaUnidades.length !== 1 ? 'es' : ''} · Impuestos incluidos
         </div>
         {!loading && (
           <div className="sena-box">
@@ -274,7 +274,7 @@ export default function PasoPresupuesto({ reserva, onBack, onConfirm }) {
                   <span>{formatARS(d.kmExtra*d.type?.usdKm*dolar)}</span>
                 </div>
               )}
-              <div className="prow sub"><span>Impuestos (21%)</span><span>{formatARS(d.ivaTotal)}</span></div>
+              <div className="prow sub"><span>Con impuestos</span><span>{formatARS(d.ivaTotal)}</span></div>
             </div>
           );
         })}
