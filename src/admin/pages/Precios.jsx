@@ -44,51 +44,15 @@ export default function Precios() {
     setTimeout(() => setSaved(false), 2000);
   }
 
-  // Conversor USD ↔ ARS completamente independiente con estado propio
+  // Conversor simple: el campo ARS es siempre editable y libre
+  // El campo USD muestra el valor del estado real
   function Conversor({ usdValue, onChangeUSD }) {
-    const [arsLocal, setArsLocal] = useState('');
-    const [usdLocal, setUsdLocal] = useState('');
-    const prevUsdRef = React.useRef(usdValue);
-
-    // Sincronizar desde afuera SOLO cuando el valor USD cambia por otra causa
-    useEffect(() => {
-      if (prevUsdRef.current !== usdValue) {
-        prevUsdRef.current = usdValue;
-        setUsdLocal(usdValue != null ? String(usdValue) : '');
-        setArsLocal(dolar && usdValue ? String(Math.round(usdValue * dolar)) : '');
-      }
-    }, [usdValue]); // eslint-disable-line react-hooks/exhaustive-deps
-
-    function handleUSDChange(val) {
-      setUsdLocal(val);
-      const n = parseFloat(val);
-      if (!isNaN(n)) {
-        setArsLocal(dolar ? String(Math.round(n * dolar)) : '');
-        prevUsdRef.current = n;
-        if (onChangeUSD) onChangeUSD(n);
-      } else {
-        setArsLocal('');
-      }
-    }
-
-    function handleARSChange(val) {
-      setArsLocal(val);
-      if (val === '' || val === '0') {
-        setUsdLocal('');
-        prevUsdRef.current = 0;
-        if (onChangeUSD) onChangeUSD(0);
-        return;
-      }
-      const n = parseFloat(val);
-      if (!isNaN(n) && dolar) {
-        const usd = parseFloat((n / dolar).toFixed(2));
-        setUsdLocal(String(usd));
-        prevUsdRef.current = usd;
-        if (onChangeUSD) onChangeUSD(usd);
-      }
-    }
+    const [modoARS, setModoARS] = useState(false);
+    const [arsInput, setArsInput] = useState('');
 
     if (loadingDolar) return null;
+
+    const arsCalculado = dolar && usdValue ? Math.round(usdValue * dolar) : 0;
 
     return (
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6, padding: '8px 10px', background: '#F4F2FA', borderRadius: 8 }}>
@@ -96,8 +60,13 @@ export default function Precios() {
           <label style={{ fontSize: 9, fontWeight: 700, color: '#9090B0', letterSpacing: '.06em', textTransform: 'uppercase', marginBottom: 3 }}>USD</label>
           <input
             type="number" step="0.01" min="0"
-            value={usdLocal !== '' ? usdLocal : (usdValue != null ? usdValue : '')}
-            onChange={e => handleUSDChange(e.target.value)}
+            value={usdValue || ''}
+            onChange={e => {
+              const n = parseFloat(e.target.value) || 0;
+              setModoARS(false);
+              setArsInput('');
+              if (onChangeUSD) onChangeUSD(n);
+            }}
             style={{ border: '1.5px solid #7B2FBE', borderRadius: 6, padding: '6px 8px', fontSize: 13, fontFamily: 'Inter, sans-serif', outline: 'none', fontWeight: 600, color: '#4A0FA8', width: '100%' }}
           />
         </div>
@@ -106,8 +75,15 @@ export default function Precios() {
           <label style={{ fontSize: 9, fontWeight: 700, color: '#9090B0', letterSpacing: '.06em', textTransform: 'uppercase', marginBottom: 3 }}>$ ARS</label>
           <input
             type="number" step="1" min="0"
-            value={arsLocal !== '' ? arsLocal : (dolar && usdValue ? Math.round(usdValue * dolar) : '')}
-            onChange={e => handleARSChange(e.target.value)}
+            value={modoARS ? arsInput : (arsCalculado || '')}
+            onFocus={() => { setModoARS(true); setArsInput(String(arsCalculado || '')); }}
+            onChange={e => {
+              const val = e.target.value;
+              setArsInput(val);
+              const n = parseFloat(val) || 0;
+              if (dolar && onChangeUSD) onChangeUSD(parseFloat((n / dolar).toFixed(2)));
+            }}
+            onBlur={() => setModoARS(false)}
             placeholder="ej: 500000"
             style={{ border: '1.5px solid #00C896', borderRadius: 6, padding: '6px 8px', fontSize: 13, fontFamily: 'Inter, sans-serif', outline: 'none', fontWeight: 600, color: '#007A5A', width: '100%' }}
           />
