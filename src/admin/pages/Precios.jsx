@@ -46,17 +46,37 @@ export default function Precios() {
 
   // Input ARS con estado local para permitir escritura libre
   function ARSInput({ arsValue, onChangeARS }) {
-    const [localVal, setLocalVal] = useState(arsValue !== '' ? String(Math.round(arsValue)) : '');
+    const [localVal, setLocalVal] = useState('');
+    const [focused, setFocused] = useState(false);
+
+    // Solo actualiza desde afuera cuando el usuario NO está escribiendo
     useEffect(() => {
-      if (arsValue !== '') setLocalVal(Math.round(arsValue).toLocaleString('es-AR'));
-      else setLocalVal('');
-    }, [arsValue]); // eslint-disable-line react-hooks/exhaustive-deps
+      if (!focused) {
+        if (arsValue !== '') setLocalVal(Math.round(arsValue).toLocaleString('es-AR'));
+        else setLocalVal('');
+      }
+    }, [arsValue, focused]); // eslint-disable-line react-hooks/exhaustive-deps
 
     return (
       <input type="text"
         value={localVal}
-        onChange={e => { setLocalVal(e.target.value); onChangeARS(e.target.value); }}
-        placeholder="ej: 500.000"
+        onFocus={() => {
+          setFocused(true);
+          // Al enfocar, mostrar número limpio sin puntos para editar fácil
+          if (arsValue) setLocalVal(String(Math.round(arsValue)));
+        }}
+        onBlur={() => {
+          setFocused(false);
+          // Al perder foco, formatear con puntos
+          const clean = localVal.replace(/\./g, '').replace(',', '.');
+          const n = parseFloat(clean);
+          if (!isNaN(n)) setLocalVal(Math.round(n).toLocaleString('es-AR'));
+        }}
+        onChange={e => {
+          setLocalVal(e.target.value);
+          onChangeARS(e.target.value);
+        }}
+        placeholder="ej: 500000"
         style={{ border: '1.5px solid #00C896', borderRadius: 6, padding: '6px 8px', fontSize: 13, fontFamily: 'Inter, sans-serif', outline: 'none', fontWeight: 600, color: '#007A5A', width: '100%' }} />
     );
   }
