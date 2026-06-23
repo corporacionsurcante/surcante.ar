@@ -44,34 +44,14 @@ export default function Precios() {
     setTimeout(() => setSaved(false), 2000);
   }
 
-  // Conversor USD ↔ ARS
-  function Conversor({ usdValue }) {
-    const [usdInput, setUsdInput] = useState(usdValue !== undefined ? String(usdValue) : '');
-    const [arsInput, setArsInput] = useState('');
-    const [modo, setModo] = useState('usd'); // 'usd' o 'ars'
-
-    useEffect(() => {
-      if (usdValue !== undefined && modo === 'usd') {
-        setUsdInput(String(usdValue));
-        if (dolar) setArsInput(Math.round(usdValue * dolar).toLocaleString('es-AR'));
-      }
-    }, [usdValue, modo]); // eslint-disable-line react-hooks/exhaustive-deps
-
-    function handleUSD(val) {
-      setModo('usd');
-      setUsdInput(val);
-      const n = parseFloat(val);
-      if (!isNaN(n) && dolar) setArsInput(Math.round(n * dolar).toLocaleString('es-AR'));
-      else setArsInput('');
-    }
+  // Conversor USD ↔ ARS — sin estado propio, actualiza directamente el estado de precios
+  function Conversor({ usdValue, onChangeUSD }) {
+    const arsValue = dolar && usdValue ? Math.round(usdValue * dolar) : '';
 
     function handleARS(val) {
-      setModo('ars');
       const clean = val.replace(/\./g, '').replace(',', '.');
-      setArsInput(val);
       const n = parseFloat(clean);
-      if (!isNaN(n) && dolar) setUsdInput((n / dolar).toFixed(2));
-      else setUsdInput('');
+      if (!isNaN(n) && dolar) onChangeUSD(parseFloat((n / dolar).toFixed(2)));
     }
 
     if (loadingDolar) return null;
@@ -80,20 +60,21 @@ export default function Precios() {
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6, padding: '8px 10px', background: '#F4F2FA', borderRadius: 8 }}>
         <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
           <label style={{ fontSize: 9, fontWeight: 700, color: '#9090B0', letterSpacing: '.06em', textTransform: 'uppercase', marginBottom: 3 }}>USD</label>
-          <input type="number" step="0.01" min="0" value={usdInput}
-            onChange={e => handleUSD(e.target.value)}
+          <input type="number" step="0.01" min="0" value={usdValue || ''}
+            onChange={e => onChangeUSD(parseFloat(e.target.value) || 0)}
             style={{ border: '1.5px solid #7B2FBE', borderRadius: 6, padding: '6px 8px', fontSize: 13, fontFamily: 'Inter, sans-serif', outline: 'none', fontWeight: 600, color: '#4A0FA8', width: '100%' }} />
         </div>
         <div style={{ color: '#9090B0', fontSize: 14, fontWeight: 700, paddingTop: 16 }}>⇄</div>
         <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
           <label style={{ fontSize: 9, fontWeight: 700, color: '#9090B0', letterSpacing: '.06em', textTransform: 'uppercase', marginBottom: 3 }}>$ ARS</label>
-          <input type="text" value={arsInput}
+          <input type="text"
+            value={arsValue !== '' ? Math.round(arsValue).toLocaleString('es-AR') : ''}
             onChange={e => handleARS(e.target.value)}
             placeholder="ej: 500.000"
             style={{ border: '1.5px solid #00C896', borderRadius: 6, padding: '6px 8px', fontSize: 13, fontFamily: 'Inter, sans-serif', outline: 'none', fontWeight: 600, color: '#007A5A', width: '100%' }} />
         </div>
         <div style={{ fontSize: 9, color: '#9090B0', paddingTop: 16, whiteSpace: 'nowrap' }}>
-          USD 1 = ${dolar ? Math.round(dolar).toLocaleString('es-AR') : '...'}
+          1 USD = ${dolar ? Math.round(dolar).toLocaleString('es-AR') : '...'}
         </div>
       </div>
     );
@@ -127,7 +108,7 @@ export default function Precios() {
                 value={precios[u.id]?.usdKm || ''}
                 onChange={e => updateUnidad(u.id, 'usdKm', parseFloat(e.target.value))}
               />
-              <Conversor usdValue={precios[u.id]?.usdKm} />
+              <Conversor usdValue={precios[u.id]?.usdKm} onChangeUSD={v => updateUnidad(u.id, 'usdKm', v)} />
             </div>
             <div className="precio-field">
               <label>Descuento movimientos (%)</label>
@@ -142,7 +123,7 @@ export default function Precios() {
                 value={precios[u.id]?.valorBaseUSD || ''}
                 onChange={e => updateUnidad(u.id, 'valorBaseUSD', parseFloat(e.target.value) || 0)}
               />
-              <Conversor usdValue={precios[u.id]?.valorBaseUSD} />
+              <Conversor usdValue={precios[u.id]?.valorBaseUSD} onChangeUSD={v => updateUnidad(u.id, 'valorBaseUSD', v)} />
             </div>
           </div>
 
