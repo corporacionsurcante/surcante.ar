@@ -96,6 +96,15 @@ export const PRECIO_MINIMO_USD = {
   'Minibus 24': 380,
   'Minibus 19': 380,
 };
+
+// Valor base de contratación de la unidad (se suma al km en viajes hasta 300 km)
+export const VALOR_BASE_USD = {
+  'MIX 60':     320,
+  'Comun 45':   280,
+  'Minibus 24': 245,
+  'Minibus 19': 245,
+};
+export const KM_BASE_THRESHOLD = 300; // hasta este km aplica el valor base
 export const KM_MINIMO_THRESHOLD = 300;
 
 // Descuento por días consecutivos de tarifa mínima
@@ -126,28 +135,34 @@ export function calcPrecioUnidadConMinimo({ unit, kmTotal, movPorDia, movKmPorDi
   const tipoKey = unit.tipoNombre || unit.tipo || 'Comun 45';
   const minimoUSD = PRECIO_MINIMO_USD[tipoKey] || 400;
 
-  // CASO 1: Mismo día + menos de 300 km → tarifa mínima diaria
-  if (mismodia && kmTotal < KM_MINIMO_THRESHOLD) {
-    const minimoNeto = minimoUSD * dolar;
-    const subtotal = minimoNeto + base.movNeto;
+  const valorBaseUSD = unit.valorBaseUSD || (VALOR_BASE_USD[tipoKey] || 280);
+
+  // CASO 1: Viaje corto (≤300 km totales)
+  // Km se cotizan una sola vez.
+  // Valor base: si el viaje dura 1, 2 o 3 días → todos los días pagan base
+  //             si dura 4 días o más → el primer día no paga (días - 1)
+  if (kmTotal <= KM_BASE_THRESHOLD) {
+    const diasOcupacion = diasViaje <= 3 ? diasViaje : diasViaje - 1;
+    const baseNeto = valorBaseUSD * diasOcupacion * dolar;
+    const subtotal = base.traslNeto + baseNeto + base.movNeto;
     const ivaTotal = subtotal * IVA;
     const total = subtotal + ivaTotal;
-    if (minimoNeto > base.traslNeto) {
-      return {
-        ...base,
-        traslNeto: minimoNeto,
-        subtotal, ivaTotal, total,
-        esPrecioMinimo: true,
-        esEstadia: false,
-        tipoKey, diasViaje,
-        kmPorDia: kmTotal,
-      };
-    }
+    return {
+      ...base,
+      baseNeto,
+      valorBaseUSD,
+      diasOcupacion,
+      subtotal, ivaTotal, total,
+      esPrecioMinimo: false,
+      esEstadia: false,
+      esValorBase: diasOcupacion > 0,
+      tipoKey, diasViaje,
+    };
   }
 
-  // CASO 2: Varios días + menos de 800 km + más de 3 días → km + estadía desde día 3
-  if (!mismodia && kmTotal < KM_ESTADIA_THRESHOLD && diasViaje > 3) {
-    const diasEstadia = diasViaje - 2; // días 3 en adelante
+  // CASO 2: Media distancia (301-800 km) + más de 3 días → km + estadía desde día 3
+  if (kmTotal < KM_ESTADIA_THRESHOLD && diasViaje > 3) {
+    const diasEstadia = diasViaje - 2;
     const estadiaNeto = minimoUSD * diasEstadia * dolar;
     const subtotal = base.traslNeto + estadiaNeto + base.movNeto;
     const ivaTotal = subtotal * IVA;
@@ -159,11 +174,11 @@ export function calcPrecioUnidadConMinimo({ unit, kmTotal, movPorDia, movKmPorDi
       subtotal, ivaTotal, total,
       esPrecioMinimo: false,
       esEstadia: true,
+      esValorBase: false,
       tipoKey, diasViaje,
-      kmPorDia: Math.round(kmTotal / diasViaje),
     };
   }
 
-  // CASO 3: Resto (larga distancia o pocos días) → solo km × precio/km
-  return { ...base, esPrecioMinimo: false, esEstadia: false, kmPorDia: Math.round(kmTotal / diasViaje) };
+  // CASO 3: Larga distancia (>800 km) → solo km × precio/km
+  return { ...base, esPrecioMinimo: false, esEstadia: false, esValorBase: false, tipoKey, diasViaje };
 }
