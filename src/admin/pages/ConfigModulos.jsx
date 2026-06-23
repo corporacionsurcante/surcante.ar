@@ -10,6 +10,12 @@ const MODULOS = [
     desc: 'Viajes de larga y media distancia. Cotiza por km recorrido más movimientos en destino.',
   },
   {
+    id: 'movimientos',
+    label: 'Movimientos CABA / GBA',
+    icon: '🚐',
+    desc: 'Traslados puntuales en Capital Federal o Gran Buenos Aires. Precio fijo por día.',
+  },
+  {
     id: 'disponibilidad',
     label: 'Receptivo a disposición',
     icon: '⏱️',
@@ -24,7 +30,7 @@ const MODULOS = [
 ];
 
 export default function ConfigModulos() {
-  const [modulos, setModulos] = useState({ charter: true, disponibilidad: true, receptivo: true });
+  const [modulos, setModulos] = useState({ charter: true, movimientos: true, disponibilidad: true, receptivo: true });
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
