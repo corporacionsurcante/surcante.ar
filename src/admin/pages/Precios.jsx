@@ -44,51 +44,43 @@ export default function Precios() {
     setTimeout(() => setSaved(false), 2000);
   }
 
-  // Input ARS con estado local para permitir escritura libre
-  function ARSInput({ arsValue, onChangeARS }) {
-    const [localVal, setLocalVal] = useState('');
-    const [focused, setFocused] = useState(false);
-
-    // Solo actualiza desde afuera cuando el usuario NO está escribiendo
-    useEffect(() => {
-      if (!focused) {
-        if (arsValue !== '') setLocalVal(Math.round(arsValue).toLocaleString('es-AR'));
-        else setLocalVal('');
-      }
-    }, [arsValue, focused]); // eslint-disable-line react-hooks/exhaustive-deps
-
-    return (
-      <input type="text"
-        value={localVal}
-        onFocus={() => {
-          setFocused(true);
-          // Al enfocar, mostrar número limpio sin puntos para editar fácil
-          if (arsValue) setLocalVal(String(Math.round(arsValue)));
-        }}
-        onBlur={() => {
-          setFocused(false);
-          // Al perder foco, formatear con puntos
-          const clean = localVal.replace(/\./g, '').replace(',', '.');
-          const n = parseFloat(clean);
-          if (!isNaN(n)) setLocalVal(Math.round(n).toLocaleString('es-AR'));
-        }}
-        onChange={e => {
-          setLocalVal(e.target.value);
-          onChangeARS(e.target.value);
-        }}
-        placeholder="ej: 500000"
-        style={{ border: '1.5px solid #00C896', borderRadius: 6, padding: '6px 8px', fontSize: 13, fontFamily: 'Inter, sans-serif', outline: 'none', fontWeight: 600, color: '#007A5A', width: '100%' }} />
-    );
-  }
-
-  // Conversor USD ↔ ARS — sin estado propio, actualiza directamente el estado de precios
+  // Conversor USD ↔ ARS completamente independiente con estado propio
   function Conversor({ usdValue, onChangeUSD }) {
-    const arsValue = dolar && usdValue ? Math.round(usdValue * dolar) : '';
+    const [arsLocal, setArsLocal] = useState('');
+    const [usdLocal, setUsdLocal] = useState('');
+    const prevUsdRef = React.useRef(usdValue);
 
-    function handleARS(val) {
-      const clean = val.replace(/\./g, '').replace(',', '.');
-      const n = parseFloat(clean);
-      if (!isNaN(n) && dolar) onChangeUSD(parseFloat((n / dolar).toFixed(2)));
+    // Sincronizar desde afuera SOLO cuando el valor USD cambia por otra causa
+    // (no cuando el propio conversor lo cambió)
+    useEffect(() => {
+      if (prevUsdRef.current !== usdValue) {
+        prevUsdRef.current = usdValue;
+        setUsdLocal(usdValue != null ? String(usdValue) : '');
+        setArsLocal(dolar && usdValue ? String(Math.round(usdValue * dolar)) : '');
+      }
+    }); // sin array de deps — corre siempre pero solo actúa si cambió desde afuera
+
+    function handleUSDChange(val) {
+      setUsdLocal(val);
+      const n = parseFloat(val);
+      if (!isNaN(n)) {
+        setArsLocal(dolar ? String(Math.round(n * dolar)) : '');
+        prevUsdRef.current = n;
+        onChangeUSD(n);
+      } else {
+        setArsLocal('');
+      }
+    }
+
+    function handleARSChange(val) {
+      setArsLocal(val);
+      const n = parseFloat(val);
+      if (!isNaN(n) && dolar) {
+        const usd = parseFloat((n / dolar).toFixed(2));
+        setUsdLocal(String(usd));
+        prevUsdRef.current = usd;
+        onChangeUSD(usd);
+      }
     }
 
     if (loadingDolar) return null;
@@ -97,14 +89,23 @@ export default function Precios() {
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6, padding: '8px 10px', background: '#F4F2FA', borderRadius: 8 }}>
         <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
           <label style={{ fontSize: 9, fontWeight: 700, color: '#9090B0', letterSpacing: '.06em', textTransform: 'uppercase', marginBottom: 3 }}>USD</label>
-          <input type="number" step="0.01" min="0" value={usdValue || ''}
-            onChange={e => onChangeUSD(parseFloat(e.target.value) || 0)}
-            style={{ border: '1.5px solid #7B2FBE', borderRadius: 6, padding: '6px 8px', fontSize: 13, fontFamily: 'Inter, sans-serif', outline: 'none', fontWeight: 600, color: '#4A0FA8', width: '100%' }} />
+          <input
+            type="number" step="0.01" min="0"
+            value={usdLocal !== '' ? usdLocal : (usdValue != null ? usdValue : '')}
+            onChange={e => handleUSDChange(e.target.value)}
+            style={{ border: '1.5px solid #7B2FBE', borderRadius: 6, padding: '6px 8px', fontSize: 13, fontFamily: 'Inter, sans-serif', outline: 'none', fontWeight: 600, color: '#4A0FA8', width: '100%' }}
+          />
         </div>
         <div style={{ color: '#9090B0', fontSize: 14, fontWeight: 700, paddingTop: 16 }}>⇄</div>
         <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
           <label style={{ fontSize: 9, fontWeight: 700, color: '#9090B0', letterSpacing: '.06em', textTransform: 'uppercase', marginBottom: 3 }}>$ ARS</label>
-          <ARSInput arsValue={arsValue} onChangeARS={handleARS} />
+          <input
+            type="number" step="1" min="0"
+            value={arsLocal !== '' ? arsLocal : (dolar && usdValue ? Math.round(usdValue * dolar) : '')}
+            onChange={e => handleARSChange(e.target.value)}
+            placeholder="ej: 500000"
+            style={{ border: '1.5px solid #00C896', borderRadius: 6, padding: '6px 8px', fontSize: 13, fontFamily: 'Inter, sans-serif', outline: 'none', fontWeight: 600, color: '#007A5A', width: '100%' }}
+          />
         </div>
         <div style={{ fontSize: 9, color: '#9090B0', paddingTop: 16, whiteSpace: 'nowrap' }}>
           1 USD = ${dolar ? Math.round(dolar).toLocaleString('es-AR') : '...'}
