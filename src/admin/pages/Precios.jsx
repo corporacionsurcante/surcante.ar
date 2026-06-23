@@ -13,7 +13,7 @@ export default function Precios() {
   const [precios, setPrecios] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saved, setSaved] = useState(false);
-  const { dolar, loading: loadingDolar } = useDolar();
+  const { dolar } = useDolar();
 
   useEffect(() => {
     const unsub = suscribirPrecios(data => { setPrecios(data); setLoading(false); });
