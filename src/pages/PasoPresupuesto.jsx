@@ -226,7 +226,6 @@ export default function PasoPresupuesto({ reserva, onBack, onConfirm }) {
       <div className="section-label">Detalle por unidad</div>
       <div className="pcard">
         {detalles.map((d, idx) => {
-          const grupos = d.grupos || {};
           return (
             <div key={d.id}>
               {idx > 0 && <div style={{ height: 6 }} />}
