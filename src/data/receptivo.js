@@ -155,3 +155,12 @@ export function calcPrecioDisponibilidad(horas) {
   // Paquete 24hs
   return { precioUSD: 1800, descripcion: 'Paquete 24 horas', paquete: DISPONIBILIDAD_PAQUETES[2] };
 }
+
+// ---- MOVIMIENTOS CABA / GBA ----
+export const MOVIMIENTOS_CABA_GBA = {
+  id: 'mov-caba-gba',
+  nombre: 'Movimientos CABA / GBA',
+  emoji: '🚐',
+  descripcion: 'Traslados puntuales en Capital Federal o Gran Buenos Aires',
+  precioUSD: 650, // editable desde admin
+};
