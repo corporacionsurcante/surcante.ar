@@ -26,12 +26,7 @@ function CotizadorApp() {
   if (tipoServicio === 'disponibilidad') {
     return (
       <div className="app-shell">
-        <Topbar />
-        <div style={{ padding: '10px 16px', background: 'var(--bg-2)', borderBottom: '1px solid var(--border)' }}>
-          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--sp)', letterSpacing: '.05em', textTransform: 'uppercase' }}>
-            ⏱️ A disposicion
-          </span>
-        </div>
+        <Topbar onHome={() => setTipoServicio(null)} />
         <DisponibilidadCotizador onBack={() => setTipoServicio(null)} />
       </div>
     );
@@ -40,10 +35,7 @@ function CotizadorApp() {
   if (tipoServicio === 'receptivo') {
     return (
       <div className="app-shell">
-        <Topbar />
-        <div style={{ padding: '10px 16px', background: 'var(--bg-2)', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--sp)', letterSpacing: '.05em', textTransform: 'uppercase' }}>🏛️ Receptivo</span>
-        </div>
+        <Topbar onHome={() => setTipoServicio(null)} />
         <ReceptivoCotizador onBack={() => setTipoServicio(null)} />
       </div>
     );
@@ -53,14 +45,7 @@ function CotizadorApp() {
   if (tipoServicio === 'charter') {
     return (
       <div className="app-shell">
-        <Topbar />
-        <div style={{ padding: '10px 16px', background: 'var(--bg-2)', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--sp)', letterSpacing: '.05em', textTransform: 'uppercase' }}>🚌 Charter</span>
-          <button onClick={() => { setTipoServicio(null); setStep(1); setReserva(null); }}
-            style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'var(--text-3)', fontSize: 12, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
-            ← Cambiar servicio
-          </button>
-        </div>
+        <Topbar onHome={() => { setTipoServicio(null); setStep(1); setReserva(null); }} />
         {step < 4 && <Steps current={step} />}
         {step === 1 && <PasoFlota onNext={handleFlotaDone} />}
         {step === 2 && <PasoRecorrido reserva={reserva} onNext={handleRecorridoDone} onBack={() => setStep(1)} />}
