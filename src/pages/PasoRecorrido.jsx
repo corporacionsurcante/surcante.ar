@@ -155,12 +155,12 @@ export default function PasoRecorrido({ reserva, onNext, onBack }) {
 
   const totalMov = currentMov.reduce((a, b) => a + b, 0);
   const diasConMov = currentMov.filter(x => x > 0).length;
-  const grupos = { 1: [], 2: [], 3: [] };
-  currentMov.forEach((m, i) => { if (m > 0 && m <= 3) grupos[m].push('D' + (i + 1)); });
+  const grupos = {};
+  currentMov.forEach((m, i) => { if (m > 0) { if (!grupos[m]) grupos[m] = []; grupos[m].push('D' + (i + 1)); } });
 
   const diaMovVal = diaEditando !== null ? currentMov[diaEditando] : 0;
   const diaKmVal = diaEditando !== null ? currentMovKm[diaEditando] : 0;
-  const kmExtra = diaMovVal > 0 ? Math.max(0, diaKmVal - KM_MOV_INCLUIDOS) * diaMovVal : 0;
+  const kmExtraDia = diaMovVal > 0 && diaKmVal > KM_MOV_INCLUIDOS ? diaKmVal - KM_MOV_INCLUIDOS : 0;
 
   const canContinue = origenData && destinoData && kmTotal > 0 && !calculando;
 
@@ -286,27 +286,27 @@ export default function PasoRecorrido({ reserva, onNext, onBack }) {
               <button className="editor-btn" disabled={diaMovVal === 0}
                 onClick={() => { setMov(diaEditando, diaMovVal - 1); if (diaMovVal - 1 === 0) setMovKm(diaEditando, 0); }}>−</button>
               <span className="editor-val">{diaMovVal}</span>
-              <button className="editor-btn" disabled={diaMovVal >= 3}
+              <button className="editor-btn"
                 onClick={() => setMov(diaEditando, diaMovVal + 1)}>+</button>
             </div>
           </div>
           {diaMovVal > 0 && (
             <div className="editor-km">
-              <div className="editor-km-label">Km por movimiento en destino (opcional)</div>
+              <div className="editor-km-label">Km totales de movimientos este día</div>
               <div className="editor-km-row">
-                <input type="number" min="0" max="999"
+                <input type="number" min="0" max="9999"
                   className={`editor-km-input ${diaKmVal > KM_MOV_INCLUIDOS ? 'over' : ''}`}
-                  placeholder="ej: 40"
+                  placeholder="ej: 80"
                   value={diaKmVal || ''}
                   onChange={e => setMovKm(diaEditando, parseInt(e.target.value) || 0)}
                 />
-                <span className="editor-km-unit">km por mov.</span>
+                <span className="editor-km-unit">km totales</span>
               </div>
               <div className="hint" style={{ marginTop: 4 }}>
-                50 km incluidos · km extra se cobra al valor del viaje
+                Hasta {KM_MOV_INCLUIDOS} km incluidos · si superan se cobran km extra
               </div>
-              {kmExtra > 0 && (
-                <div className="km-extra-alert">⚠️ +{kmExtra} km extra a cotizar</div>
+              {kmExtraDia > 0 && (
+                <div className="km-extra-alert">⚠️ +{kmExtraDia} km extra incluidos en el precio</div>
               )}
             </div>
           )}
@@ -316,9 +316,9 @@ export default function PasoRecorrido({ reserva, onNext, onBack }) {
       {totalMov > 0 && (
         <div className="resumen-pill">
           <strong>{diasConMov} días con movimientos · {totalMov} movimientos totales</strong><br />
-          {grupos[1].length > 0 && <span><strong>1 mov:</strong> {grupos[1].join(', ')} · </span>}
-          {grupos[2].length > 0 && <span><strong>2 mov:</strong> {grupos[2].join(', ')} · </span>}
-          {grupos[3].length > 0 && <span><strong>3 mov:</strong> {grupos[3].join(', ')}</span>}
+          {Object.entries(grupos).filter(([,v]) => v.length > 0).map(([k, v]) => (
+            <span key={k}><strong>{k} mov:</strong> {v.join(', ')} · </span>
+          ))}
         </div>
       )}
 
