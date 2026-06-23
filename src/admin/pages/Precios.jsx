@@ -2,9 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { suscribirPrecios, actualizarPrecios, inicializarPrecios } from '../../firebase/services';
 
 const UNIDADES = [
-  { id: 'u1', nombre: 'Omnibus Premium (60 but.)', ico: '🚌' },
-  { id: 'u2', nombre: 'Omnibus Estándar (45 but.)', ico: '🚌' },
-  { id: 'u3', nombre: 'Minibus Ejecutivo (24 but.)', ico: '🚐' },
+  { id: 'u1', nombre: 'Omnibus Mix 60', ico: '🚌' },
+  { id: 'u2', nombre: 'Omnibus Común 45', ico: '🚌' },
+  { id: 'u3', nombre: 'Minibus 19/24', ico: '🚐' },
 ];
 
 export default function Precios() {
@@ -78,6 +78,13 @@ export default function Precios() {
                 onChange={e => updateUnidad(u.id, 'movDesc', parseFloat(e.target.value) / 100)}
               />
             </div>
+            <div className="precio-field">
+              <label>Valor base viajes cortos (USD, hasta 300 km)</label>
+              <input type="number" step="1" min="0"
+                value={precios[u.id]?.valorBaseUSD || ''}
+                onChange={e => updateUnidad(u.id, 'valorBaseUSD', parseFloat(e.target.value) || 0)}
+              />
+            </div>
           </div>
 
           <div style={{ marginTop: 16 }}>
@@ -107,6 +114,20 @@ export default function Precios() {
             <input type="number" min="0"
               value={precios.kmMovIncluidos || 50}
               onChange={e => setPrecios(prev => ({ ...prev, kmMovIncluidos: parseInt(e.target.value) }))}
+            />
+          </div>
+          <div className="precio-field">
+            <label>Km umbral viaje corto (valor base)</label>
+            <input type="number" min="0"
+              value={precios.kmBaseThreshold || 300}
+              onChange={e => setPrecios(prev => ({ ...prev, kmBaseThreshold: parseInt(e.target.value) }))}
+            />
+          </div>
+          <div className="precio-field">
+            <label>Km umbral estadía (media distancia)</label>
+            <input type="number" min="0"
+              value={precios.kmEstadiaThreshold || 800}
+              onChange={e => setPrecios(prev => ({ ...prev, kmEstadiaThreshold: parseInt(e.target.value) }))}
             />
           </div>
           <div className="precio-field">
