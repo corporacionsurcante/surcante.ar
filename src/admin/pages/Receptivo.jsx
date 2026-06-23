@@ -4,6 +4,10 @@ import {
   suscribirCircuitos, agregarCircuito, actualizarCircuito, eliminarCircuito, inicializarCircuitos,
   suscribirTransfers, actualizarTransfer, inicializarTransfers,
 } from '../../firebase/receptivoServices';
+import { doc, setDoc, onSnapshot } from 'firebase/firestore';
+import { db } from '../../firebase/config';
+import { useDolar } from '../../hooks/useDolar';
+import ConversorUSD from '../components/ConversorUSD';
 
 const TIPOS_UNIDAD = ['MIX 60', 'Comun 45', 'Minibus 24', 'Minibus 19'];
 const TIPO_LABELS = { 'MIX 60': 'Omnibus 60 / Doble piso', 'Comun 45': 'Omnibus 45 butacas', 'Minibus 24': 'Minibus 24 butacas', 'Minibus 19': 'Minibus 19 butacas' };
@@ -18,6 +22,22 @@ export default function Receptivo() {
   const [transfers, setTransfers] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saved, setSaved] = useState('');
+  const [precioMovUSD, setPrecioMovUSD] = useState(650);
+  const [savedMov, setSavedMov] = useState(false);
+  const { dolar } = useDolar();
+
+  useEffect(() => {
+    const unsub = onSnapshot(doc(db, 'config', 'receptivo_movimientos'), snap => {
+      if (snap.exists() && snap.data().precioUSD) setPrecioMovUSD(snap.data().precioUSD);
+    });
+    return unsub;
+  }, []);
+
+  async function saveMovimientos() {
+    await setDoc(doc(db, 'config', 'receptivo_movimientos'), { precioUSD: precioMovUSD });
+    setSavedMov(true);
+    setTimeout(() => setSavedMov(false), 2000);
+  }
   const [modal, setModal] = useState(null);
   const [form, setForm] = useState(FORM_CIRCUITO_VACIO);
   const [saving, setSaving] = useState(false);
@@ -107,6 +127,7 @@ export default function Receptivo() {
           { id: 'citytour', label: '🏛️ City Tour CABA' },
           { id: 'circuitos', label: '🎡 Circuitos' },
           { id: 'transfers', label: '✈️ Transfers' },
+          { id: 'movimientos', label: '🚐 Movimientos CABA/GBA' },
         ].map(t => (
           <button key={t.id} onClick={() => setTab(t.id)}
             style={{
@@ -205,6 +226,31 @@ export default function Receptivo() {
               </table>
             </div>
           )}
+        </div>
+      )}
+
+      {/* MOVIMIENTOS CABA/GBA */}
+      {tab === 'movimientos' && (
+        <div>
+          <div className="section-header">
+            <div className="section-title">Movimientos CABA / GBA — Precio por día (USD)</div>
+          </div>
+          <div className="precios-card">
+            <div style={{ fontSize: 12, color: '#9090B0', marginBottom: 16, fontWeight: 500 }}>
+              Precio fijo por día de servicio, independiente del tipo de unidad. Se convierte a pesos con el dólar BNA al momento de cotizar.
+            </div>
+            <div className="precio-field">
+              <label>Precio por día (USD)</label>
+              <input type="number" step="1" min="0"
+                value={precioMovUSD}
+                onChange={e => setPrecioMovUSD(parseFloat(e.target.value) || 0)}
+              />
+              <ConversorUSD usdValue={precioMovUSD} dolar={dolar} onChangeUSD={v => setPrecioMovUSD(v)} />
+            </div>
+            <button className={`precios-save ${savedMov ? 'saved' : ''}`} onClick={saveMovimientos}>
+              {savedMov ? '✓ Guardado' : 'Guardar precio'}
+            </button>
+          </div>
         </div>
       )}
 
