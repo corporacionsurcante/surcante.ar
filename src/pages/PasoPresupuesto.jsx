@@ -245,6 +245,12 @@ export default function PasoPresupuesto({ reserva, onBack, onConfirm }) {
                   <span>{formatARS(d.traslNeto)}</span>
                 </div>
               )}
+              {d.esValorBase && d.baseNeto > 0 && (
+                <div className="prow sub" style={{ color: 'var(--sp)' }}>
+                  <span>📋 Valor base · {d.diasOcupacion} día{d.diasOcupacion > 1 ? 's' : ''} × USD {d.valorBaseUSD}</span>
+                  <span>{formatARS(d.baseNeto)}</span>
+                </div>
+              )}
               {d.esEstadia && d.estadiaNeto > 0 && (
                 <div className="prow sub" style={{ color: 'var(--sp)' }}>
                   <span>🏨 Estadía unidad ({d.diasEstadia} día{d.diasEstadia > 1 ? 's' : ''} desde día 3)</span>
@@ -268,7 +274,7 @@ export default function PasoPresupuesto({ reserva, onBack, onConfirm }) {
                   <span>{formatARS(d.kmExtra*d.type?.usdKm*dolar)}</span>
                 </div>
               )}
-              <div className="prow sub"><span>IVA (21%)</span><span>{formatARS(d.ivaTotal)}</span></div>
+              <div className="prow sub"><span>Impuestos (21%)</span><span>{formatARS(d.ivaTotal)}</span></div>
             </div>
           );
         })}
