@@ -104,7 +104,7 @@ export default function Precios() {
                     value={precios[u.id]?.movUSD?.[i] || ''}
                     onChange={e => updateMov(u.id, i, e.target.value)}
                   />
-                  <Conversor usdValue={precios[u.id]?.movUSD?.[i]} onChangeUSD={v => updateMov(u.id, i, String(v))} />
+                  <ConversorUSD usdValue={precios[u.id]?.movUSD?.[i]} dolar={dolar} onChangeUSD={v => updateMov(u.id, i, String(v))} />
                 </div>
               ))}
             </div>
