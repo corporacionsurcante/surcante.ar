@@ -9,10 +9,27 @@ import Confirmacion from './pages/Confirmacion';
 import ReceptivoCotizador from './pages/ReceptivoCotizador';
 import DisponibilidadCotizador from './pages/DisponibilidadCotizador';
 import AdminApp from './admin/pages/AdminApp';
+import { useState as useAuthState, useEffect as useAuthEffect } from 'react';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from './firebase/config';
+import { isAdminAutorizado } from './firebase/services';
 import './index.css';
 
 function CotizadorApp() {
-  const [tipoServicio, setTipoServicio] = useState(null); // null | 'charter' | 'receptivo'
+  const [isAdmin, setIsAdmin] = useAuthState(false);
+  const [tipoServicio, setTipoServicio] = useState(null);
+
+  useAuthEffect(() => {
+    const unsub = onAuthStateChanged(auth, async u => {
+      if (u) {
+        const ok = await isAdminAutorizado(u.email);
+        setIsAdmin(ok);
+      } else {
+        setIsAdmin(false);
+      }
+    });
+    return unsub;
+  }, []); // null | 'charter' | 'receptivo'
   const [step, setStep] = useState(1);
   const [reserva, setReserva] = useState(null);
   const [pago, setPago] = useState(null);
@@ -49,7 +66,7 @@ function CotizadorApp() {
         {step < 4 && <Steps current={step} />}
         {step === 1 && <PasoFlota onNext={handleFlotaDone} />}
         {step === 2 && <PasoRecorrido reserva={reserva} onNext={handleRecorridoDone} onBack={() => setStep(1)} />}
-        {step === 3 && <PasoPresupuesto reserva={reserva} onBack={() => setStep(2)} onConfirm={handleConfirm} />}
+        {step === 3 && <PasoPresupuesto reserva={reserva} onBack={() => setStep(2)} onConfirm={handleConfirm} isAdmin={isAdmin} />}
         {step === 4 && <Confirmacion reserva={reserva} pago={pago} onNueva={handleNueva} />}
       </div>
     );
