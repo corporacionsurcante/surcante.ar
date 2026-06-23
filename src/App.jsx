@@ -7,6 +7,7 @@ import PasoRecorrido from './pages/PasoRecorrido';
 import PasoPresupuesto from './pages/PasoPresupuesto';
 import Confirmacion from './pages/Confirmacion';
 import ReceptivoCotizador from './pages/ReceptivoCotizador';
+import DisponibilidadCotizador from './pages/DisponibilidadCotizador';
 import AdminApp from './admin/pages/AdminApp';
 import './index.css';
 
@@ -22,6 +23,20 @@ function CotizadorApp() {
   function handleNueva() { setReserva(null); setPago(null); setStep(1); setTipoServicio(null); }
 
   // Receptivo tiene su propio flujo completo
+  if (tipoServicio === 'disponibilidad') {
+    return (
+      <div className="app-shell">
+        <Topbar />
+        <div style={{ padding: '10px 16px', background: 'var(--bg-2)', borderBottom: '1px solid var(--border)' }}>
+          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--sp)', letterSpacing: '.05em', textTransform: 'uppercase' }}>
+            ⏱️ A disposicion
+          </span>
+        </div>
+        <DisponibilidadCotizador onBack={() => setTipoServicio(null)} />
+      </div>
+    );
+  }
+
   if (tipoServicio === 'receptivo') {
     return (
       <div className="app-shell">
