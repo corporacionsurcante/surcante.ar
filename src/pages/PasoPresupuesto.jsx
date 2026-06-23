@@ -234,45 +234,8 @@ export default function PasoPresupuesto({ reserva, onBack, onConfirm }) {
                 <span>{d.type?.icon} {d.label}</span>
                 <span>{formatARS(d.total)}</span>
               </div>
-              {d.esPrecioMinimo ? (
-                <div className="prow sub" style={{ color: 'var(--sp)' }}>
-                  <span>⚡ Tarifa mínima · {d.kmPorDia} km</span>
-                  <span>{formatARS(d.traslNeto)}</span>
-                </div>
-              ) : (
-                <div className="prow sub">
-                  <span>Recorrido {d.kmTotalConExtra?.toLocaleString('es-AR')} km</span>
-                  <span>{formatARS(d.traslNeto)}</span>
-                </div>
-              )}
-              {d.esValorBase && d.baseNeto > 0 && (
-                <div className="prow sub" style={{ color: 'var(--sp)' }}>
-                  <span>📋 Valor base · {d.diasOcupacion} día{d.diasOcupacion > 1 ? 's' : ''} × USD {d.valorBaseUSD}</span>
-                  <span>{formatARS(d.baseNeto)}</span>
-                </div>
-              )}
-              {d.esEstadia && d.estadiaNeto > 0 && (
-                <div className="prow sub" style={{ color: 'var(--sp)' }}>
-                  <span>🏨 Estadía unidad ({d.diasEstadia} día{d.diasEstadia > 1 ? 's' : ''} desde día 3)</span>
-                  <span>{formatARS(d.estadiaNeto)}</span>
-                </div>
-              )}
               {d.movNeto > 0 && (
-                <>
-                  <div className="prow sub"><span>Movimientos en destino</span><span>{formatARS(d.movNeto)}</span></div>
-                  {[1,2,3].map(m => grupos[m] > 0 ? (
-                    <div key={m} className="prow sub" style={{ paddingLeft: 24 }}>
-                      <span>{grupos[m]} día{grupos[m]>1?'s':''} × {m} mov.</span>
-                      <span>{formatARS(d.type?.movUSD[m-1]*(1-d.type?.movDesc)*dolar*grupos[m])}</span>
-                    </div>
-                  ) : null)}
-                </>
-              )}
-              {d.kmExtra > 0 && (
-                <div className="prow sub">
-                  <span>Km extra movimientos</span>
-                  <span>{formatARS(d.kmExtra*d.type?.usdKm*dolar)}</span>
-                </div>
+                <div className="prow sub"><span>Movimientos en destino</span><span>{formatARS(d.movNeto)}</span></div>
               )}
               <div className="prow sub"><span>Con impuestos</span><span>{formatARS(d.ivaTotal)}</span></div>
             </div>
