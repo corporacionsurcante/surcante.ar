@@ -44,6 +44,23 @@ export default function Precios() {
     setTimeout(() => setSaved(false), 2000);
   }
 
+  // Input ARS con estado local para permitir escritura libre
+  function ARSInput({ arsValue, onChangeARS }) {
+    const [localVal, setLocalVal] = useState(arsValue !== '' ? String(Math.round(arsValue)) : '');
+    useEffect(() => {
+      if (arsValue !== '') setLocalVal(Math.round(arsValue).toLocaleString('es-AR'));
+      else setLocalVal('');
+    }, [arsValue]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    return (
+      <input type="text"
+        value={localVal}
+        onChange={e => { setLocalVal(e.target.value); onChangeARS(e.target.value); }}
+        placeholder="ej: 500.000"
+        style={{ border: '1.5px solid #00C896', borderRadius: 6, padding: '6px 8px', fontSize: 13, fontFamily: 'Inter, sans-serif', outline: 'none', fontWeight: 600, color: '#007A5A', width: '100%' }} />
+    );
+  }
+
   // Conversor USD ↔ ARS — sin estado propio, actualiza directamente el estado de precios
   function Conversor({ usdValue, onChangeUSD }) {
     const arsValue = dolar && usdValue ? Math.round(usdValue * dolar) : '';
@@ -67,11 +84,7 @@ export default function Precios() {
         <div style={{ color: '#9090B0', fontSize: 14, fontWeight: 700, paddingTop: 16 }}>⇄</div>
         <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
           <label style={{ fontSize: 9, fontWeight: 700, color: '#9090B0', letterSpacing: '.06em', textTransform: 'uppercase', marginBottom: 3 }}>$ ARS</label>
-          <input type="text"
-            value={arsValue !== '' ? Math.round(arsValue).toLocaleString('es-AR') : ''}
-            onChange={e => handleARS(e.target.value)}
-            placeholder="ej: 500.000"
-            style={{ border: '1.5px solid #00C896', borderRadius: 6, padding: '6px 8px', fontSize: 13, fontFamily: 'Inter, sans-serif', outline: 'none', fontWeight: 600, color: '#007A5A', width: '100%' }} />
+          <ARSInput arsValue={arsValue} onChangeARS={handleARS} />
         </div>
         <div style={{ fontSize: 9, color: '#9090B0', paddingTop: 16, whiteSpace: 'nowrap' }}>
           1 USD = ${dolar ? Math.round(dolar).toLocaleString('es-AR') : '...'}
@@ -150,13 +163,6 @@ export default function Precios() {
       <div className="precios-card">
         <div className="precios-title">⚙️ Configuración general</div>
         <div className="precios-grid">
-          <div className="precio-field">
-            <label>Km incluidos por movimiento</label>
-            <input type="number" min="0"
-              value={precios.kmMovIncluidos || 50}
-              onChange={e => setPrecios(prev => ({ ...prev, kmMovIncluidos: parseInt(e.target.value) }))}
-            />
-          </div>
           <div className="precio-field">
             <label>Km umbral viaje corto (valor base)</label>
             <input type="number" min="0"
