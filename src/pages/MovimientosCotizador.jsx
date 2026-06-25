@@ -4,6 +4,7 @@ import { formatARS, formatDate, getDiasServicio } from '../utils/calculos';
 import { useDisponibilidad } from '../hooks/useDisponibilidad';
 import { DATOS_BANCARIOS, WHATSAPP } from '../data/pagos';
 import { doc, onSnapshot } from 'firebase/firestore';
+import { guardarReserva } from '../firebase/reservasService';
 import { db } from '../firebase/config';
 import Calendario from '../components/Calendario';
 
@@ -169,7 +170,23 @@ export default function MovimientosCotizador({ onBack }) {
 
         {(payMethod === 'transferencia' || payMethod === 'efectivo') && (
           <button className="btn-primary green"
-            onClick={() => alert('¡Reserva recibida! Te contactamos a la brevedad para confirmar.')}>
+            onClick={async () => {
+              try {
+                await guardarReserva({
+                  tipo: 'movimientos-caba-gba',
+                  unidad: `${unidadSel?.tipo} · Int. ${unidadSel?.interno}`,
+                  fechaInicio: fechas.fechaInicio,
+                  fechaFin: fechas.fechaFin,
+                  dias,
+                  descripcion: descripcion || '',
+                  grandTotal: total,
+                  sena: montoAhora,
+                  saldo,
+                  payMethod,
+                });
+              } catch(e) { console.error('Error guardando reserva:', e); }
+              alert('¡Reserva recibida! Te contactamos a la brevedad para confirmar.');
+            }}>
             ✓ Confirmar reserva
           </button>
         )}
