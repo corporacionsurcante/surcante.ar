@@ -9,8 +9,22 @@ function isSameDay(a, b) {
 function isToday(d) { return isSameDay(d, new Date()); }
 function stripTime(d) { const r = new Date(d); r.setHours(0,0,0,0); return r; }
 
+// Fecha mínima permitida: hoy si son antes de las 18hs, mañana si son después
+function getFechaMinima() {
+  const now = new Date();
+  const horas = now.getHours();
+  // Si quedan menos de 6 horas para medianoche, el mínimo es mañana
+  if (horas >= 18) {
+    const manana = new Date(now);
+    manana.setDate(manana.getDate() + 1);
+    manana.setHours(0,0,0,0);
+    return manana;
+  }
+  return stripTime(now);
+}
+
 export default function Calendario({ onChange }) {
-  const today = stripTime(new Date());
+  const today = getFechaMinima();
   const [viewYear, setViewYear] = useState(today.getFullYear());
   const [viewMonth, setViewMonth] = useState(today.getMonth());
   const [inicio, setInicio] = useState(null);
