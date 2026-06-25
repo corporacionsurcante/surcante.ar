@@ -185,7 +185,7 @@ export default function DisponibilidadCotizador({ onBack }) {
     <div className="body">
       <div className="section-label">Fecha del servicio</div>
       <input type="date" value={fecha} onChange={e => setFecha(e.target.value)}
-        min={new Date().toISOString().split('T')[0]}
+        min={(() => { const now = new Date(); if (now.getHours() >= 18) { const m = new Date(now); m.setDate(m.getDate()+1); return m.toISOString().split('T')[0]; } return now.toISOString().split('T')[0]; })()}
         style={{ width: '100%', border: '1.5px solid var(--border)', borderRadius: 10, padding: '12px 14px', fontSize: 15, fontFamily: 'Inter, sans-serif', outline: 'none', marginBottom: 16 }} />
 
       <div className="section-label">Horas de servicio</div>
