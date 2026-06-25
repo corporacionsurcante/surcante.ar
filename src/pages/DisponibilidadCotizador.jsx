@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useDolar } from '../hooks/useDolar';
 import { formatARS } from '../utils/calculos';
 import { calcPrecioDisponibilidad } from '../data/receptivo';
+import { guardarReserva } from '../firebase/reservasService';
 import { useDisponibilidad } from '../hooks/useDisponibilidad';
 import { DATOS_BANCARIOS, WHATSAPP } from '../data/pagos';
 
@@ -162,7 +163,23 @@ export default function DisponibilidadCotizador({ onBack }) {
 
         {(payMethod === 'transferencia' || payMethod === 'efectivo') && (
           <button className="btn-primary green"
-            onClick={() => alert('¡Reserva recibida! Te contactamos a la brevedad para confirmar.')}>
+            onClick={async () => {
+              try {
+                await guardarReserva({
+                  tipo: 'disposicion',
+                  unidad: `${unidadSel?.tipo} · Int. ${unidadSel?.interno}`,
+                  fechaInicio: fecha,
+                  fechaFin: fecha,
+                  horas,
+                  descripcion: descripcion || '',
+                  grandTotal: total,
+                  sena: montoAhora,
+                  saldo,
+                  payMethod,
+                });
+              } catch(e) { console.error('Error guardando reserva:', e); }
+              alert('¡Reserva recibida! Te contactamos a la brevedad para confirmar.');
+            }}>
             ✓ Confirmar reserva
           </button>
         )}
