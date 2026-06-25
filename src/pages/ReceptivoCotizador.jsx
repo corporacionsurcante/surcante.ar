@@ -6,6 +6,7 @@ import { CITY_TOUR_USD, CIRCUITOS, TRANSFERS_AEROPUERTO } from '../data/receptiv
 import { suscribirPreciosCityTour, suscribirCircuitos, suscribirTransfers } from '../firebase/receptivoServices';
 import Calendario from '../components/Calendario';
 import { crearPreferenciaMercadoPago } from '../hooks/useMercadoPago';
+import { guardarReserva } from '../firebase/reservasService';
 
 const TIPO_UNIT = {
   'MIX 60':     { icon: '🚌', label: 'Omnibus doble piso / 60 but.' },
@@ -282,7 +283,23 @@ export default function ReceptivoCotizador({ onBack }) {
 
         {(payMethod === 'transferencia' || payMethod === 'efectivo') && (
           <button className="btn-primary green"
-            onClick={() => alert('¡Reserva recibida! Te contactamos a la brevedad para confirmar.')}>
+            onClick={async () => {
+              try {
+                await guardarReserva({
+                  tipo: 'receptivo',
+                  unidad: `${unidadSel?.tipo} · Int. ${unidadSel?.interno}`,
+                  fechaInicio: fechas.fechaInicio,
+                  fechaFin: fechas.fechaFin,
+                  dias,
+                  programa,
+                  grandTotal: total,
+                  sena: montoAhora,
+                  saldo: saldoPendiente,
+                  payMethod,
+                });
+              } catch(e) { console.error('Error guardando reserva:', e); }
+              alert('¡Reserva recibida! Te contactamos a la brevedad para confirmar.');
+            }}>
             ✓ Confirmar y reservar
           </button>
         )}
