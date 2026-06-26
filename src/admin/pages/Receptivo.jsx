@@ -24,6 +24,21 @@ export default function Receptivo() {
   const [saved, setSaved] = useState('');
   const [precioMovUSD, setPrecioMovUSD] = useState(650);
   const [savedMov, setSavedMov] = useState(false);
+  const [preciosDisp, setPreciosDisp] = useState({ hora: 150, p6h: 400, p12h: 1200, p24h: 1800 });
+  const [savedDisp, setSavedDisp] = useState(false);
+
+  useEffect(() => {
+    const unsub = onSnapshot(doc(db, 'config', 'disponibilidad_precios'), snap => {
+      if (snap.exists()) setPreciosDisp(prev => ({ ...prev, ...snap.data() }));
+    });
+    return unsub;
+  }, []);
+
+  async function saveDisponibilidad() {
+    await setDoc(doc(db, 'config', 'disponibilidad_precios'), preciosDisp);
+    setSavedDisp(true);
+    setTimeout(() => setSavedDisp(false), 2000);
+  }
   const { dolar } = useDolar();
 
   useEffect(() => {
@@ -128,6 +143,7 @@ export default function Receptivo() {
           { id: 'circuitos', label: '🎡 Circuitos' },
           { id: 'transfers', label: '✈️ Transfers' },
           { id: 'movimientos', label: '🚐 Movimientos CABA/GBA' },
+          { id: 'disponibilidad', label: '⏱️ A disposición' },
         ].map(t => (
           <button key={t.id} onClick={() => setTab(t.id)}
             style={{
@@ -230,6 +246,37 @@ export default function Receptivo() {
       )}
 
       {/* MOVIMIENTOS CABA/GBA */}
+      {tab === 'disponibilidad' && (
+        <div>
+          <div className="section-header">
+            <div className="section-title">Receptivo a disposición — Precios (USD)</div>
+          </div>
+          <div className="precios-card">
+            <div style={{ fontSize: 12, color: '#9090B0', marginBottom: 16, fontWeight: 500 }}>
+              Precios de los paquetes por horas. Se convierten a pesos con el dólar BNA al cotizar.
+            </div>
+            {[
+              { key: 'hora', label: 'Precio por hora (hasta 3hs)' },
+              { key: 'p6h', label: 'Paquete 6 horas' },
+              { key: 'p12h', label: 'Paquete 12 horas' },
+              { key: 'p24h', label: 'Paquete 24 horas' },
+            ].map(({ key, label }) => (
+              <div className="precio-field" key={key}>
+                <label>{label}</label>
+                <input type="number" step="1" min="0"
+                  value={preciosDisp[key] || ''}
+                  onChange={e => setPreciosDisp(prev => ({ ...prev, [key]: parseFloat(e.target.value) || 0 }))}
+                />
+                <ConversorUSD usdValue={preciosDisp[key]} dolar={dolar} onChangeUSD={v => setPreciosDisp(prev => ({ ...prev, [key]: v }))} />
+              </div>
+            ))}
+            <button className={`precios-save ${savedDisp ? 'saved' : ''}`} onClick={saveDisponibilidad}>
+              {savedDisp ? '✓ Guardado' : 'Guardar precios'}
+            </button>
+          </div>
+        </div>
+      )}
+
       {tab === 'movimientos' && (
         <div>
           <div className="section-header">
