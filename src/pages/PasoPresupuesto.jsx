@@ -52,9 +52,6 @@ export default function PasoPresupuesto({ reserva, onBack, onConfirm, isAdmin })
     }
   }
 
-  function handleConfirmarReserva() {
-    onConfirm({ grandTotal, sena: montoAhora, saldo, payMethod, porcentaje });
-  }
 
   function WhatsAppButtons({ sufijo }) {
     return (
