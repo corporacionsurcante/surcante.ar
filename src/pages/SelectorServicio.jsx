@@ -3,7 +3,7 @@ import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase/config';
 
 export default function SelectorServicio({ onSelect }) {
-  const [modulos, setModulos] = useState({ charter: true, disponibilidad: true, receptivo: true });
+  const [modulos, setModulos] = useState({ charter: true, movimientos: true, disponibilidad: true, receptivo: true });
 
   useEffect(() => {
     const unsub = onSnapshot(doc(db, 'config', 'modulos'), snap => {
