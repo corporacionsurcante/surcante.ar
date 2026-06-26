@@ -260,7 +260,7 @@ export default function DisponibilidadCotizador({ onBack }) {
       {/* Selector rápido */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 14 }}>
         {PAQUETES_RAPIDOS.map(p => {
-          const { precioUSD: pUSD } = calcPrecioLocal(p.horas, precios);
+          
           return (
             <div key={p.horas} onClick={() => setHoras(p.horas)}
               style={{
