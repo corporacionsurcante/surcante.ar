@@ -25,6 +25,25 @@ export default function MovimientosCotizador({ onBack }) {
   const [payMethod, setPayMethod] = useState('transferencia');
   const [descripcion, setDescripcion] = useState('');
   const [step, setStep] = useState(1);
+  const [modo, setModo] = useState('dia'); // 'dia' | 'horas'
+  const [horas, setHoras] = useState(3);
+  const [preciosMov, setPreciosMov] = useState({ hora: 150, p3h: 350, p6h: 600, p12h: 1000, p24h: 1600, diario: 650 });
+
+  useEffect(() => {
+    const unsub2 = onSnapshot(doc(db, 'config', 'mov_caba_precios'), snap => {
+      if (snap.exists()) setPreciosMov(prev => ({ ...prev, ...snap.data() }));
+    });
+    return unsub2;
+  }, []);
+
+  function calcPrecioHoras(h, p) {
+    if (h <= 0) return { precioUSD: 0, descripcion: '' };
+    if (h <= 2) return { precioUSD: h * p.hora, descripcion: `${h}h × USD ${p.hora}` };
+    if (h <= 3) return { precioUSD: p.p3h, descripcion: 'Pack 3 horas' };
+    if (h <= 6) return { precioUSD: p.p6h, descripcion: 'Pack 6 horas' };
+    if (h <= 12) return { precioUSD: p.p12h, descripcion: 'Pack 12 horas' };
+    return { precioUSD: p.p24h, descripcion: 'Pack 24 horas' };
+  }
   const [contacto, setContacto] = useState({ nombre: '', whatsapp: '' });
   const contactoValido = contacto.nombre.trim().length > 1 && contacto.whatsapp.trim().length >= 8;
 
@@ -39,8 +58,9 @@ export default function MovimientosCotizador({ onBack }) {
     return unsub;
   }, []);
 
-  const subtotalDia = precioUSD * (dolar || 0);
-  const subtotal = subtotalDia * dias;
+  const { precioUSD: precioHorasUSD, descripcion: descHoras } = calcPrecioHoras(horas, preciosMov);
+  const subtotalDia = modo === 'dia' ? precioUSD * (dolar || 0) : precioHorasUSD * (dolar || 0);
+  const subtotal = subtotalDia * (modo === 'dia' ? dias : 1);
   const iva = subtotal * 0.21;
   const total = subtotal + iva;
   const montoAhora = Math.round(total * (payMethod === 'mercadopago' || payMethod === 'tarjeta' ? 0.10 : 0.30));
@@ -67,7 +87,7 @@ export default function MovimientosCotizador({ onBack }) {
           <div className="presup-hero-label">Total del servicio</div>
           <div className="presup-hero-val">{loadingDolar ? 'Calculando...' : formatARS(total)}</div>
           <div className="presup-hero-sub">
-            {dias} día{dias > 1 ? 's' : ''} · {unidadSel?.tipo} · Impuestos incluidos
+            {modo === 'horas' ? `${horas}h · ` : `${dias} día${dias > 1 ? 's' : ''} · `}{unidadSel?.tipo} · Impuestos incluidos
           </div>
           {!loadingDolar && (
             <div className="sena-box">
@@ -91,7 +111,7 @@ export default function MovimientosCotizador({ onBack }) {
 
         <div className="section-label">Detalle del servicio</div>
         <div className="pcard">
-          <div className="prow hl"><span>🚐 Movimientos CABA / GBA</span><span>{formatARS(subtotal)}</span></div>
+          <div className="prow hl"><span>🚐 {modo === 'horas' ? descHoras : `Movimientos CABA / GBA · ${dias} día${dias > 1 ? 's' : ''}`}</span><span>{formatARS(subtotal)}</span></div>
           <div className="prow"><span>Unidad</span><span>{unidadSel?.tipo} · Int. {unidadSel?.interno} · {unidadSel?.patente}</span></div>
           <div className="prow"><span>Fechas</span><span>{formatDate(fechas.fechaInicio)}{dias > 1 ? ` → ${formatDate(fechas.fechaFin)}` : ''}</span></div>
           {descripcion && <div className="prow"><span>Descripción</span><span>{descripcion}</span></div>}
@@ -228,6 +248,42 @@ export default function MovimientosCotizador({ onBack }) {
   // PASO 1 — Selector
   return (
     <div className="body">
+      <div className="section-label">Tipo de contratación</div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16 }}>
+        {[
+          { id: 'dia', label: '📅 Por día', desc: 'Tarifa diaria completa' },
+          { id: 'horas', label: '⏱️ Por horas', desc: 'Packs de 3, 6, 12 o 24hs' },
+        ].map(m => (
+          <div key={m.id} onClick={() => setModo(m.id)}
+            style={{ border: `1.5px solid ${modo === m.id ? 'var(--sp)' : 'var(--border)'}`, borderRadius: 12, padding: '12px 14px', cursor: 'pointer', background: modo === m.id ? 'var(--spl)' : 'var(--bg)', textAlign: 'center' }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: modo === m.id ? 'var(--spd)' : 'var(--text)' }}>{m.label}</div>
+            <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 3 }}>{m.desc}</div>
+          </div>
+        ))}
+      </div>
+
+      {modo === 'horas' && (
+        <div style={{ marginBottom: 16 }}>
+          <div className="section-label">Horas de servicio</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 10 }}>
+            {[
+              { h: 3, label: '3 hs', key: 'p3h' },
+              { h: 6, label: '6 hs', key: 'p6h' },
+              { h: 8, label: '8 hs', key: 'p6h' },
+              { h: 12, label: '12 hs', key: 'p12h' },
+              { h: 16, label: '16 hs', key: 'p24h' },
+              { h: 24, label: '24 hs', key: 'p24h' },
+            ].map(p => (
+              <div key={p.h} onClick={() => setHoras(p.h)}
+                style={{ border: `1.5px solid ${horas === p.h ? 'var(--sp)' : 'var(--border)'}`, borderRadius: 10, padding: '10px 8px', cursor: 'pointer', textAlign: 'center', background: horas === p.h ? 'var(--spl)' : 'var(--bg)' }}>
+                <div style={{ fontSize: 15, fontWeight: 800, color: horas === p.h ? 'var(--spd)' : 'var(--text)' }}>{p.label}</div>
+                <div style={{ fontSize: 11, color: horas === p.h ? 'var(--sp)' : 'var(--text-3)', fontWeight: 600 }}>USD {calcPrecioHoras(p.h, preciosMov).precioUSD}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="section-label">Fechas del servicio</div>
       <Calendario onChange={f => setFechas({ ...f, dias: f.mismodia ? 1 : getDiasServicio(f.fechaInicio, f.fechaFin) })} />
 
