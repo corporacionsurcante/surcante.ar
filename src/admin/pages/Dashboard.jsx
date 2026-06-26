@@ -87,9 +87,9 @@ export default function Dashboard() {
             <thead>
               <tr>
                 <th>N° Reserva</th>
-                <th>Origen → Destino</th>
-                <th>Fecha salida</th>
-                <th>Unidades</th>
+                <th>Servicio</th>
+                <th>Cliente</th>
+                <th>Fecha</th>
                 <th>Total</th>
                 <th>Estado</th>
               </tr>
@@ -109,7 +109,7 @@ export default function Dashboard() {
                     {r.origen ? `${r.origen} → ${r.destino}` : r.descripcion || r.unidad || '—'}
                   </td>
                   <td>{r.fechaInicio || '—'}</td>
-                  <td>{r.flotaUnidades?.length || 1} unidad{r.flotaUnidades?.length !== 1 ? 'es' : ''}</td>
+                  <td>{r.clienteNombre || '—'}{r.clienteWhatsapp ? ` · ${r.clienteWhatsapp}` : ''}</td>
                   <td style={{ fontWeight: 700 }}>{formatARS(r.grandTotal || 0)}</td>
                   <td>{estadoBadge(r.estado)}</td>
                 </tr>
