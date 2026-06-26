@@ -15,9 +15,9 @@ const TIPO_UNIT = {
 };
 
 const PAQUETES_RAPIDOS = [
-  { horas: 3, label: '3 hs' },
-  { horas: 6, label: '6 hs' },
-  { horas: 8, label: '8 hs' },
+  { horas: 3,  label: '3 hs' },
+  { horas: 6,  label: '6 hs' },
+  { horas: 8,  label: '8 hs' },
   { horas: 12, label: '12 hs' },
   { horas: 15, label: '15 hs' },
   { horas: 24, label: '24 hs' },
@@ -28,11 +28,16 @@ const PRECIOS_DEFAULT = { hora: 150, p6h: 400, p12h: 1200, p24h: 1800 };
 
 function calcPrecioLocal(horas, precios) {
   const { hora, p6h, p12h, p24h } = precios;
-  if (horas <= 0) return { precioUSD: 0, descripcion: '' };
-  if (horas <= 3) return { precioUSD: horas * hora, descripcion: `${horas} hora${horas > 1 ? 's' : ''} × USD ${hora}` };
+  if (horas < 3) return { precioUSD: 0, descripcion: 'Mínimo 3 horas' };
+  // 3hs → se cobra por hora (3 × precio/hora)
+  if (horas === 3) return { precioUSD: 3 * hora, descripcion: `3 horas × USD ${hora}` };
+  // 4-6hs → paquete 6hs
   if (horas <= 6) return { precioUSD: p6h, descripcion: 'Paquete 6 horas' };
+  // 7-12hs → paquete 12hs
   if (horas <= 12) return { precioUSD: p12h, descripcion: 'Paquete 12 horas' };
+  // 13-15hs → paquete 12hs + horas extra
   if (horas <= 15) { const extra = horas - 12; return { precioUSD: p12h + extra * hora, descripcion: `Paquete 12hs + ${extra}h extra × USD ${hora}` }; }
+  // 16-24hs → paquete 24hs
   return { precioUSD: p24h, descripcion: 'Paquete 24 horas' };
 }
 
@@ -47,7 +52,7 @@ export default function DisponibilidadCotizador({ onBack }) {
     return unsub;
   }, []);
   const [fecha, setFecha] = useState('');
-  const [horas, setHoras] = useState(6);
+  const [horas, setHoras] = useState(3);
   const [unidadSel, setUnidadSel] = useState(null);
   const [payMethod, setPayMethod] = useState('transferencia');
   const [step, setStep] = useState(1);
@@ -273,11 +278,11 @@ export default function DisponibilidadCotizador({ onBack }) {
       {/* Slider fino */}
       <div style={{ marginBottom: 16 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--text-3)', marginBottom: 6 }}>
-          <span>1 hora</span>
+          <span>3 horas</span>
           <span style={{ fontWeight: 700, color: 'var(--sp)', fontSize: 14 }}>{horas} hora{horas !== 1 ? 's' : ''}</span>
           <span>24 horas</span>
         </div>
-        <input type="range" min={1} max={24} value={horas} onChange={e => setHoras(parseInt(e.target.value))}
+        <input type="range" min={3} max={24} value={horas} onChange={e => setHoras(parseInt(e.target.value))}
           style={{ width: '100%', accentColor: 'var(--sp)' }} />
         <div style={{ marginTop: 8, padding: '8px 12px', background: 'var(--spl)', borderRadius: 8, fontSize: 12, color: 'var(--spd)', fontWeight: 600, textAlign: 'center' }}>
           {descripcion} · {formatARS(dolar ? subtotal : 0)} {dolar ? '(sin impuestos)' : ''}
