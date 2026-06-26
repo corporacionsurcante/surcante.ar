@@ -4,14 +4,17 @@ import { crearReserva } from '../firebase/services';
 
 export default function Confirmacion({ reserva, pago, onNueva }) {
   const { origen, destino, fechaInicio, fechaFin, dias, flotaUnidades, kmTotal } = reserva;
-  const { grandTotal, sena, saldo, payMethod } = pago;
+  const { grandTotal, sena, saldo, payMethod, clienteNombre, clienteWhatsapp } = pago;
   const [numReserva, setNumReserva] = useState('');
 
   useEffect(() => {
     crearReserva({
+      tipo: 'charter',
       origen, destino, fechaInicio, fechaFin, dias, kmTotal,
       flotaUnidades: flotaUnidades.map(u => ({ id: u.id, label: u.label, tipo: u.tid })),
       grandTotal, sena, saldo, payMethod,
+      clienteNombre: clienteNombre || '',
+      clienteWhatsapp: clienteWhatsapp || '',
     }).then(ref => {
       setNumReserva('SRC-' + ref.id.slice(-6).toUpperCase());
     }).catch(() => {
@@ -24,7 +27,7 @@ export default function Confirmacion({ reserva, pago, onNueva }) {
       <div className="confirm-icon">✅</div>
       <div className="confirm-title">¡Reserva confirmada!</div>
       <div className="confirm-sub">
-        En breve recibís todos los detalles por WhatsApp.
+        {clienteNombre ? `¡Gracias, ${clienteNombre}! ` : ''}En breve te contactamos por WhatsApp.
       </div>
 
       {numReserva && (
