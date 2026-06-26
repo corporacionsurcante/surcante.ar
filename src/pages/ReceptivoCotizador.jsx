@@ -28,6 +28,8 @@ export default function ReceptivoCotizador({ onBack }) {
   const [payMethod, setPayMethod] = useState('transferencia');
   const [loadingMP, setLoadingMP] = useState(false);
   const [errorMP, setErrorMP] = useState('');
+  const [contacto, setContacto] = useState({ nombre: '', whatsapp: '' });
+  const contactoValido = contacto.nombre.trim().length > 1 && contacto.whatsapp.trim().length >= 8;
 
   useEffect(() => {
     const u1 = suscribirPreciosCityTour(setCityTourPrecios);
@@ -281,12 +283,33 @@ export default function ReceptivoCotizador({ onBack }) {
           </div>
         )}
 
+
+        <div className="section-label">Tus datos de contacto</div>
+        <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 12, padding: 14, marginBottom: 14 }}>
+          <div style={{ marginBottom: 10 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-3)', letterSpacing: '.06em', textTransform: 'uppercase', marginBottom: 5 }}>Nombre completo</div>
+            <input type="text" placeholder="ej: Juan García"
+              value={contacto.nombre}
+              onChange={e => setContacto(c => ({ ...c, nombre: e.target.value }))}
+              style={{ width: '100%', border: '1.5px solid var(--border)', borderRadius: 8, padding: '10px 12px', fontSize: 14, fontFamily: 'Inter, sans-serif', outline: 'none' }} />
+          </div>
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-3)', letterSpacing: '.06em', textTransform: 'uppercase', marginBottom: 5 }}>WhatsApp</div>
+            <input type="tel" placeholder="ej: 11 1234 5678"
+              value={contacto.whatsapp}
+              onChange={e => setContacto(c => ({ ...c, whatsapp: e.target.value }))}
+              style={{ width: '100%', border: '1.5px solid var(--border)', borderRadius: 8, padding: '10px 12px', fontSize: 14, fontFamily: 'Inter, sans-serif', outline: 'none' }} />
+          </div>
+        </div>
         {(payMethod === 'transferencia' || payMethod === 'efectivo') && (
           <button className="btn-primary green"
+            disabled={!contactoValido}
             onClick={async () => {
               try {
                 await guardarReserva({
                   tipo: 'receptivo',
+                  clienteNombre: contacto.nombre,
+                  clienteWhatsapp: contacto.whatsapp,
                   unidad: `${unidadSel?.tipo} · Int. ${unidadSel?.interno}`,
                   fechaInicio: fechas.fechaInicio,
                   fechaFin: fechas.fechaFin,
