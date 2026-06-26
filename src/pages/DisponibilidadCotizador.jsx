@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useDolar } from '../hooks/useDolar';
 import { formatARS } from '../utils/calculos';
-import { calcPrecioDisponibilidad } from '../data/receptivo';
 import { guardarReserva } from '../firebase/reservasService';
+import { doc, onSnapshot } from 'firebase/firestore';
+import { db } from '../firebase/config';
 import { useDisponibilidad } from '../hooks/useDisponibilidad';
 import { DATOS_BANCARIOS, WHATSAPP } from '../data/pagos';
 
@@ -22,8 +23,29 @@ const PAQUETES_RAPIDOS = [
   { horas: 24, label: '24 hs' },
 ];
 
+// Precios por defecto (se sobreescriben desde Firebase)
+const PRECIOS_DEFAULT = { hora: 150, p6h: 400, p12h: 1200, p24h: 1800 };
+
+function calcPrecioLocal(horas, precios) {
+  const { hora, p6h, p12h, p24h } = precios;
+  if (horas <= 0) return { precioUSD: 0, descripcion: '' };
+  if (horas <= 3) return { precioUSD: horas * hora, descripcion: `${horas} hora${horas > 1 ? 's' : ''} × USD ${hora}` };
+  if (horas <= 6) return { precioUSD: p6h, descripcion: 'Paquete 6 horas' };
+  if (horas <= 12) return { precioUSD: p12h, descripcion: 'Paquete 12 horas' };
+  if (horas <= 15) { const extra = horas - 12; return { precioUSD: p12h + extra * hora, descripcion: `Paquete 12hs + ${extra}h extra × USD ${hora}` }; }
+  return { precioUSD: p24h, descripcion: 'Paquete 24 horas' };
+}
+
 export default function DisponibilidadCotizador({ onBack }) {
   const { dolar, loading: loadingDolar } = useDolar();
+  const [precios, setPrecios] = useState(PRECIOS_DEFAULT);
+
+  useEffect(() => {
+    const unsub = onSnapshot(doc(db, 'config', 'disponibilidad_precios'), snap => {
+      if (snap.exists()) setPrecios({ ...PRECIOS_DEFAULT, ...snap.data() });
+    });
+    return unsub;
+  }, []);
   const [fecha, setFecha] = useState('');
   const [horas, setHoras] = useState(6);
   const [unidadSel, setUnidadSel] = useState(null);
@@ -34,7 +56,7 @@ export default function DisponibilidadCotizador({ onBack }) {
 
   const { disponibilidad, loading: loadingDisp } = useDisponibilidad(fecha, fecha);
 
-  const { precioUSD, descripcion } = calcPrecioDisponibilidad(horas);
+  const { precioUSD, descripcion } = calcPrecioLocal(horas, precios);
   const subtotal = precioUSD * (dolar || 0);
   const iva = subtotal * 0.21;
   const total = subtotal + iva;
@@ -233,7 +255,7 @@ export default function DisponibilidadCotizador({ onBack }) {
       {/* Selector rápido */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 14 }}>
         {PAQUETES_RAPIDOS.map(p => {
-          const { precioUSD: pUSD } = calcPrecioDisponibilidad(p.horas);
+          const { precioUSD: pUSD } = calcPrecioLocal(p.horas, precios);
           return (
             <div key={p.horas} onClick={() => setHoras(p.horas)}
               style={{
@@ -242,7 +264,7 @@ export default function DisponibilidadCotizador({ onBack }) {
                 background: horas === p.horas ? 'var(--spl)' : 'var(--bg)',
               }}>
               <div style={{ fontSize: 15, fontWeight: 800, color: horas === p.horas ? 'var(--spd)' : 'var(--text)' }}>{p.label}</div>
-              <div style={{ fontSize: 11, color: horas === p.horas ? 'var(--sp)' : 'var(--text-3)', fontWeight: 600 }}>USD {pUSD}</div>
+              <div style={{ fontSize: 11, color: horas === p.horas ? 'var(--sp)' : 'var(--text-3)', fontWeight: 600 }}>USD {calcPrecioLocal(p.horas, precios).precioUSD}</div>
             </div>
           );
         })}
