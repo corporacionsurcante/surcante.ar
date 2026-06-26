@@ -87,7 +87,10 @@ export default function Reservas() {
                   <td style={{ fontFamily: 'monospace', color: '#7B2FBE', fontWeight: 700 }}>
                     SRC-{r.id.slice(-6).toUpperCase()}
                   </td>
-                  <td>{r.clienteNombre || '—'}</td>
+                  <td>
+                    <div style={{ fontWeight: 600 }}>{r.clienteNombre || '—'}</div>
+                    {r.clienteWhatsapp && <div style={{ fontSize: 11, color: '#9090B0' }}>📱 {r.clienteWhatsapp}</div>}
+                  </td>
                   <td style={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {r.origen} → {r.destino}
                   </td>
