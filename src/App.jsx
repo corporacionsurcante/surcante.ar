@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Topbar from './components/Topbar';
 import Steps from './components/Steps';
 import SelectorServicio from './pages/SelectorServicio';
@@ -10,17 +10,16 @@ import ReceptivoCotizador from './pages/ReceptivoCotizador';
 import DisponibilidadCotizador from './pages/DisponibilidadCotizador';
 import MovimientosCotizador from './pages/MovimientosCotizador';
 import AdminApp from './admin/pages/AdminApp';
-import { useState as useAuthState, useEffect as useAuthEffect } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from './firebase/config';
 import { isAdminAutorizado } from './firebase/services';
 import './index.css';
 
 function CotizadorApp() {
-  const [isAdmin, setIsAdmin] = useAuthState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [tipoServicio, setTipoServicio] = useState(null);
 
-  useAuthEffect(() => {
+  useEffect(() => {
     const unsub = onAuthStateChanged(auth, async u => {
       if (u) {
         const ok = await isAdminAutorizado(u.email);
