@@ -71,7 +71,7 @@ export default function DisponibilidadCotizador({ onBack }) {
       `Hola ${nombre}! Quiero reservar un servicio a disposición con Surcante.\n\n` +
       `📅 Fecha: ${fecha}\n` +
       `⏱️ Duración: ${horas} horas (${descripcion})\n` +
-      `🚌 Unidad: ${unidadSel?.tipo} · Int. ${unidadSel?.interno}\n` +
+      `🚌 Unidad: ${unidadSel?.tipo} · INTERNO ${unidadSel?.interno}\n` +
       `💰 Total: ${formatARS(total)}\n` +
       `💳 Método: ${payMethod}\n` +
       `✅ Pago ahora: ${formatARS(montoAhora)}`
@@ -111,7 +111,7 @@ export default function DisponibilidadCotizador({ onBack }) {
         <div className="section-label">Detalle del servicio</div>
         <div className="pcard">
           <div className="prow hl"><span>⏱️ {descripcion}</span><span>{formatARS(subtotal)}</span></div>
-          <div className="prow"><span>Unidad</span><span>{unidadSel?.tipo} · Int. {unidadSel?.interno} · {unidadSel?.patente}</span></div>
+          <div className="prow"><span>Unidad</span><span>{unidadSel?.tipo} · INTERNO {unidadSel?.interno} · {unidadSel?.patente}</span></div>
           <div className="prow"><span>Fecha</span><span>{fecha}</span></div>
           <div className="prow sub"><span>Con impuestos</span><span>{formatARS(iva)}</span></div>
           <div className="prow total"><span>Total</span><span>{formatARS(total)}</span></div>
@@ -215,7 +215,7 @@ export default function DisponibilidadCotizador({ onBack }) {
                   tipo: 'disposicion',
                   clienteNombre: contacto.nombre,
                   clienteWhatsapp: contacto.whatsapp,
-                  unidad: `${unidadSel?.tipo} · Int. ${unidadSel?.interno}`,
+                  unidad: `${unidadSel?.tipo} · INTERNO ${unidadSel?.interno}`,
                   fechaInicio: fecha,
                   fechaFin: fecha,
                   horas,
@@ -305,7 +305,7 @@ export default function DisponibilidadCotizador({ onBack }) {
             <div className="unit-card-header">
               <div className="unit-ico">{tipoInfo.icon}</div>
               <div className="unit-info">
-                <div className="unit-name">Int. {u.interno} · {u.patente}</div>
+                <div className="unit-name">INTERNO {u.interno} · {u.patente}</div>
                 <div className="unit-detail">{u.butacas} butacas · {tipoInfo.label}</div>
               </div>
               <span className={`badge ${!fecha ? 'badge-avail' : disponible ? 'badge-avail' : 'badge-unavail'}`}>
