@@ -17,14 +17,12 @@ const TIPO_UNIT = {
 const PAQUETES_RAPIDOS = [
   { horas: 3,  label: '3 hs' },
   { horas: 6,  label: '6 hs' },
-  { horas: 8,  label: '8 hs' },
   { horas: 12, label: '12 hs' },
-  { horas: 15, label: '15 hs' },
   { horas: 24, label: '24 hs' },
 ];
 
 // Precios por defecto (se sobreescriben desde Firebase)
-const PRECIOS_DEFAULT = { hora: 150, p6h: 400, p12h: 1200, p24h: 1800 };
+const PRECIOS_DEFAULT = { hora: 150, p6h: 650, p12h: 1200, p24h: 1800 };
 
 function calcPrecioLocal(horas, precios) {
   const { hora, p6h, p12h, p24h } = precios;
