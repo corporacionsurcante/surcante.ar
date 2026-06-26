@@ -69,7 +69,7 @@ export default function PasoFlota({ onNext }) {
             seats: u.butacas,
             tipoNombre: u.tipo,
           },
-          label: `Int. ${u.interno} · ${u.patente}${cant > 1 ? ` #${i+1}` : ''}`,
+          label: `INTERNO ${u.interno} · ${u.patente}${cant > 1 ? ` #${i+1}` : ''}`,
           unidadId: u.id,
         });
       }
@@ -136,8 +136,8 @@ export default function PasoFlota({ onNext }) {
                 <div className="unit-card-header">
                   <div className="unit-ico">{u.butacas >= 45 ? '🚌' : '🚐'}</div>
                   <div className="unit-info">
-                    <div className="unit-name">Int. {u.interno} · {u.patente}</div>
-                    <div className="unit-detail">{u.butacas} butacas · {u.empresa}</div>
+                    <div className="unit-name">INTERNO {u.interno} · {u.patente}</div>
+                    <div className="unit-detail">{u.butacas} butacas · {u.empresa?.toUpperCase()}</div>
                   </div>
                   <span className={`badge ${!fechas.fechaInicio ? 'badge-avail' : disponible ? 'badge-avail' : 'badge-unavail'}`}>
                     {!fechas.fechaInicio ? 'Seleccioná fechas' : disponible ? 'Disponible' : 'Ocupado'}
