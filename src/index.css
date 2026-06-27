@@ -116,7 +116,7 @@ html, body, #root {
 
 /* Fondo de pantalla completa */
 html {
-  background-image: url('/bg-surcante.jpg');
+  background-image: url('%PUBLIC_URL%/bg-surcante.jpg');
   background-size: cover;
   background-position: center center;
   background-attachment: fixed;
