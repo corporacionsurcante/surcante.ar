@@ -14,6 +14,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from './firebase/config';
 import { isAdminAutorizado } from './firebase/services';
 import './index.css';
+import FooterLegal from './components/FooterLegal';
 
 function CotizadorApp() {
   const [isAdmin, setIsAdmin] = useState(false);
@@ -86,6 +87,7 @@ function CotizadorApp() {
     <div className="app-shell">
       <Topbar />
       <SelectorServicio onSelect={setTipoServicio} />
+      <FooterLegal />
     </div>
   );
 }
