@@ -15,6 +15,7 @@ import { auth } from './firebase/config';
 import { isAdminAutorizado } from './firebase/services';
 import './index.css';
 import FooterLegal from './components/FooterLegal';
+import bgImage from './assets/bg-surcante.jpg';
 
 function CotizadorApp() {
   const [isAdmin, setIsAdmin] = useState(false);
@@ -43,52 +44,73 @@ function CotizadorApp() {
   // Receptivo tiene su propio flujo completo
   if (tipoServicio === 'movimientos') {
     return (
-      <div className="app-shell">
-        <Topbar onHome={() => setTipoServicio(null)} />
-        <MovimientosCotizador onBack={() => setTipoServicio(null)} />
-      </div>
+      <>
+        <BgOverlay />
+        <div className="app-shell">
+          <Topbar onHome={() => setTipoServicio(null)} />
+          <MovimientosCotizador onBack={() => setTipoServicio(null)} />
+        </div>
+      </>
     );
   }
 
   if (tipoServicio === 'disponibilidad') {
     return (
-      <div className="app-shell">
-        <Topbar onHome={() => setTipoServicio(null)} />
-        <DisponibilidadCotizador onBack={() => setTipoServicio(null)} />
-      </div>
+      <>
+        <BgOverlay />
+        <div className="app-shell">
+          <Topbar onHome={() => setTipoServicio(null)} />
+          <DisponibilidadCotizador onBack={() => setTipoServicio(null)} />
+        </div>
+      </>
     );
   }
 
   if (tipoServicio === 'receptivo') {
     return (
-      <div className="app-shell">
-        <Topbar onHome={() => setTipoServicio(null)} />
-        <ReceptivoCotizador onBack={() => setTipoServicio(null)} />
-      </div>
+      <>
+        <BgOverlay />
+        <div className="app-shell">
+          <Topbar onHome={() => setTipoServicio(null)} />
+          <ReceptivoCotizador onBack={() => setTipoServicio(null)} />
+        </div>
+      </>
     );
   }
 
   // Charter — flujo existente
   if (tipoServicio === 'charter') {
     return (
-      <div className="app-shell">
-        <Topbar onHome={() => { setTipoServicio(null); setStep(1); setReserva(null); }} />
-        {step < 4 && <Steps current={step} />}
-        {step === 1 && <PasoFlota onNext={handleFlotaDone} />}
-        {step === 2 && <PasoRecorrido reserva={reserva} onNext={handleRecorridoDone} onBack={() => setStep(1)} />}
-        {step === 3 && <PasoPresupuesto reserva={reserva} onBack={() => setStep(2)} onConfirm={handleConfirm} isAdmin={isAdmin} />}
-        {step === 4 && <Confirmacion reserva={reserva} pago={pago} onNueva={handleNueva} />}
-      </div>
+      <>
+        <BgOverlay />
+        <div className="app-shell">
+          <Topbar onHome={() => { setTipoServicio(null); setStep(1); setReserva(null); }} />
+          {step < 4 && <Steps current={step} />}
+          {step === 1 && <PasoFlota onNext={handleFlotaDone} />}
+          {step === 2 && <PasoRecorrido reserva={reserva} onNext={handleRecorridoDone} onBack={() => setStep(1)} />}
+          {step === 3 && <PasoPresupuesto reserva={reserva} onBack={() => setStep(2)} onConfirm={handleConfirm} isAdmin={isAdmin} />}
+          {step === 4 && <Confirmacion reserva={reserva} pago={pago} onNueva={handleNueva} />}
+        </div>
+      </>
     );
   }
 
   // Pantalla inicial — selector de servicio
   return (
-    <div className="app-shell">
-      <Topbar />
-      <SelectorServicio onSelect={setTipoServicio} />
-      <FooterLegal />
-    </div>
+    <>
+      <BgOverlay />
+      <div className="app-shell">
+        <Topbar />
+        <SelectorServicio onSelect={setTipoServicio} />
+        <FooterLegal />
+      </div>
+    </>
+  );
+}
+
+function BgOverlay() {
+  return (
+    <div id="bg-overlay" style={{ backgroundImage: `url(${bgImage})` }} />
   );
 }
 
