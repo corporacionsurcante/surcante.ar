@@ -2,19 +2,26 @@ import React, { useEffect, useState } from 'react';
 import { formatARS, formatDate } from '../utils/calculos';
 import { crearReserva } from '../firebase/services';
 
+function generarNroCotizacion() {
+  const fecha = new Date();
+  const yy = String(fecha.getFullYear()).slice(-2);
+  const mm = String(fecha.getMonth() + 1).padStart(2, '0');
+  const dd = String(fecha.getDate()).padStart(2, '0');
+  const rand = Math.floor(Math.random() * 9000) + 1000;
+  return `SRC-${yy}${mm}${dd}-${rand}`;
+}
+
 export default function Confirmacion({ reserva, pago, onNueva }) {
+  const [nroCotizacion] = React.useState(generarNroCotizacion);
   const { origen, destino, fechaInicio, fechaFin, dias, flotaUnidades, kmTotal } = reserva;
-  const { grandTotal, sena, saldo, payMethod, clienteNombre, clienteWhatsapp } = pago;
+  const { grandTotal, sena, saldo, payMethod } = pago;
   const [numReserva, setNumReserva] = useState('');
 
   useEffect(() => {
     crearReserva({
-      tipo: 'charter',
       origen, destino, fechaInicio, fechaFin, dias, kmTotal,
       flotaUnidades: flotaUnidades.map(u => ({ id: u.id, label: u.label, tipo: u.tid })),
       grandTotal, sena, saldo, payMethod,
-      clienteNombre: clienteNombre || '',
-      clienteWhatsapp: clienteWhatsapp || '',
     }).then(ref => {
       setNumReserva('SRC-' + ref.id.slice(-6).toUpperCase());
     }).catch(() => {
@@ -25,9 +32,14 @@ export default function Confirmacion({ reserva, pago, onNueva }) {
   return (
     <div className="confirm-page">
       <div className="confirm-icon">✅</div>
+      <div style={{ background: '#F4F2FA', borderRadius: 10, padding: '10px 16px', marginBottom: 12, textAlign: 'center' }}>
+        <div style={{ fontSize: 11, color: '#9090B0', fontWeight: 600, letterSpacing: '.08em', textTransform: 'uppercase' }}>Número de cotización</div>
+        <div style={{ fontSize: 20, fontWeight: 800, color: '#7B2FBE', letterSpacing: '.05em' }}>{nroCotizacion}</div>
+        <div style={{ fontSize: 11, color: '#9090B0', marginTop: 3 }}>Guardá este número para consultas</div>
+      </div>
       <div className="confirm-title">¡Reserva confirmada!</div>
       <div className="confirm-sub">
-        {clienteNombre ? `¡Gracias, ${clienteNombre}! ` : ''}En breve te contactamos por WhatsApp.
+        En breve recibís todos los detalles por WhatsApp.
       </div>
 
       {numReserva && (
