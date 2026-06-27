@@ -49,7 +49,9 @@ html, body, #root {
   background: var(--bg);
   display: flex;
   flex-direction: column;
-  box-shadow: 0 0 40px rgba(123,47,190,0.08);
+  box-shadow: 0 0 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(123,47,190,0.15);
+  position: relative;
+  z-index: 1;
 }
 
 /* ---- Topbar ---- */
@@ -111,6 +113,23 @@ html, body, #root {
 
 /* ---- Body ---- */
 .body { padding: 20px; flex: 1; overflow-y: auto; }
+
+/* Fondo de pantalla completa */
+html {
+  background-image: url('/bg-surcante.jpg');
+  background-size: cover;
+  background-position: center center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+}
+html::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 10, 20, 0.55);
+  z-index: 0;
+  pointer-events: none;
+}
 .section-label {
   font-size: 10px; font-weight: 700; color: var(--text-3);
   letter-spacing: .1em; text-transform: uppercase; margin-bottom: 10px;
