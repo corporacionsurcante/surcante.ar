@@ -114,21 +114,25 @@ html, body, #root {
 /* ---- Body ---- */
 .body { padding: 20px; flex: 1; overflow-y: auto; }
 
-/* Fondo de pantalla completa */
+/* Fondo de pantalla completa — imagen cargada desde App.jsx */
 html {
-  background-image: url('%PUBLIC_URL%/bg-surcante.jpg');
+  background-color: #0A0A0F;
+}
+#bg-overlay {
+  position: fixed;
+  inset: 0;
   background-size: cover;
   background-position: center center;
   background-attachment: fixed;
   background-repeat: no-repeat;
-}
-html::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background: rgba(10, 10, 20, 0.55);
   z-index: 0;
   pointer-events: none;
+}
+#bg-overlay::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(10, 10, 20, 0.55);
 }
 .section-label {
   font-size: 10px; font-weight: 700; color: var(--text-3);
