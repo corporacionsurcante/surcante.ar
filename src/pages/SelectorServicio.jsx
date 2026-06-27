@@ -73,7 +73,7 @@ export default function SelectorServicio({ onSelect }) {
           La unidad queda a tu disposición por el tiempo que necesitás. Sin preocuparte por la distancia.
         </div>
         <div style={{ display: 'flex', gap: 6, marginTop: 10, flexWrap: 'wrap' }}>
-          {['6 horas · USD 400', '12 horas · USD 1.200', '24 horas · USD 1.800', 'Fracciones por hora'].map(d => (
+          {['3 horas mín.', '6 horas · USD 650', '12 horas · USD 1.200', '24 horas · USD 1.800'].map(d => (
             <span key={d} style={{ background: '#FFF8E6', border: '1px solid #FFD166', borderRadius: 20, padding: '3px 10px', fontSize: 11, color: '#7A5200', fontWeight: 500 }}>{d}</span>
           ))}
         </div>
