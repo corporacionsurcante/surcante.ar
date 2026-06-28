@@ -46,10 +46,12 @@ html, body, #root {
   min-height: 100vh;
   max-width: 430px;
   margin: 0 auto;
-  background: var(--bg);
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   display: flex;
   flex-direction: column;
-  box-shadow: 0 0 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(123,47,190,0.15);
+  box-shadow: 0 0 60px rgba(0,0,0,0.4), 0 0 0 1px rgba(123,47,190,0.2);
   position: relative;
   z-index: 1;
 }
@@ -121,7 +123,7 @@ html {
 #bg-overlay {
   position: fixed;
   inset: 0;
-  background-size: 75%;
+  background-size: cover;
   background-position: center center;
   background-attachment: fixed;
   background-repeat: no-repeat;
@@ -132,7 +134,7 @@ html {
   content: '';
   position: absolute;
   inset: 0;
-  background: rgba(10, 10, 20, 0.55);
+  background: rgba(10, 10, 20, 0.35);
 }
 .section-label {
   font-size: 10px; font-weight: 700; color: var(--text-3);
