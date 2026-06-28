@@ -121,7 +121,7 @@ html {
 #bg-overlay {
   position: fixed;
   inset: 0;
-  background-size: cover;
+  background-size: 75%;
   background-position: center center;
   background-attachment: fixed;
   background-repeat: no-repeat;
