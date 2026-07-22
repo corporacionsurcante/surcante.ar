@@ -13,13 +13,17 @@ function generarNroCotizacion() {
 
 export default function Confirmacion({ reserva, pago, onNueva }) {
   const [nroCotizacion] = React.useState(generarNroCotizacion);
-  const { origen, destino, fechaInicio, fechaFin, dias, flotaUnidades, kmTotal } = reserva;
-  const { grandTotal, sena, saldo, payMethod } = pago;
+  const { origen, destino, fechaInicio, fechaFin, dias, flotaUnidades, kmTotal, puntosCarga } = reserva;
+  const { grandTotal, sena, saldo, payMethod, clienteNombre, clienteWhatsapp } = pago;
   const [numReserva, setNumReserva] = useState('');
 
   useEffect(() => {
     crearReserva({
+      tipo: 'charter',
       origen, destino, fechaInicio, fechaFin, dias, kmTotal,
+      puntosCarga: puntosCarga || [],
+      clienteNombre: clienteNombre || '',
+      clienteWhatsapp: clienteWhatsapp || '',
       flotaUnidades: flotaUnidades.map(u => ({ id: u.id, label: u.label, tipo: u.tid })),
       grandTotal, sena, saldo, payMethod,
     }).then(ref => {
@@ -60,6 +64,9 @@ export default function Confirmacion({ reserva, pago, onNueva }) {
         <div className="confirm-row"><span>Días de servicio</span><span>{dias}</span></div>
         <div className="confirm-row"><span>Unidades</span><span>{flotaUnidades.length}</span></div>
         <div className="confirm-row"><span>Km totales</span><span>{kmTotal?.toLocaleString('es-AR')} km</span></div>
+        {!!puntosCarga?.length && (
+          <div className="confirm-row"><span>Puntos de carga</span><span>{puntosCarga.length}</span></div>
+        )}
         <div className="confirm-row"><span>Pago</span><span style={{ textTransform: 'capitalize' }}>{payMethod}</span></div>
       </div>
 

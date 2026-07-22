@@ -22,12 +22,13 @@ function loadGoogleMaps() {
 
 // Usa Directions API para obtener la ruta más rápida (igual que Google Maps)
 // avoidFerries: true, avoidHighways: false = usa autopistas, sin ferries
-function calcRouteKm(origin, destination) {
+function calcRouteKm(origin, destination, waypoints = []) {
   return new Promise((resolve, reject) => {
     const service = new window.google.maps.DirectionsService();
     service.route({
       origin,
       destination,
+      waypoints,
       travelMode: window.google.maps.TravelMode.DRIVING,
       avoidFerries: true,
       avoidTolls: false,
@@ -84,12 +85,13 @@ export default function PasoRecorrido({ reserva, onNext, onBack }) {
   const [origenData, setOrigenData] = useState(null);
   const [destinoData, setDestinoData] = useState(null);
   const [kmBaseOrigen, setKmBaseOrigen] = useState(null);
-  const [kmOrigenDestino, setKmOrigenDestino] = useState(null);
+  const [kmRutaIda, setKmRutaIda] = useState(null);
   const [calculando, setCalculando] = useState(false);
   const [errorCalculo, setErrorCalculo] = useState(false);
   const [syncMode, setSyncMode] = useState(true);
   const [tabActivo, setTabActivo] = useState(flotaUnidades[0]?.id || null);
   const [diaEditando, setDiaEditando] = useState(null);
+  const [puntosCarga, setPuntosCarga] = useState([]);
 
   const [movData, setMovData] = useState(() => {
     const d = { '_sync': Array(dias || 1).fill(0) };
@@ -115,19 +117,26 @@ export default function PasoRecorrido({ reserva, onNext, onBack }) {
     });
   }, [origenData]);
 
-  // Calcula origen→destino cuando están ambos
+  // Calcula ruta de ida (origen + puntos de carga + destino)
   useEffect(() => {
     if (!origenData || !destinoData) return;
     setCalculando(true);
     setErrorCalculo(false);
-    setKmOrigenDestino(null);
+    setKmRutaIda(null);
 
     loadGoogleMaps().then(() => {
       const origen = new window.google.maps.LatLng(origenData.lat, origenData.lng);
       const destino = new window.google.maps.LatLng(destinoData.lat, destinoData.lng);
-      calcRouteKm(origen, destino)
+      const waypoints = puntosCarga
+        .filter(p => p.data)
+        .map(p => ({
+          location: new window.google.maps.LatLng(p.data.lat, p.data.lng),
+          stopover: true,
+        }));
+
+      calcRouteKm(origen, destino, waypoints)
         .then(km => {
-          setKmOrigenDestino(km);
+          setKmRutaIda(km);
           setCalculando(false);
         })
         .catch(() => {
@@ -135,10 +144,10 @@ export default function PasoRecorrido({ reserva, onNext, onBack }) {
           setCalculando(false);
         });
     });
-  }, [origenData, destinoData]);
+  }, [origenData, destinoData, puntosCarga]);
 
-  const kmTotal = kmBaseOrigen && kmOrigenDestino
-    ? (kmBaseOrigen * 2) + (kmOrigenDestino * 2)
+  const kmTotal = kmBaseOrigen && kmRutaIda
+    ? (kmBaseOrigen * 2) + (kmRutaIda * 2)
     : null;
 
   const key = syncMode ? '_sync' : (tabActivo || '_sync');
@@ -166,20 +175,33 @@ export default function PasoRecorrido({ reserva, onNext, onBack }) {
 
   const handleOrigenSelect = useCallback((data) => {
     setOrigenData(data);
-    setKmOrigenDestino(null);
+    setKmRutaIda(null);
   }, []);
 
   const handleDestinoSelect = useCallback((data) => {
     setDestinoData(data);
-    setKmOrigenDestino(null);
+    setKmRutaIda(null);
   }, []);
+
+  function agregarPuntoCarga() {
+    setPuntosCarga(prev => [...prev, { id: `${Date.now()}-${Math.random().toString(16).slice(2)}`, data: null }]);
+  }
+
+  function quitarPuntoCarga(id) {
+    setPuntosCarga(prev => prev.filter(p => p.id !== id));
+  }
+
+  function seleccionarPuntoCarga(id, data) {
+    setPuntosCarga(prev => prev.map(p => (p.id === id ? { ...p, data } : p)));
+  }
 
   function handleNext() {
     onNext({
       origen: origenData.display,
       destino: destinoData.display,
+      puntosCarga: puntosCarga.filter(p => p.data).map(p => p.data.display),
       kmBaseOrigen,
-      kmOrigenDestino,
+      kmRutaIda,
       kmTotal,
       syncMode, movData, movKmData,
     });
@@ -207,6 +229,34 @@ export default function PasoRecorrido({ reserva, onNext, onBack }) {
         </div>
       </div>
 
+      <div className="section-label">Puntos de carga adicionales (opcional)</div>
+      <div style={{ marginBottom: 12 }}>
+        {puntosCarga.map((p, idx) => (
+          <div key={p.id} style={{ border: '1px solid var(--border)', borderRadius: 10, padding: 10, marginBottom: 8, background: 'var(--bg)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+              <div style={{ fontSize: 11, color: 'var(--text-3)', fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase' }}>
+                Punto adicional {idx + 1}
+              </div>
+              <button
+                type="button"
+                onClick={() => quitarPuntoCarga(p.id)}
+                style={{ border: 'none', background: 'transparent', color: 'var(--text-3)', cursor: 'pointer', fontSize: 14 }}
+              >
+                ✕
+              </button>
+            </div>
+            <AutocompleteInput
+              label="Ubicación de carga"
+              placeholder="Ej: hotel, colegio, club, etc."
+              onSelect={(data) => seleccionarPuntoCarga(p.id, data)}
+            />
+          </div>
+        ))}
+        <button type="button" className="btn-secondary" style={{ marginTop: 0 }} onClick={agregarPuntoCarga}>
+          + Agregar punto de carga
+        </button>
+      </div>
+
       {calculando && (
         <div className="km-pill" style={{ color: 'var(--sp)' }}>
           ⏳ Calculando ruta real...
@@ -221,7 +271,12 @@ export default function PasoRecorrido({ reserva, onNext, onBack }) {
 
       {kmTotal && !calculando && (
         <div className="km-pill">
-          🛣️ Base↔Origen: <strong>{kmBaseOrigen * 2} km</strong> · Origen↔Destino: <strong>{kmOrigenDestino * 2} km</strong> · <strong>Total: {kmTotal} km</strong>
+          🛣️ Base↔Origen: <strong>{kmBaseOrigen * 2} km</strong> · Recorrido (ida y vuelta): <strong>{kmRutaIda * 2} km</strong> · <strong>Total: {kmTotal} km</strong>
+          {puntosCarga.filter(p => p.data).length > 0 && (
+            <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 3 }}>
+              Incluye {puntosCarga.filter(p => p.data).length} punto{puntosCarga.filter(p => p.data).length > 1 ? 's' : ''} de carga adicional{puntosCarga.filter(p => p.data).length > 1 ? 'es' : ''}.
+            </div>
+          )}
           <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 3 }}>
             Ruta más rápida · sin ferries · apto omnibus
           </div>

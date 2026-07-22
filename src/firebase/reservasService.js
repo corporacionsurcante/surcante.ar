@@ -1,10 +1,5 @@
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
-import { db } from './config';
+import { crearReserva } from './services';
 
 export async function guardarReserva(data) {
-  return addDoc(collection(db, 'reservas'), {
-    ...data,
-    estado: 'seña_pendiente',
-    creadoEn: serverTimestamp(),
-  });
+  return crearReserva(data);
 }

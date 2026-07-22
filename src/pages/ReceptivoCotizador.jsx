@@ -15,7 +15,7 @@ const TIPO_UNIT = {
   'Minibus 19': { icon: '🚐', label: 'Minibus 19 butacas' },
 };
 
-export default function ReceptivoCotizador({ onBack }) {
+export default function ReceptivoCotizador({ onBack, initialContacto }) {
   const { dolar, loading: loadingDolar } = useDolar();
   const [cityTourPrecios, setCityTourPrecios] = useState(null);
   const [circuitosDB, setCircuitosDB] = useState(null);
@@ -28,7 +28,10 @@ export default function ReceptivoCotizador({ onBack }) {
   const [payMethod, setPayMethod] = useState('transferencia');
   const [loadingMP, setLoadingMP] = useState(false);
   const [errorMP, setErrorMP] = useState('');
-  const [contacto, setContacto] = useState({ nombre: '', whatsapp: '' });
+  const [contacto, setContacto] = useState({
+    nombre: initialContacto?.nombreCompleto || '',
+    whatsapp: initialContacto?.whatsapp || '',
+  });
   const contactoValido = contacto.nombre.trim().length > 1 && contacto.whatsapp.trim().length >= 8;
 
   useEffect(() => {

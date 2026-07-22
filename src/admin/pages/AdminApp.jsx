@@ -10,6 +10,9 @@ import Precios from './Precios';
 import Gantt from './Gantt';
 import Receptivo from './Receptivo';
 import ConfigModulos from './ConfigModulos';
+import { collection, onSnapshot, query, where } from 'firebase/firestore';
+import { db } from '../../firebase/config';
+import { marcarNotificacionesComoLeidas } from '../../firebase/notificacionesService';
 import '../admin.css';
 
 const NAV = [
@@ -26,6 +29,7 @@ export default function AdminApp() {
   const [user, setUser] = useState(null);
   const [checking, setChecking] = useState(true);
   const [tab, setTab] = useState('dashboard');
+  const [notificacionesPendientes, setNotificacionesPendientes] = useState(0);
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async u => {
@@ -39,6 +43,19 @@ export default function AdminApp() {
     });
     return unsub;
   }, []);
+
+  useEffect(() => {
+    if (!user) return undefined;
+    const q = query(collection(db, 'notificaciones'), where('leida', '==', false));
+    return onSnapshot(q, snap => {
+      setNotificacionesPendientes(snap.size);
+    });
+  }, [user]);
+
+  useEffect(() => {
+    if (tab !== 'reservas') return;
+    marcarNotificacionesComoLeidas();
+  }, [tab]);
 
   if (checking) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0A0A0F', color: 'rgba(255,255,255,.4)', fontSize: 14 }}>
@@ -69,6 +86,24 @@ export default function AdminApp() {
           <div key={n.id} className={`admin-nav-item ${tab === n.id ? 'active' : ''}`} onClick={() => setTab(n.id)}>
             <span className="nav-icon">{n.icon}</span>
             {n.label}
+            {n.id === 'reservas' && notificacionesPendientes > 0 && (
+              <span style={{
+                marginLeft: 8,
+                background: '#CF1322',
+                color: '#fff',
+                borderRadius: 999,
+                minWidth: 18,
+                height: 18,
+                padding: '0 6px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 10,
+                fontWeight: 700,
+              }}>
+                {notificacionesPendientes}
+              </span>
+            )}
           </div>
         ))}
       </div>

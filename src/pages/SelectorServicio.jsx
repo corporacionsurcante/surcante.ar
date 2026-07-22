@@ -19,6 +19,19 @@ export default function SelectorServicio({ onSelect }) {
           ¿Qué tipo de servicio necesitás?
         </div>
       </div>
+      <div style={{
+        background: '#FFF8E6',
+        border: '1px solid #FFD166',
+        borderRadius: 12,
+        padding: '10px 12px',
+        marginBottom: 16,
+        fontSize: 12,
+        color: '#7A5200',
+        lineHeight: 1.5,
+        fontWeight: 600,
+      }}>
+        ⚠️ <strong>Charter:</strong> las cotizaciones no incluyen gastos extra (estacionamientos, entradas a parques nacionales, alojamiento ni viáticos de tripulación).
+      </div>
 
       {/* Charter */}
       {modulos.charter !== false && <div

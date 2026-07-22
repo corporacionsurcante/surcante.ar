@@ -39,7 +39,7 @@ function calcPrecioLocal(horas, precios) {
   return { precioUSD: p24h, descripcion: 'Paquete 24 horas' };
 }
 
-export default function DisponibilidadCotizador({ onBack }) {
+export default function DisponibilidadCotizador({ onBack, initialContacto }) {
   const { dolar, loading: loadingDolar } = useDolar();
   const [precios, setPrecios] = useState(PRECIOS_DEFAULT);
 
@@ -54,7 +54,10 @@ export default function DisponibilidadCotizador({ onBack }) {
   const [unidadSel, setUnidadSel] = useState(null);
   const [payMethod, setPayMethod] = useState('transferencia');
   const [step, setStep] = useState(1);
-  const [contacto, setContacto] = useState({ nombre: '', whatsapp: '' });
+  const [contacto, setContacto] = useState({
+    nombre: initialContacto?.nombreCompleto || '',
+    whatsapp: initialContacto?.whatsapp || '',
+  });
   const contactoValido = contacto.nombre.trim().length > 1 && contacto.whatsapp.trim().length >= 8;
 
   const { disponibilidad, loading: loadingDisp } = useDisponibilidad(fecha, fecha);

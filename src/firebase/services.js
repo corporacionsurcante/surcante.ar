@@ -3,6 +3,7 @@ import {
   query, orderBy, onSnapshot, serverTimestamp, setDoc, getDoc
 } from 'firebase/firestore';
 import { db } from './config';
+import { crearNotificacionCotizacion } from './notificacionesService';
 
 // ---- RESERVAS ----
 export function suscribirReservas(callback) {
@@ -14,11 +15,23 @@ export function suscribirReservas(callback) {
 }
 
 export async function crearReserva(data) {
-  return addDoc(collection(db, 'reservas'), {
+  const reservaRef = await addDoc(collection(db, 'reservas'), {
     ...data,
     estado: 'seña_pendiente',
     creadoEn: serverTimestamp(),
   });
+  await crearNotificacionCotizacion({
+    reservaId: reservaRef.id,
+    servicio: data.tipo || 'charter',
+    clienteNombre: data.clienteNombre || '',
+    clienteWhatsapp: data.clienteWhatsapp || '',
+    origen: data.origen || '',
+    destino: data.destino || '',
+    grandTotal: data.grandTotal || 0,
+    payMethod: data.payMethod || '',
+    mensaje: `Nueva cotización ${data.tipo || 'charter'} · ${data.clienteNombre || 'Cliente sin nombre'}`,
+  });
+  return reservaRef;
 }
 
 export async function actualizarEstadoReserva(id, estado) {
