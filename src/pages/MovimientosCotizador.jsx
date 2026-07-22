@@ -17,7 +17,7 @@ const TIPO_UNIT = {
   'Minibus 19': { icon: '🚐', label: 'Minibus 19 butacas' },
 };
 
-export default function MovimientosCotizador({ onBack }) {
+export default function MovimientosCotizador({ onBack, initialContacto }) {
   const { dolar, loading: loadingDolar } = useDolar();
   const [precioUSD, setPrecioUSD] = useState(PRECIO_DEFAULT_USD);
   const [fechas, setFechas] = useState({ fechaInicio: '', fechaFin: '', dias: 1 });
@@ -44,7 +44,10 @@ export default function MovimientosCotizador({ onBack }) {
     if (h <= 12) return { precioUSD: p.p12h, descripcion: 'Pack 12 horas' };
     return { precioUSD: p.p24h, descripcion: 'Pack 24 horas' };
   }
-  const [contacto, setContacto] = useState({ nombre: '', whatsapp: '' });
+  const [contacto, setContacto] = useState({
+    nombre: initialContacto?.nombreCompleto || '',
+    whatsapp: initialContacto?.whatsapp || '',
+  });
   const contactoValido = contacto.nombre.trim().length > 1 && contacto.whatsapp.trim().length >= 8;
 
   const { disponibilidad, loading: loadingDisp } = useDisponibilidad(fechas.fechaInicio, fechas.fechaFin);

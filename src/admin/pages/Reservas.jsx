@@ -93,6 +93,9 @@ export default function Reservas() {
                   </td>
                   <td style={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {r.origen} → {r.destino}
+                    {Array.isArray(r.puntosCarga) && r.puntosCarga.length > 0 && (
+                      <div style={{ fontSize: 11, color: '#9090B0' }}>+ {r.puntosCarga.length} punto{r.puntosCarga.length > 1 ? 's' : ''} de carga</div>
+                    )}
                   </td>
                   <td>{r.fechaInicio || '—'}</td>
                   <td>{r.nights || '—'}</td>
@@ -116,6 +119,12 @@ export default function Reservas() {
             </div>
             <div className="modal-row"><span>Origen</span><span>{selected.origen}</span></div>
             <div className="modal-row"><span>Destino</span><span>{selected.destino}</span></div>
+            {Array.isArray(selected.puntosCarga) && selected.puntosCarga.length > 0 && (
+              <div className="modal-row">
+                <span>Puntos de carga</span>
+                <span>{selected.puntosCarga.length}</span>
+              </div>
+            )}
             <div className="modal-row"><span>Salida</span><span>{selected.fechaInicio}</span></div>
             <div className="modal-row"><span>Regreso</span><span>{selected.fechaFin}</span></div>
             <div className="modal-row"><span>Noches</span><span>{selected.nights}</span></div>

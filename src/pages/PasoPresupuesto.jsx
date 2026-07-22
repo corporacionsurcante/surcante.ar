@@ -4,10 +4,13 @@ import { calcPresupuestoTotal, formatARS, formatDate } from '../utils/calculos';
 import { METODOS_PAGO, DATOS_BANCARIOS, WHATSAPP } from '../data/pagos';
 import { crearPreferenciaMercadoPago } from '../hooks/useMercadoPago';
 
-export default function PasoPresupuesto({ reserva, onBack, onConfirm, isAdmin }) {
+export default function PasoPresupuesto({ reserva, onBack, onConfirm, isAdmin, initialContacto }) {
   const { dolar, loading } = useDolar();
   const [payMethod, setPayMethod] = useState('transferencia');
-  const [contacto, setContacto] = useState({ nombre: '', whatsapp: '' });
+  const [contacto, setContacto] = useState({
+    nombre: initialContacto?.nombreCompleto || '',
+    whatsapp: initialContacto?.whatsapp || '',
+  });
   const contactoValido = contacto.nombre.trim().length > 1 && contacto.whatsapp.trim().length >= 8;
   const [loadingMP, setLoadingMP] = useState(false);
   const [errorMP, setErrorMP] = useState('');
@@ -44,7 +47,16 @@ export default function PasoPresupuesto({ reserva, onBack, onConfirm, isAdmin })
         grandTotal, montoAhora, origen, destino,
         fechaInicio, fechaFin, flotaUnidades,
       });
-      onConfirm({ grandTotal, sena: montoAhora, saldo, payMethod, porcentaje, mpPreferenceId: pref.id });
+      onConfirm({
+        grandTotal,
+        sena: montoAhora,
+        saldo,
+        payMethod,
+        porcentaje,
+        mpPreferenceId: pref.id,
+        clienteNombre: contacto.nombre.trim(),
+        clienteWhatsapp: contacto.whatsapp.trim(),
+      });
       window.location.href = pref.init_point;
     } catch (e) {
       setErrorMP('No se pudo conectar con MercadoPago. Intentá con transferencia o efectivo.');
@@ -310,7 +322,15 @@ export default function PasoPresupuesto({ reserva, onBack, onConfirm, isAdmin })
         <button
           className="btn-primary green"
           disabled={loading || !contactoValido}
-          onClick={() => onConfirm({ grandTotal, sena: montoAhora, saldo, payMethod, porcentaje, clienteNombre: contacto.nombre, clienteWhatsapp: contacto.whatsapp })}>
+          onClick={() => onConfirm({
+            grandTotal,
+            sena: montoAhora,
+            saldo,
+            payMethod,
+            porcentaje,
+            clienteNombre: contacto.nombre.trim(),
+            clienteWhatsapp: contacto.whatsapp.trim(),
+          })}>
           ✓ Confirmar reserva
         </button>
       )}

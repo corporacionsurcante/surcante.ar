@@ -145,7 +145,7 @@ export default function FooterLegal() {
       {showPrivacidad && (
         <Modal titulo="Política de privacidad" onClose={() => setShowPrivacidad(false)}>
           <H>Datos que recopilamos</H>
-          <P>Recopilamos nombre y número de WhatsApp al momento de confirmar una reserva. Estos datos se utilizan exclusivamente para la gestión del servicio contratado.</P>
+          <P>Recopilamos nombre y número de WhatsApp al ingresar al cotizador y al confirmar una reserva. Estos datos se utilizan exclusivamente para la gestión del servicio contratado.</P>
           <H>Uso de los datos</H>
           <P>Los datos personales no se comparten con terceros ni se utilizan con fines publicitarios. Se almacenan de forma segura en Firebase (Google) con acceso restringido.</P>
           <H>Derechos del titular</H>
