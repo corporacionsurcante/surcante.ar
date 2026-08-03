@@ -37,11 +37,11 @@ function calcRouteKm(origin, destination, waypoints = []) {
       optimizeWaypoints: false,
     }, (result, status) => {
       if (status !== 'OK') { reject(status); return; }
-      // Toma la primera ruta (la más rápida, igual que Google Maps)
-      const leg = result.routes[0]?.legs[0];
-      if (!leg) { reject('NO_LEG'); return; }
-      const km = Math.round(leg.distance.value / 1000);
-      resolve(km);
+      const legs = result.routes[0]?.legs;
+      if (!legs || legs.length === 0) { reject('NO_LEG'); return; }
+      // Suma todos los tramos: con waypoints hay un leg por segmento
+      const totalMeters = legs.reduce((acc, leg) => acc + leg.distance.value, 0);
+      resolve(Math.round(totalMeters / 1000));
     });
   });
 }
@@ -49,6 +49,9 @@ function calcRouteKm(origin, destination, waypoints = []) {
 function AutocompleteInput({ placeholder, label, onSelect }) {
   const inputRef = useRef(null);
   const [value, setValue] = useState('');
+  // Ref estable: evita re-registrar el autocomplete cuando onSelect cambia entre renders
+  const onSelectRef = useRef(onSelect);
+  useEffect(() => { onSelectRef.current = onSelect; });
 
   useEffect(() => {
     if (!MAPS_KEY) return;
@@ -62,10 +65,10 @@ function AutocompleteInput({ placeholder, label, onSelect }) {
         const loc = place.geometry.location;
         const display = place.name || place.formatted_address;
         setValue(display);
-        onSelect({ lat: loc.lat(), lng: loc.lng(), display, placeId: place.place_id });
+        onSelectRef.current({ lat: loc.lat(), lng: loc.lng(), display, placeId: place.place_id });
       });
     }).catch(() => {});
-  }, [onSelect]);
+  }, []);
 
   return (
     <div className="ruta-field">

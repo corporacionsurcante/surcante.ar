@@ -13,6 +13,7 @@ import AdminApp from './admin/pages/AdminApp';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from './firebase/config';
 import { isAdminAutorizado } from './firebase/services';
+import { WHATSAPP } from './data/pagos';
 import './index.css';
 import FooterLegal from './components/FooterLegal';
 import bgImage from './assets/bg-surcante.jpg';
@@ -25,6 +26,11 @@ function leerAccesoGuardado() {
     if (!raw) return null;
     const data = JSON.parse(raw);
     if (!data?.nombreCompleto || !data?.whatsapp) return null;
+    // Expirar sesión a los 30 días
+    if (data.ts && Date.now() - data.ts > 30 * 24 * 60 * 60 * 1000) {
+      window.localStorage.removeItem(ACCESO_STORAGE_KEY);
+      return null;
+    }
     return data;
   } catch (_) {
     return null;
@@ -56,8 +62,9 @@ function CotizadorApp() {
   function handleConfirm(pagoData) { setPago(pagoData); setStep(4); }
   function handleNueva() { setReserva(null); setPago(null); setStep(1); setTipoServicio(null); }
   function handleAccesoConfirmado(data) {
-    setAccesoCliente(data);
-    window.localStorage.setItem(ACCESO_STORAGE_KEY, JSON.stringify(data));
+    const withTs = { ...data, ts: Date.now() };
+    setAccesoCliente(withTs);
+    window.localStorage.setItem(ACCESO_STORAGE_KEY, JSON.stringify(withTs));
   }
 
   if (!accesoCliente) {
@@ -146,6 +153,50 @@ function BgOverlay() {
   );
 }
 
+const MP_STATUS_CONFIG = {
+  exitoso:  { icon: '✅', title: '¡Pago recibido!', sub: 'Tu seña fue procesada. Te contactamos a la brevedad para confirmar la reserva.', color: '#00C896' },
+  fallido:  { icon: '❌', title: 'El pago no se procesó', sub: 'Podés intentar con otro método o contactarnos directamente por WhatsApp.', color: '#CF1322' },
+  pendiente:{ icon: '⏳', title: 'Pago pendiente', sub: 'Tu pago está siendo procesado. Te avisamos cuando esté acreditado.', color: '#FA8C16' },
+};
+
+function RetornoPago({ tipo, urlParams }) {
+  const cfg = MP_STATUS_CONFIG[tipo] || MP_STATUS_CONFIG.pendiente;
+  const paymentId = urlParams.get('payment_id') || urlParams.get('collection_id');
+  return (
+    <>
+      <BgOverlay />
+      <div className="app-shell">
+        <Topbar />
+        <div className="confirm-page">
+          <div className="confirm-icon">{cfg.icon}</div>
+          <div className="confirm-title">{cfg.title}</div>
+          <div className="confirm-sub">{cfg.sub}</div>
+          {paymentId && (
+            <div style={{ background: '#F4F2FA', borderRadius: 10, padding: '8px 14px', marginBottom: 16, textAlign: 'center' }}>
+              <div style={{ fontSize: 11, color: '#9090B0', fontWeight: 600, letterSpacing: '.08em', textTransform: 'uppercase' }}>ID de pago</div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: '#7B2FBE' }}>{paymentId}</div>
+            </div>
+          )}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 20 }}>
+            {WHATSAPP.map(w => (
+              <a key={w.numero}
+                href={`https://wa.me/${w.numero}?text=${encodeURIComponent(`Hola ${w.nombre}! Acabo de realizar un pago (ID: ${paymentId || 'N/D'}) en Surcante. ¿Pueden confirmar mi reserva?`)}`}
+                target="_blank" rel="noreferrer"
+                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '12px 8px', background: '#25D366', borderRadius: 10, color: '#fff', textDecoration: 'none', fontWeight: 600, fontSize: 13, gap: 4, textAlign: 'center' }}>
+                <span style={{ fontSize: 20 }}>📱</span>
+                {w.label}
+              </a>
+            ))}
+          </div>
+          <a href="/" style={{ textDecoration: 'none' }}>
+            <button className="btn-secondary" style={{ width: '100%' }}>← Volver al inicio</button>
+          </a>
+        </div>
+      </div>
+    </>
+  );
+}
+
 function AccesoPrevio({ onConfirm }) {
   const [nombreCompleto, setNombreCompleto] = useState('');
   const [whatsapp, setWhatsapp] = useState('');
@@ -216,7 +267,11 @@ function AccesoPrevio({ onConfirm }) {
 }
 
 export default function App() {
-  const isAdmin = window.location.pathname.startsWith('/admin');
-  if (isAdmin) return <AdminApp />;
+  const pathname = window.location.pathname;
+  if (pathname.startsWith('/admin')) return <AdminApp />;
+  const urlParams = new URLSearchParams(window.location.search);
+  if (pathname === '/pago-exitoso') return <RetornoPago tipo="exitoso" urlParams={urlParams} />;
+  if (pathname === '/pago-fallido') return <RetornoPago tipo="fallido" urlParams={urlParams} />;
+  if (pathname === '/pago-pendiente') return <RetornoPago tipo="pendiente" urlParams={urlParams} />;
   return <CotizadorApp />;
 }
