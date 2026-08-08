@@ -1,15 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { formatARS, formatDate } from '../utils/calculos';
 import { crearReserva } from '../firebase/services';
-
-function generarNroCotizacion() {
-  const fecha = new Date();
-  const yy = String(fecha.getFullYear()).slice(-2);
-  const mm = String(fecha.getMonth() + 1).padStart(2, '0');
-  const dd = String(fecha.getDate()).padStart(2, '0');
-  const rand = Math.floor(Math.random() * 9000) + 1000;
-  return `SRC-${yy}${mm}${dd}-${rand}`;
-}
+import { generarNroCotizacion, descargarPdfCotizacion } from '../utils/pdfCotizacion';
 
 export default function Confirmacion({ reserva, pago, onNueva }) {
   const [nroCotizacion] = React.useState(generarNroCotizacion);
@@ -17,16 +9,19 @@ export default function Confirmacion({ reserva, pago, onNueva }) {
   const { grandTotal, sena, saldo, payMethod, clienteNombre, clienteWhatsapp } = pago;
   const [numReserva, setNumReserva] = useState('');
 
+  const datosPdf = {
+    tipo: 'charter',
+    nroCotizacion,
+    origen, destino, fechaInicio, fechaFin, dias, kmTotal,
+    puntosCarga: puntosCarga || [],
+    clienteNombre: clienteNombre || '',
+    clienteWhatsapp: clienteWhatsapp || '',
+    flotaUnidades: flotaUnidades.map(u => ({ id: u.id, label: u.label, tipo: u.tid })),
+    grandTotal, sena, saldo, payMethod,
+  };
+
   useEffect(() => {
-    crearReserva({
-      tipo: 'charter',
-      origen, destino, fechaInicio, fechaFin, dias, kmTotal,
-      puntosCarga: puntosCarga || [],
-      clienteNombre: clienteNombre || '',
-      clienteWhatsapp: clienteWhatsapp || '',
-      flotaUnidades: flotaUnidades.map(u => ({ id: u.id, label: u.label, tipo: u.tid })),
-      grandTotal, sena, saldo, payMethod,
-    }).then(ref => {
+    crearReserva(datosPdf).then(ref => {
       setNumReserva('SRC-' + ref.id.slice(-6).toUpperCase());
     }).catch(() => {
       setNumReserva('SRC-' + Date.now().toString().slice(-6));
@@ -78,7 +73,14 @@ export default function Confirmacion({ reserva, pago, onNueva }) {
         📱 Te contactamos a la brevedad por WhatsApp para coordinar el pago del saldo antes del viaje.
       </div>
 
-      <button className="btn-primary" onClick={onNueva} style={{ marginTop: 0 }}>
+      <button
+        className="btn-primary"
+        style={{ marginTop: 0, background: '#7B2FBE' }}
+        onClick={() => descargarPdfCotizacion(datosPdf)}>
+        📄 Descargar presupuesto en PDF
+      </button>
+
+      <button className="btn-primary" onClick={onNueva} style={{ marginTop: 10 }}>
         + Nueva cotización
       </button>
     </div>

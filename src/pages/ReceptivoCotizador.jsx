@@ -7,6 +7,8 @@ import { suscribirPreciosCityTour, suscribirCircuitos, suscribirTransfers } from
 import Calendario from '../components/Calendario';
 import { crearPreferenciaMercadoPago } from '../hooks/useMercadoPago';
 import { guardarReserva } from '../firebase/reservasService';
+import { generarNroCotizacion } from '../utils/pdfCotizacion';
+import ReservaConfirmada from '../components/ReservaConfirmada';
 
 const TIPO_UNIT = {
   'MIX 60':     { icon: '🚌', label: 'Omnibus doble piso / 60 but.' },
@@ -28,6 +30,7 @@ export default function ReceptivoCotizador({ onBack, initialContacto }) {
   const [payMethod, setPayMethod] = useState('transferencia');
   const [loadingMP, setLoadingMP] = useState(false);
   const [errorMP, setErrorMP] = useState('');
+  const [reservaOk, setReservaOk] = useState(null);
   const [contacto, setContacto] = useState({
     nombre: initialContacto?.nombreCompleto || '',
     whatsapp: initialContacto?.whatsapp || '',
@@ -150,6 +153,8 @@ export default function ReceptivoCotizador({ onBack, initialContacto }) {
       `✅ Pago ahora: ${formatARS(montoAhora)}`
     );
   }
+
+  if (reservaOk) return <ReservaConfirmada datos={reservaOk} onNueva={onBack} />;
 
   if (step === 3) {
     return (
@@ -308,23 +313,29 @@ export default function ReceptivoCotizador({ onBack, initialContacto }) {
           <button className="btn-primary green"
             disabled={!contactoValido}
             onClick={async () => {
+              const datos = {
+                tipo: 'receptivo',
+                nroCotizacion: generarNroCotizacion(),
+                clienteNombre: contacto.nombre,
+                clienteWhatsapp: contacto.whatsapp,
+                unidad: `${unidadSel?.tipo} · INTERNO ${unidadSel?.interno}`,
+                fechaInicio: fechas.fechaInicio,
+                fechaFin: fechas.fechaFin,
+                dias,
+                programa,
+                programaResumen: Array.from({ length: dias }, (_, i) => ({
+                  dia: i + 1,
+                  actividades: getNombreDia(i + 1) || 'Día libre',
+                })),
+                grandTotal: total,
+                sena: montoAhora,
+                saldo: saldoPendiente,
+                payMethod,
+              };
               try {
-                await guardarReserva({
-                  tipo: 'receptivo',
-                  clienteNombre: contacto.nombre,
-                  clienteWhatsapp: contacto.whatsapp,
-                  unidad: `${unidadSel?.tipo} · INTERNO ${unidadSel?.interno}`,
-                  fechaInicio: fechas.fechaInicio,
-                  fechaFin: fechas.fechaFin,
-                  dias,
-                  programa,
-                  grandTotal: total,
-                  sena: montoAhora,
-                  saldo: saldoPendiente,
-                  payMethod,
-                });
+                await guardarReserva(datos);
               } catch(e) { console.error('Error guardando reserva:', e); }
-              alert('¡Reserva recibida! Te contactamos a la brevedad para confirmar.');
+              setReservaOk(datos);
             }}>
             ✓ Confirmar y reservar
           </button>

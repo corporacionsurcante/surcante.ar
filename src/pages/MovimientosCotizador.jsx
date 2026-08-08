@@ -7,6 +7,8 @@ import { doc, onSnapshot } from 'firebase/firestore';
 import { guardarReserva } from '../firebase/reservasService';
 import { db } from '../firebase/config';
 import Calendario from '../components/Calendario';
+import { generarNroCotizacion } from '../utils/pdfCotizacion';
+import ReservaConfirmada from '../components/ReservaConfirmada';
 
 const PRECIO_DEFAULT_USD = 650;
 
@@ -28,6 +30,7 @@ export default function MovimientosCotizador({ onBack, initialContacto }) {
   const [modo, setModo] = useState('dia'); // 'dia' | 'horas'
   const [horas, setHoras] = useState(3);
   const [preciosMov, setPreciosMov] = useState({ hora: 150, p3h: 350, p6h: 600, p12h: 1000, p24h: 1600, diario: 650 });
+  const [reservaOk, setReservaOk] = useState(null);
 
   useEffect(() => {
     const unsub2 = onSnapshot(doc(db, 'config', 'mov_caba_precios'), snap => {
@@ -81,6 +84,9 @@ export default function MovimientosCotizador({ onBack, initialContacto }) {
       `✅ Pago ahora: ${formatARS(montoAhora)}`
     );
   }
+
+  // Pantalla de éxito con PDF descargable
+  if (reservaOk) return <ReservaConfirmada datos={reservaOk} onNueva={onBack} />;
 
   // PASO 2 — Presupuesto
   if (step === 2) {
@@ -215,23 +221,25 @@ export default function MovimientosCotizador({ onBack, initialContacto }) {
           <button className="btn-primary green"
             disabled={!contactoValido}
             onClick={async () => {
+              const datos = {
+                tipo: 'movimientos-caba-gba',
+                nroCotizacion: generarNroCotizacion(),
+                clienteNombre: contacto.nombre,
+                clienteWhatsapp: contacto.whatsapp,
+                unidad: `${unidadSel?.tipo} · INTERNO ${unidadSel?.interno}`,
+                fechaInicio: fechas.fechaInicio,
+                fechaFin: fechas.fechaFin,
+                dias,
+                descripcion: descripcion || '',
+                grandTotal: total,
+                sena: montoAhora,
+                saldo,
+                payMethod,
+              };
               try {
-                await guardarReserva({
-                  tipo: 'movimientos-caba-gba',
-                  clienteNombre: contacto.nombre,
-                  clienteWhatsapp: contacto.whatsapp,
-                  unidad: `${unidadSel?.tipo} · INTERNO ${unidadSel?.interno}`,
-                  fechaInicio: fechas.fechaInicio,
-                  fechaFin: fechas.fechaFin,
-                  dias,
-                  descripcion: descripcion || '',
-                  grandTotal: total,
-                  sena: montoAhora,
-                  saldo,
-                  payMethod,
-                });
+                await guardarReserva(datos);
               } catch(e) { console.error('Error guardando reserva:', e); }
-              alert('¡Reserva recibida! Te contactamos a la brevedad para confirmar.');
+              setReservaOk(datos);
             }}>
             ✓ Confirmar reserva
           </button>

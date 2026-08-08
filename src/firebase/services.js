@@ -31,6 +31,18 @@ export async function crearReserva(data) {
     payMethod: data.payMethod || '',
     mensaje: `Nueva cotización ${data.tipo || 'charter'} · ${data.clienteNombre || 'Cliente sin nombre'}`,
   });
+  // Push en tiempo real a los iPhone/dispositivos admin (fire-and-forget)
+  try {
+    const total = (data.grandTotal || 0).toLocaleString('es-AR');
+    fetch('/api/notificar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        titulo: `🚌 Nueva cotización · ${data.tipo || 'charter'}`,
+        cuerpo: `${data.clienteNombre || 'Cliente sin nombre'} · $${total}${data.destino ? ` · ${data.destino}` : ''}`,
+      }),
+    }).catch(() => {});
+  } catch (_) { /* noop */ }
   return reservaRef;
 }
 
