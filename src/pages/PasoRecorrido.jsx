@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { KM_MOV_INCLUIDOS, BASE_COORDS } from '../data/constants';
+import { KM_MOV_INCLUIDOS, BASES, baseMasCercana } from '../data/constants';
 
 const MAPS_KEY = process.env.REACT_APP_GOOGLE_MAPS_KEY;
 
@@ -86,6 +86,8 @@ export default function PasoRecorrido({ reserva, onNext, onBack }) {
   const [destinoData, setDestinoData] = useState(null);
   const [kmBaseOrigen, setKmBaseOrigen] = useState(null);
   const [kmRutaIda, setKmRutaIda] = useState(null);
+  const [baseSel, setBaseSel] = useState(BASES[0]);
+  const [baseManual, setBaseManual] = useState(false); // true si el cliente eligió base a mano
   const [calculando, setCalculando] = useState(false);
   const [errorCalculo, setErrorCalculo] = useState(false);
   const [syncMode, setSyncMode] = useState(true);
@@ -104,18 +106,25 @@ export default function PasoRecorrido({ reserva, onNext, onBack }) {
     return d;
   });
 
-  // Calcula base→origen apenas se selecciona el origen
+  // Al seleccionar el origen, asigna automáticamente la base más cercana
+  // (salvo que el cliente la haya elegido a mano)
+  useEffect(() => {
+    if (!origenData || baseManual) return;
+    setBaseSel(baseMasCercana({ lat: origenData.lat, lng: origenData.lng }));
+  }, [origenData, baseManual]);
+
+  // Calcula base→origen apenas se selecciona el origen (o cambia la base)
   useEffect(() => {
     if (!origenData) return;
     setKmBaseOrigen(null);
     loadGoogleMaps().then(() => {
-      const base = new window.google.maps.LatLng(BASE_COORDS.lat, BASE_COORDS.lng);
+      const base = new window.google.maps.LatLng(baseSel.coords.lat, baseSel.coords.lng);
       const origen = new window.google.maps.LatLng(origenData.lat, origenData.lng);
       calcRouteKm(base, origen)
         .then(km => setKmBaseOrigen(km))
         .catch(() => {});
     });
-  }, [origenData]);
+  }, [origenData, baseSel]);
 
   // Calcula ruta de ida (origen + puntos de carga + destino)
   useEffect(() => {
@@ -197,6 +206,8 @@ export default function PasoRecorrido({ reserva, onNext, onBack }) {
 
   function handleNext() {
     onNext({
+      baseId: baseSel.id,
+      baseNombre: baseSel.nombre,
       origen: origenData.display,
       destino: destinoData.display,
       puntosCarga: puntosCarga.filter(p => p.data).map(p => p.data.display),
@@ -257,6 +268,31 @@ export default function PasoRecorrido({ reserva, onNext, onBack }) {
         </button>
       </div>
 
+      {/* Base operativa — se asigna sola por cercanía, con opción de cambiarla */}
+      {origenData && (
+        <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 12, padding: 12, marginBottom: 12 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-3)', letterSpacing: '.06em', textTransform: 'uppercase', marginBottom: 8 }}>
+            Base de salida {baseManual ? '· elegida por vos' : '· asignada por cercanía'}
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            {BASES.map(b => (
+              <div key={b.id}
+                onClick={() => { setBaseSel(b); setBaseManual(true); }}
+                style={{
+                  border: `1.5px solid ${baseSel.id === b.id ? 'var(--sp)' : 'var(--border)'}`,
+                  background: baseSel.id === b.id ? 'var(--spl)' : 'var(--bg)',
+                  borderRadius: 10, padding: '10px 12px', cursor: 'pointer', textAlign: 'center',
+                }}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: baseSel.id === b.id ? 'var(--spd)' : 'var(--text)' }}>
+                  🚌 {b.nombre}
+                </div>
+                <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 3, lineHeight: 1.4 }}>{b.zona}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {calculando && (
         <div className="km-pill" style={{ color: 'var(--sp)' }}>
           ⏳ Calculando ruta real...
@@ -271,7 +307,7 @@ export default function PasoRecorrido({ reserva, onNext, onBack }) {
 
       {kmTotal && !calculando && (
         <div className="km-pill">
-          🛣️ Base↔Origen: <strong>{kmBaseOrigen * 2} km</strong> · Recorrido (ida y vuelta): <strong>{kmRutaIda * 2} km</strong> · <strong>Total: {kmTotal} km</strong>
+          🛣️ Base {baseSel.nombre}↔Origen: <strong>{kmBaseOrigen * 2} km</strong> · Recorrido (ida y vuelta): <strong>{kmRutaIda * 2} km</strong> · <strong>Total: {kmTotal} km</strong>
           {puntosCarga.filter(p => p.data).length > 0 && (
             <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 3 }}>
               Incluye {puntosCarga.filter(p => p.data).length} punto{puntosCarga.filter(p => p.data).length > 1 ? 's' : ''} de carga adicional{puntosCarga.filter(p => p.data).length > 1 ? 'es' : ''}.
