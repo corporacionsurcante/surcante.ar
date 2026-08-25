@@ -12,6 +12,8 @@ export default function Confirmacion({ reserva, pago, onNueva }) {
   const datosPdf = {
     tipo: 'charter',
     nroCotizacion,
+    baseId: reserva.baseId || '',
+    baseNombre: reserva.baseNombre || '',
     origen, destino, fechaInicio, fechaFin, dias, kmTotal,
     puntosCarga: puntosCarga || [],
     clienteNombre: clienteNombre || '',
@@ -52,6 +54,9 @@ export default function Confirmacion({ reserva, pago, onNueva }) {
         <div className="confirm-row" style={{ color: '#00C896', fontWeight: 600 }}><span>Seña abonada (30%)</span><span>{formatARS(sena)}</span></div>
         <div className="confirm-row"><span>Saldo pendiente</span><span style={{ color: 'rgba(255,255,255,.8)' }}>{formatARS(saldo)}</span></div>
         <div style={{ height: 12 }} />
+        {reserva.baseNombre && (
+          <div className="confirm-row"><span>Base de salida</span><span style={{ color: 'rgba(255,255,255,.8)' }}>{reserva.baseNombre}</span></div>
+        )}
         <div className="confirm-row"><span>Origen</span><span style={{ color: 'rgba(255,255,255,.8)' }}>{origen}</span></div>
         <div className="confirm-row"><span>Destino</span><span style={{ color: 'rgba(255,255,255,.8)' }}>{destino}</span></div>
         <div className="confirm-row"><span>Salida</span><span>{formatDate(fechaInicio)}</span></div>
