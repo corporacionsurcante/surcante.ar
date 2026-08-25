@@ -51,6 +51,7 @@ function buildFilas(r) {
     filas.push([k, String(v)]);
   };
   push('Tipo de servicio', TIPO_LABELS[r.tipo] || r.tipo || 'Charter');
+  push('Base de salida', r.baseNombre);
   push('Origen', r.origen);
   push('Destino', r.destino);
   push('Fecha de salida', safeFormatDate(r.fechaInicio));
@@ -187,7 +188,7 @@ export function generarPdfCotizacion(r) {
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
   doc.setTextColor(...TEXT_2);
-  doc.text('Surcante  ·  surcante-ar.vercel.app  ·  WhatsApp +54 9 11 5810-0414', M, 278);
+  doc.text('Surcante  ·  surcante.com  ·  WhatsApp +54 9 11 5810-0414', M, 278);
   doc.text('Presupuesto sujeto a disponibilidad. Validez: 48 hs. Valores en pesos argentinos según dólar BNA del día.', M, 283);
   doc.setTextColor(...SP);
   doc.text(`N° ${nro}`, W - M, 278, { align: 'right' });
