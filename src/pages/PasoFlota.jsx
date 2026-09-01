@@ -50,7 +50,9 @@ export default function PasoFlota({ onNext }) {
   const canContinue = fechas.fechaInicio && fechas.fechaFin && totalUnidades > 0;
 
   function chQty(uid, d) {
-    setQty(prev => ({ ...prev, [uid]: Math.max(0, (prev[uid] || 0) + d) }));
+    const unit = disponibilidad.find(u => u.id === uid);
+    const max = unit?.disponibles ?? 10;
+    setQty(prev => ({ ...prev, [uid]: Math.min(max, Math.max(0, (prev[uid] || 0) + d)) }));
   }
 
   function buildFlota() {
@@ -108,7 +110,7 @@ export default function PasoFlota({ onNext }) {
 
       <div className="divider" />
       <div className="section-label">
-        Unidades disponibles{dias > 0 ? ` · ${dias} noche${dias !== 1 ? 's' : ''}` : fechas.mismodia ? ' · viaje en el día' : ''}
+        Unidades disponibles{dias > 0 ? ` · ${dias} día${dias !== 1 ? 's' : ''} de servicio` : fechas.mismodia ? ' · viaje en el día' : ''}
       </div>
 
       {loading && fechas.fechaInicio && (

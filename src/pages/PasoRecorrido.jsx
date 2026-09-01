@@ -35,12 +35,10 @@ function calcRouteKm(origin, destination, waypoints = []) {
       optimizeWaypoints: false,
     }, (result, status) => {
       if (status !== 'OK') { reject(status); return; }
-      // Suma TODOS los tramos (legs) — cuando hay waypoints hay un leg por tramo
       const legs = result.routes[0]?.legs;
       if (!legs || legs.length === 0) { reject('NO_LEG'); return; }
       const totalMeters = legs.reduce((sum, leg) => sum + leg.distance.value, 0);
-      const km = Math.round(totalMeters / 1000);
-      resolve(km);
+      resolve(Math.round(totalMeters / 1000));
     });
   });
 }
@@ -48,6 +46,8 @@ function calcRouteKm(origin, destination, waypoints = []) {
 function AutocompleteInput({ placeholder, label, onSelect }) {
   const inputRef = useRef(null);
   const [value, setValue] = useState('');
+  const onSelectRef = useRef(onSelect);
+  useEffect(() => { onSelectRef.current = onSelect; });
 
   useEffect(() => {
     if (!MAPS_KEY) return;
@@ -61,10 +61,10 @@ function AutocompleteInput({ placeholder, label, onSelect }) {
         const loc = place.geometry.location;
         const display = place.name || place.formatted_address;
         setValue(display);
-        onSelect({ lat: loc.lat(), lng: loc.lng(), display, placeId: place.place_id });
+        onSelectRef.current({ lat: loc.lat(), lng: loc.lng(), display, placeId: place.place_id });
       });
     }).catch(() => {});
-  }, [onSelect]);
+  }, []);
 
   return (
     <div className="ruta-field">
