@@ -6,6 +6,8 @@ import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { useDisponibilidad } from '../hooks/useDisponibilidad';
 import { DATOS_BANCARIOS, WHATSAPP } from '../data/pagos';
+import { generarNroCotizacion } from '../utils/pdfCotizacion';
+import ReservaConfirmada from '../components/ReservaConfirmada';
 
 const TIPO_UNIT = {
   'MIX 60':     { icon: '🚌', label: 'Omnibus Mix 60' },
@@ -59,6 +61,7 @@ export default function DisponibilidadCotizador({ onBack, initialContacto }) {
     whatsapp: initialContacto?.whatsapp || '',
   });
   const contactoValido = contacto.nombre.trim().length > 1 && contacto.whatsapp.trim().length >= 8;
+  const [reservaOk, setReservaOk] = useState(null);
 
   const { disponibilidad, loading: loadingDisp } = useDisponibilidad(fecha, fecha);
 
@@ -80,6 +83,9 @@ export default function DisponibilidadCotizador({ onBack, initialContacto }) {
       `✅ Pago ahora: ${formatARS(montoAhora)}`
     );
   }
+
+  // Pantalla de éxito con PDF descargable
+  if (reservaOk) return <ReservaConfirmada datos={reservaOk} onNueva={onBack} />;
 
   // PASO 2 — Presupuesto
   if (step === 2) {
@@ -213,23 +219,25 @@ export default function DisponibilidadCotizador({ onBack, initialContacto }) {
           <button className="btn-primary green"
             disabled={!contactoValido}
             onClick={async () => {
+              const datos = {
+                tipo: 'disposicion',
+                nroCotizacion: generarNroCotizacion(),
+                clienteNombre: contacto.nombre,
+                clienteWhatsapp: contacto.whatsapp,
+                unidad: `${unidadSel?.tipo} · INTERNO ${unidadSel?.interno}`,
+                fechaInicio: fecha,
+                fechaFin: fecha,
+                horas,
+                descripcion: descripcion || '',
+                grandTotal: total,
+                sena: montoAhora,
+                saldo,
+                payMethod,
+              };
               try {
-                await guardarReserva({
-                  tipo: 'disposicion',
-                  clienteNombre: contacto.nombre,
-                  clienteWhatsapp: contacto.whatsapp,
-                  unidad: `${unidadSel?.tipo} · INTERNO ${unidadSel?.interno}`,
-                  fechaInicio: fecha,
-                  fechaFin: fecha,
-                  horas,
-                  descripcion: descripcion || '',
-                  grandTotal: total,
-                  sena: montoAhora,
-                  saldo,
-                  payMethod,
-                });
+                await guardarReserva(datos);
               } catch(e) { console.error('Error guardando reserva:', e); }
-              alert('¡Reserva recibida! Te contactamos a la brevedad para confirmar.');
+              setReservaOk(datos);
             }}>
             ✓ Confirmar reserva
           </button>

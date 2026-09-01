@@ -1,0 +1,12 @@
+{
+  "short_name": "Surcante Admin",
+  "name": "Surcante — Panel Admin",
+  "icons": [
+    { "src": "Logo_Surcante_01.png", "type": "image/png", "sizes": "512x512" }
+  ],
+  "start_url": "/admin",
+  "scope": "/",
+  "display": "standalone",
+  "theme_color": "#0A0A0F",
+  "background_color": "#0A0A0F"
+}

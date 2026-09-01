@@ -2,34 +2,38 @@ import React, { useEffect } from 'react';
 import { formatARS, formatDate } from '../utils/calculos';
 import { crearReserva } from '../firebase/services';
 import { WHATSAPP } from '../data/pagos';
-
-function generarNroCotizacion() {
-  const fecha = new Date();
-  const yy = String(fecha.getFullYear()).slice(-2);
-  const mm = String(fecha.getMonth() + 1).padStart(2, '0');
-  const dd = String(fecha.getDate()).padStart(2, '0');
-  const rand = Math.floor(Math.random() * 9000) + 1000;
-  return `SRC-${yy}${mm}${dd}-${rand}`;
-}
+import { generarNroCotizacion, descargarPdfCotizacion } from '../utils/pdfCotizacion';
 
 export default function Confirmacion({ reserva, pago, onNueva }) {
   const [nroCotizacion] = React.useState(generarNroCotizacion);
   const { origen, destino, fechaInicio, fechaFin, dias, flotaUnidades, kmTotal, puntosCarga } = reserva;
   const { grandTotal, sena, saldo, payMethod, clienteNombre, clienteWhatsapp, porcentaje } = pago;
+
+  const datosPdf = {
+    tipo: 'charter',
+    nroCotizacion,
+    baseId: reserva.baseId || '',
+    baseNombre: reserva.baseNombre || '',
+    origen,
+    destino,
+    fechaInicio,
+    fechaFin,
+    dias,
+    kmTotal,
+    puntosCarga: puntosCarga || [],
+    clienteNombre: clienteNombre || '',
+    clienteWhatsapp: clienteWhatsapp || '',
+    flotaUnidades: flotaUnidades.map(u => ({ id: u.id, label: u.label, tipo: u.tid })),
+    grandTotal,
+    sena,
+    saldo,
+    payMethod,
+    porcentaje,
+  };
+
   useEffect(() => {
-    crearReserva({
-      tipo: 'charter',
-      nroCotizacion,
-      origen, destino, fechaInicio, fechaFin, dias, kmTotal,
-      puntosCarga: puntosCarga || [],
-      clienteNombre: clienteNombre || '',
-      clienteWhatsapp: clienteWhatsapp || '',
-      flotaUnidades: flotaUnidades.map(u => ({ id: u.id, label: u.label, tipo: u.tid })),
-      grandTotal, sena, saldo, payMethod,
-    }).then(() => {
-      // reserva guardada — nroCotizacion es el número visible para el cliente
-    }).catch(() => {
-      // fallo silencioso: la reserva no se guardó, pero el cliente ya tiene su número
+    crearReserva(datosPdf).catch(() => {
+      // fallo silencioso: el PDF del cliente no depende de la persistencia
     });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -54,6 +58,9 @@ export default function Confirmacion({ reserva, pago, onNueva }) {
         </div>
         <div className="confirm-row"><span>Saldo pendiente</span><span style={{ color: 'rgba(255,255,255,.8)' }}>{formatARS(saldo)}</span></div>
         <div style={{ height: 12 }} />
+        {reserva.baseNombre && (
+          <div className="confirm-row"><span>Base de salida</span><span style={{ color: 'rgba(255,255,255,.8)' }}>{reserva.baseNombre}</span></div>
+        )}
         <div className="confirm-row"><span>Origen</span><span style={{ color: 'rgba(255,255,255,.8)' }}>{origen}</span></div>
         <div className="confirm-row"><span>Destino</span><span style={{ color: 'rgba(255,255,255,.8)' }}>{destino}</span></div>
         <div className="confirm-row"><span>Salida</span><span>{formatDate(fechaInicio)}</span></div>
@@ -87,7 +94,14 @@ export default function Confirmacion({ reserva, pago, onNueva }) {
         </div>
       </div>
 
-      <button className="btn-primary" onClick={onNueva} style={{ marginTop: 0 }}>
+      <button
+        className="btn-primary"
+        style={{ marginTop: 0, background: '#7B2FBE' }}
+        onClick={() => descargarPdfCotizacion(datosPdf)}>
+        📄 Descargar presupuesto en PDF
+      </button>
+
+      <button className="btn-primary" onClick={onNueva} style={{ marginTop: 10 }}>
         + Nueva cotización
       </button>
     </div>
