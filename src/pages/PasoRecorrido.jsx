@@ -20,8 +20,6 @@ function loadGoogleMaps() {
   });
 }
 
-// Usa Directions API para obtener la ruta más rápida (igual que Google Maps)
-// avoidFerries: true, avoidHighways: false = usa autopistas, sin ferries
 function calcRouteKm(origin, destination, waypoints = []) {
   return new Promise((resolve, reject) => {
     const service = new window.google.maps.DirectionsService();
@@ -37,10 +35,11 @@ function calcRouteKm(origin, destination, waypoints = []) {
       optimizeWaypoints: false,
     }, (result, status) => {
       if (status !== 'OK') { reject(status); return; }
-      // Toma la primera ruta (la más rápida, igual que Google Maps)
-      const leg = result.routes[0]?.legs[0];
-      if (!leg) { reject('NO_LEG'); return; }
-      const km = Math.round(leg.distance.value / 1000);
+      // Suma TODOS los tramos (legs) — cuando hay waypoints hay un leg por tramo
+      const legs = result.routes[0]?.legs;
+      if (!legs || legs.length === 0) { reject('NO_LEG'); return; }
+      const totalMeters = legs.reduce((sum, leg) => sum + leg.distance.value, 0);
+      const km = Math.round(totalMeters / 1000);
       resolve(km);
     });
   });
@@ -87,7 +86,7 @@ export default function PasoRecorrido({ reserva, onNext, onBack }) {
   const [kmBaseOrigen, setKmBaseOrigen] = useState(null);
   const [kmRutaIda, setKmRutaIda] = useState(null);
   const [baseSel, setBaseSel] = useState(BASES[0]);
-  const [baseManual, setBaseManual] = useState(false); // true si el cliente eligió base a mano
+  const [baseManual, setBaseManual] = useState(false);
   const [calculando, setCalculando] = useState(false);
   const [errorCalculo, setErrorCalculo] = useState(false);
   const [syncMode, setSyncMode] = useState(true);
@@ -106,14 +105,11 @@ export default function PasoRecorrido({ reserva, onNext, onBack }) {
     return d;
   });
 
-  // Al seleccionar el origen, asigna automáticamente la base más cercana
-  // (salvo que el cliente la haya elegido a mano)
   useEffect(() => {
     if (!origenData || baseManual) return;
     setBaseSel(baseMasCercana({ lat: origenData.lat, lng: origenData.lng }));
   }, [origenData, baseManual]);
 
-  // Calcula base→origen apenas se selecciona el origen (o cambia la base)
   useEffect(() => {
     if (!origenData) return;
     setKmBaseOrigen(null);
@@ -126,7 +122,6 @@ export default function PasoRecorrido({ reserva, onNext, onBack }) {
     });
   }, [origenData, baseSel]);
 
-  // Calcula ruta de ida (origen + puntos de carga + destino)
   useEffect(() => {
     if (!origenData || !destinoData) return;
     setCalculando(true);
@@ -268,7 +263,6 @@ export default function PasoRecorrido({ reserva, onNext, onBack }) {
         </button>
       </div>
 
-      {/* Base operativa — se asigna sola por cercanía, con opción de cambiarla */}
       {origenData && (
         <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 12, padding: 12, marginBottom: 12 }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-3)', letterSpacing: '.06em', textTransform: 'uppercase', marginBottom: 8 }}>
