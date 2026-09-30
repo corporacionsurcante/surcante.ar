@@ -1,0 +1,98 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    // Admin = usuario de Google cuyo email está en /admins.
+    // Se verifica que el token tenga email (los links personales de la Fase 2 no lo tienen).
+    function isAdmin() {
+      return signedIn()
+        && 'email' in request.auth.token
+        && exists(/databases/$(database)/documents/admins/$(request.auth.token.email));
+    }
+
+    match /admins/{email} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    match /reservas/{id} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
+
+    match /notificaciones/{id} {
+      allow read, update, delete: if isAdmin();
+      allow create: if false;
+    }
+
+    match /fcm_tokens/{token} {
+      allow read, write: if isAdmin();
+    }
+
+    match /config/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /flota/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /unidades/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /receptivo_circuitos/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /receptivo_transfers/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /receptivo_movimientos/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // ---------------- Módulo Egresados ----------------
+    // Fase 1: solo admin. Contienen datos personales de pasajeros (DNI, hotel,
+    // contactos de emergencia) — no abrir lectura pública.
+    // Fase 2 sumará acceso acotado para pasajeros, conductores y coordinadores
+    // a través de sus links personales.
+
+    match /agencias/{id} {
+      allow read, write: if isAdmin();
+    }
+
+    match /operativos/{opId} {
+      allow read, write: if isAdmin();
+
+      // buses, staff, pasajeros, itinerario, avisos, reportes, ubicaciones, checkins
+      match /{sub}/{docId} {
+        allow read, write: if isAdmin();
+      }
+    }
+
+    match /conductores/{id} {
+      allow read, write: if isAdmin();
+    }
+
+    match /accesos/{token} {
+      allow read, write: if isAdmin();
+    }
+
+    // Todo lo no listado queda cerrado
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
