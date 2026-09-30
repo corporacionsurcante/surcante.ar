@@ -35,6 +35,8 @@ const NAV = [
 export default function AdminApp() {
   const [user, setUser] = useState(null);
   const [checking, setChecking] = useState(true);
+  const [sinAcceso, setSinAcceso] = useState('');
+  const [errorVerificacion, setErrorVerificacion] = useState('');
   const [tab, setTab] = useState('dashboard');
   const [notificacionesPendientes, setNotificacionesPendientes] = useState(0);
   const [pushActivo, setPushActivo] = useState(() => pushYaActivado());
@@ -61,13 +63,30 @@ export default function AdminApp() {
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async u => {
-      if (u) {
-        const ok = await isAdminAutorizado(u.email);
-        setUser(ok ? u : null);
-      } else {
+      setErrorVerificacion('');
+      if (!u) {
         setUser(null);
+        setChecking(false);
+        return;
       }
-      setChecking(false);
+      try {
+        const ok = await isAdminAutorizado(u.email);
+        if (ok) {
+          setUser(u);
+          setSinAcceso('');
+        } else {
+          // Sesión de Google sin permiso de admin: se cierra y se avisa
+          setUser(null);
+          setSinAcceso(u.email || 'esta cuenta');
+          signOut(auth).catch(() => {});
+        }
+      } catch (e) {
+        console.error('Verificando admin:', e);
+        setUser(null);
+        setErrorVerificacion('No se pudo verificar tu acceso (sin conexión con la base de datos). Revisá internet y recargá la página.');
+      } finally {
+        setChecking(false);
+      }
     });
     return unsub;
   }, []);
@@ -77,13 +96,13 @@ export default function AdminApp() {
     const q = query(collection(db, 'notificaciones'), where('leida', '==', false));
     return onSnapshot(q, snap => {
       setNotificacionesPendientes(snap.size);
-    });
+    }, e => console.error('[Firestore] notificaciones:', e));
   }, [user]);
 
   useEffect(() => {
-    if (tab !== 'reservas') return;
-    marcarNotificacionesComoLeidas();
-  }, [tab]);
+    if (tab !== 'reservas' || !user) return;
+    marcarNotificacionesComoLeidas().catch(e => console.error('Marcando notificaciones:', e));
+  }, [tab, user]);
 
   if (checking) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0A0A0F', color: 'rgba(255,255,255,.4)', fontSize: 14 }}>
@@ -91,9 +110,19 @@ export default function AdminApp() {
     </div>
   );
 
-  if (!user) return <AdminLogin onLogin={setUser} />;
+  if (errorVerificacion) return (
+    <div className="login-page">
+      <div className="login-card">
+        <img src="/Logo_Surcante_01.png" alt="Surcante" className="login-logo" />
+        <div className="login-error" style={{ marginTop: 0 }}>{errorVerificacion}</div>
+        <button className="login-btn" style={{ marginTop: 16 }} onClick={() => window.location.reload()}>Reintentar</button>
+      </div>
+    </div>
+  );
 
-  const initials = user.displayName?.split(' ').map(n => n[0]).join('').slice(0, 2) || user.email[0].toUpperCase();
+  if (!user) return <AdminLogin onLogin={u => { setSinAcceso(''); setUser(u); }} sinAcceso={sinAcceso} />;
+
+  const initials = user.displayName?.split(' ').filter(Boolean).map(n => n[0]).join('').slice(0, 2).toUpperCase() || (user.email || '?')[0].toUpperCase();
 
   return (
     <div className="admin-shell">

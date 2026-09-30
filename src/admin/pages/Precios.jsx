@@ -13,16 +13,21 @@ export default function Precios() {
   const [precios, setPrecios] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState('');
+  const [guardando, setGuardando] = useState(false);
   const { dolar } = useDolar();
 
-  useEffect(() => {
-    const unsub = suscribirPrecios(data => { setPrecios(data); setLoading(false); });
-    return unsub;
-  }, []);
+  useEffect(() => suscribirPrecios(
+    data => { setPrecios(data); setLoading(false); },
+    () => { setError('No se pudieron leer los precios.'); setLoading(false); },
+  ), []);
 
   async function handleInit() {
-    await inicializarPrecios();
+    try { await inicializarPrecios(); } catch (e) { console.error(e); setError('No se pudieron inicializar los precios.'); }
   }
+
+  const num = (v, def = 0) => { const n = parseFloat(v); return Number.isFinite(n) ? n : def; };
+  const porc = (v, def) => (v === undefined || v === null || v === '' ? def : Number(v));
 
   function updateUnidad(uid, field, value) {
     setPrecios(prev => ({
@@ -40,12 +45,22 @@ export default function Precios() {
   }
 
   async function handleSave() {
-    await actualizarPrecios(precios);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+    setGuardando(true);
+    setError('');
+    try {
+      await actualizarPrecios(precios);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch (e) {
+      console.error(e);
+      setError('No se pudieron guardar los precios. Revisá la conexión.');
+    }
+    setGuardando(false);
   }
 
   if (loading) return <div className="admin-loading">Cargando precios...</div>;
+
+  if (!precios && error) return <div className="admin-empty"><div className="admin-empty-icon">⚠️</div>{error}</div>;
 
   if (!precios) return (
     <div className="admin-empty">
@@ -71,15 +86,15 @@ export default function Precios() {
               <label>USD por km</label>
               <input type="number" step="0.1" min="0"
                 value={precios[u.id]?.usdKm || ''}
-                onChange={e => updateUnidad(u.id, 'usdKm', parseFloat(e.target.value))}
+                onChange={e => updateUnidad(u.id, 'usdKm', num(e.target.value))}
               />
               <ConversorUSD usdValue={precios[u.id]?.usdKm} dolar={dolar} onChangeUSD={v => updateUnidad(u.id, 'usdKm', v)} />
             </div>
             <div className="precio-field">
               <label>Descuento movimientos (%)</label>
               <input type="number" step="1" min="0" max="100"
-                value={((precios[u.id]?.movDesc || 0) * 100).toFixed(0)}
-                onChange={e => updateUnidad(u.id, 'movDesc', parseFloat(e.target.value) / 100)}
+                value={Math.round((precios[u.id]?.movDesc || 0) * 100)}
+                onChange={e => updateUnidad(u.id, 'movDesc', num(e.target.value) / 100)}
               />
             </div>
             <div className="precio-field">
@@ -114,39 +129,44 @@ export default function Precios() {
 
       <div className="precios-card">
         <div className="precios-title">⚙️ Configuración general</div>
+        <div style={{ fontSize: 12, color: '#B07A00', background: '#FFF8E6', borderRadius: 8, padding: '8px 10px', margin: '6px 0 12px', fontWeight: 600, lineHeight: 1.45 }}>
+          ⚠️ Estos cuatro valores todavía no los usa el cotizador: hoy calcula con IVA 21 %, viaje corto hasta 300 km,
+          estadía por debajo de 800 km y seña 30 % (transferencia/efectivo) o 10 % (online), fijos en el código.
+        </div>
         <div className="precios-grid">
           <div className="precio-field">
             <label>Km umbral viaje corto (valor base)</label>
             <input type="number" min="0"
               value={precios.kmBaseThreshold || 300}
-              onChange={e => setPrecios(prev => ({ ...prev, kmBaseThreshold: parseInt(e.target.value) }))}
+              onChange={e => setPrecios(prev => ({ ...prev, kmBaseThreshold: num(e.target.value, 300) }))}
             />
           </div>
           <div className="precio-field">
             <label>Km umbral estadía (media distancia)</label>
             <input type="number" min="0"
               value={precios.kmEstadiaThreshold || 800}
-              onChange={e => setPrecios(prev => ({ ...prev, kmEstadiaThreshold: parseInt(e.target.value) }))}
+              onChange={e => setPrecios(prev => ({ ...prev, kmEstadiaThreshold: num(e.target.value, 800) }))}
             />
           </div>
           <div className="precio-field">
             <label>IVA (%)</label>
             <input type="number" step="1" min="0"
-              value={((precios.iva || 0.21) * 100).toFixed(0)}
-              onChange={e => setPrecios(prev => ({ ...prev, iva: parseFloat(e.target.value) / 100 }))}
+              value={Math.round(porc(precios.iva, 0.21) * 100)}
+              onChange={e => setPrecios(prev => ({ ...prev, iva: num(e.target.value) / 100 }))}
             />
           </div>
           <div className="precio-field">
             <label>Seña (%)</label>
             <input type="number" step="1" min="0"
-              value={((precios.senaPorc || 0.30) * 100).toFixed(0)}
-              onChange={e => setPrecios(prev => ({ ...prev, senaPorc: parseFloat(e.target.value) / 100 }))}
+              value={Math.round(porc(precios.senaPorc, 0.30) * 100)}
+              onChange={e => setPrecios(prev => ({ ...prev, senaPorc: num(e.target.value) / 100 }))}
             />
           </div>
         </div>
       </div>
 
-      <button className={`precios-save ${saved ? 'saved' : ''}`} onClick={handleSave}>
+      {error && <div style={{ color: '#CF1322', fontSize: 13, fontWeight: 600, marginBottom: 12 }}>{error}</div>}
+      <button className={`precios-save ${saved ? 'saved' : ''}`} onClick={handleSave} disabled={guardando}>
         {saved ? '✓ Precios guardados' : 'Guardar todos los precios'}
       </button>
     </div>

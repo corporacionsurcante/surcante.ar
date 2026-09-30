@@ -15,18 +15,40 @@ service cloud.firestore {
     }
 
     match /admins/{email} {
-      allow read: if isAdmin();
+      // Cada usuario puede consultar SOLO su propio documento: así el login
+      // distingue "no autorizado" de un error de conexión.
+      allow get: if signedIn()
+        && 'email' in request.auth.token
+        && request.auth.token.email == email;
+      allow list: if isAdmin();
       allow write: if false;
     }
 
+    // Cotizaciones / reservas: las crea el cotizador público (sin login).
+    // Solo se aceptan en estado inicial y sin marcas internas del servidor.
     match /reservas/{id} {
-      allow create: if true;
+      allow create: if request.resource.data.estado == 'seña_pendiente'
+        && !('notificado' in request.resource.data);
       allow read, update, delete: if isAdmin();
     }
 
+    // Avisos del panel: los crea el servidor (api/notificar, firebase-admin).
     match /notificaciones/{id} {
       allow read, update, delete: if isAdmin();
       allow create: if false;
+    }
+
+    // Diagrama de ocupación (Gantt) — una colección por año: gantt_2026, gantt_2027...
+    // Contiene destinos, notas y quién cargó cada viaje: solo admin.
+    match /{coleccion}/{docId} {
+      allow read, write: if coleccion.matches('gantt_[0-9]{4}') && isAdmin();
+    }
+
+    // Copia pública y mínima del Gantt (unidad + fechas + turnos) para que el
+    // cotizador muestre disponibilidad sin exponer datos internos.
+    match /ocupacion/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
     match /fcm_tokens/{token} {

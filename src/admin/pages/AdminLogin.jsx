@@ -1,9 +1,30 @@
 import React, { useState } from 'react';
-import { signInWithPopup } from 'firebase/auth';
+import { signInWithPopup, signInWithRedirect, signOut } from 'firebase/auth';
 import { auth, googleProvider } from '../../firebase/config';
 import { isAdminAutorizado } from '../../firebase/services';
 
-export default function AdminLogin({ onLogin }) {
+// Mensaje claro según el código de error de Firebase Auth
+function mensajeLogin(e) {
+  const code = e?.code || '';
+  if (code === 'auth/unauthorized-domain') {
+    return `Este dominio (${window.location.hostname}) no está autorizado para iniciar sesión. Agregalo en Firebase Console → Authentication → Configuración → Dominios autorizados.`;
+  }
+  if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') {
+    return 'Se cerró la ventana de Google antes de terminar. Intentá de nuevo.';
+  }
+  if (code === 'auth/network-request-failed') {
+    return 'Sin conexión con Google. Revisá internet e intentá de nuevo.';
+  }
+  if (code === 'auth/too-many-requests') {
+    return 'Demasiados intentos seguidos. Esperá unos minutos y volvé a probar.';
+  }
+  if (code === 'auth/user-disabled') {
+    return 'Esta cuenta de Google está deshabilitada en Firebase.';
+  }
+  return `Error al iniciar sesión${code ? ` (${code})` : ''}. Intentá de nuevo.`;
+}
+
+export default function AdminLogin({ onLogin, sinAcceso }) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -15,17 +36,32 @@ export default function AdminLogin({ onLogin }) {
       const email = result.user.email;
       const autorizado = await isAdminAutorizado(email);
       if (!autorizado) {
-        await auth.signOut();
-        setError('Tu cuenta no tiene acceso al panel de administración.');
+        await signOut(auth);
+        setError(`La cuenta ${email} no tiene acceso al panel de administración.`);
         setLoading(false);
         return;
       }
       onLogin(result.user);
     } catch (e) {
-      setError('Error al iniciar sesión. Intentá de nuevo.');
+      console.error('Login admin:', e);
+      // Navegadores o apps instaladas que bloquean ventanas emergentes → redirección
+      if (e?.code === 'auth/popup-blocked' || e?.code === 'auth/operation-not-supported-in-this-environment') {
+        try {
+          await signInWithRedirect(auth, googleProvider);
+          return;
+        } catch (e2) {
+          console.error('Login admin (redirect):', e2);
+          setError(mensajeLogin(e2));
+          setLoading(false);
+          return;
+        }
+      }
+      setError(mensajeLogin(e));
       setLoading(false);
     }
   }
+
+  const aviso = error || (sinAcceso ? `La cuenta ${sinAcceso} no tiene acceso al panel de administración. Ingresá con una cuenta autorizada.` : '');
 
   return (
     <div className="login-page">
@@ -42,7 +78,7 @@ export default function AdminLogin({ onLogin }) {
           </svg>
           {loading ? 'Iniciando sesión...' : 'Ingresar con Google'}
         </button>
-        {error && <div className="login-error">{error}</div>}
+        {aviso && <div className="login-error">{aviso}</div>}
       </div>
     </div>
   );

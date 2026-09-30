@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useDolar } from '../hooks/useDolar';
+import AvisoDolar from '../components/AvisoDolar';
 import { useDisponibilidad } from '../hooks/useDisponibilidad';
 import { getDiasServicio, formatARS, formatDate } from '../utils/calculos';
 import { CITY_TOUR_USD, CIRCUITOS, TRANSFERS_AEROPUERTO } from '../data/receptivo';
 import { suscribirPreciosCityTour, suscribirCircuitos, suscribirTransfers } from '../firebase/receptivoServices';
 import Calendario from '../components/Calendario';
-import { crearPreferenciaMercadoPago } from '../hooks/useMercadoPago';
+import { iniciarPagoOnline } from '../hooks/useMercadoPago';
+import { DATOS_BANCARIOS, WHATSAPP } from '../data/pagos';
 import { guardarReserva } from '../firebase/reservasService';
 import { generarNroCotizacion } from '../utils/pdfCotizacion';
 import ReservaConfirmada from '../components/ReservaConfirmada';
@@ -18,7 +20,7 @@ const TIPO_UNIT = {
 };
 
 export default function ReceptivoCotizador({ onBack, initialContacto }) {
-  const { dolar, loading: loadingDolar } = useDolar();
+  const { dolar, loading: loadingDolar, error: errorDolar } = useDolar();
   const [cityTourPrecios, setCityTourPrecios] = useState(null);
   const [circuitosDB, setCircuitosDB] = useState(null);
   const [transfersDB, setTransfersDB] = useState(null);
@@ -49,6 +51,13 @@ export default function ReceptivoCotizador({ onBack, initialContacto }) {
   const transfersActivos = (transfersDB || TRANSFERS_AEROPUERTO).filter(t => t.activo !== false);
   const { disponibilidad, loading: loadingDisp } = useDisponibilidad(fechas.fechaInicio, fechas.fechaFin);
   const dias = fechas.dias || 1;
+
+  // Si cambian las fechas y la unidad elegida quedó ocupada, se deselecciona
+  useEffect(() => {
+    if (!unidadSel || !fechas.fechaInicio) return;
+    const u = disponibilidad.find(x => x.id === unidadSel.id);
+    if (u && !u.disponible) setUnidadSel(null);
+  }, [disponibilidad, unidadSel, fechas.fechaInicio]);
 
   function getPrecioItem(item) {
     if (!unidadSel || !dolar) return 0;
@@ -134,14 +143,38 @@ export default function ReceptivoCotizador({ onBack, initialContacto }) {
   const montoAhora = Math.round(total * metodoActual.porc);
   const saldoPendiente = total - montoAhora;
 
-  const DATOS_BANCARIOS = {
-    titular: 'SURCANTE S.R.L', banco: 'Banco Macro · Suc. 544',
-    cuenta: 'Cta Cte $ 3-5440941641566-6', cbu: '2850544230094164156661', cuit: '30-71098078-7',
-  };
-  const WHATSAPP_LIST = [
-    { label: 'José', numero: '5491158100414', nombre: 'José Bournissen' },
-    { label: 'Sebastián', numero: '5492984524724', nombre: 'Sebastián Machado' },
+  const FILAS_BANCO = [
+    ['Titular', DATOS_BANCARIOS.titular],
+    ['Banco', `${DATOS_BANCARIOS.banco} · ${DATOS_BANCARIOS.sucursal}`],
+    ['Cuenta', `${DATOS_BANCARIOS.tipoCuenta} ${DATOS_BANCARIOS.numeroCuenta}`],
+    ['CBU', DATOS_BANCARIOS.cbu],
+    ['CUIT', DATOS_BANCARIOS.cuit],
   ];
+  const WHATSAPP_LIST = WHATSAPP;
+
+  function armarDatosReserva() {
+    return {
+      tipo: 'receptivo',
+      nroCotizacion: generarNroCotizacion(),
+      clienteNombre: contacto.nombre.trim(),
+      clienteWhatsapp: contacto.whatsapp.trim(),
+      unidad: `${unidadSel?.tipo} · INTERNO ${unidadSel?.interno}`,
+      unidadId: unidadSel?.id || '',
+      fechaInicio: fechas.fechaInicio,
+      fechaFin: fechas.fechaFin,
+      dias,
+      programa,
+      programaResumen: Array.from({ length: dias }, (_, i) => ({
+        dia: i + 1,
+        actividades: getNombreDia(i + 1) || 'Día libre',
+      })),
+      grandTotal: total,
+      sena: montoAhora,
+      saldo: saldoPendiente,
+      payMethod,
+      porcentaje: metodoActual.porc,
+    };
+  }
 
   function buildWAMsg(nombre) {
     return encodeURIComponent(
@@ -210,9 +243,11 @@ export default function ReceptivoCotizador({ onBack, initialContacto }) {
               </div>
             );
           })}
-          <div className="prow"><span>Con impuestos</span><span>{formatARS(iva)}</span></div>
+          <div className="prow"><span>IVA 21%</span><span>{formatARS(iva)}</span></div>
           <div className="prow total"><span>Total</span><span>{formatARS(total)}</span></div>
         </div>
+
+        <AvisoDolar error={errorDolar} dolar={dolar} />
 
         <div className="section-label">Método de pago</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 14 }}>
@@ -240,9 +275,9 @@ export default function ReceptivoCotizador({ onBack, initialContacto }) {
         {payMethod === 'transferencia' && (
           <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 12, padding: 14, marginBottom: 14 }}>
             <div className="section-label" style={{ marginBottom: 10 }}>Datos bancarios</div>
-            {Object.entries(DATOS_BANCARIOS).map(([k, v]) => (
+            {FILAS_BANCO.map(([k, v]) => (
               <div key={k} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid var(--border)', fontSize: 12 }}>
-                <span style={{ color: 'var(--text-3)', fontWeight: 500, textTransform: 'capitalize' }}>{k}</span>
+                <span style={{ color: 'var(--text-3)', fontWeight: 500 }}>{k}</span>
                 <span style={{ color: 'var(--text)', fontWeight: 600, textAlign: 'right', maxWidth: '65%', wordBreak: 'break-all' }}>{v}</span>
               </div>
             ))}
@@ -313,28 +348,13 @@ export default function ReceptivoCotizador({ onBack, initialContacto }) {
           <button className="btn-primary green"
             disabled={!contactoValido}
             onClick={async () => {
-              const datos = {
-                tipo: 'receptivo',
-                nroCotizacion: generarNroCotizacion(),
-                clienteNombre: contacto.nombre,
-                clienteWhatsapp: contacto.whatsapp,
-                unidad: `${unidadSel?.tipo} · INTERNO ${unidadSel?.interno}`,
-                fechaInicio: fechas.fechaInicio,
-                fechaFin: fechas.fechaFin,
-                dias,
-                programa,
-                programaResumen: Array.from({ length: dias }, (_, i) => ({
-                  dia: i + 1,
-                  actividades: getNombreDia(i + 1) || 'Día libre',
-                })),
-                grandTotal: total,
-                sena: montoAhora,
-                saldo: saldoPendiente,
-                payMethod,
-              };
+              const datos = armarDatosReserva();
               try {
                 await guardarReserva(datos);
-              } catch(e) { console.error('Error guardando reserva:', e); }
+              } catch (e) {
+                console.error('Error guardando reserva:', e);
+                datos.errorGuardado = true;
+              }
               setReservaOk(datos);
             }}>
             ✓ Confirmar y reservar
@@ -343,23 +363,21 @@ export default function ReceptivoCotizador({ onBack, initialContacto }) {
 
         {(payMethod === 'mercadopago' || payMethod === 'tarjeta') && (
           <button className="btn-primary"
-            disabled={loadingMP || loadingDolar}
+            disabled={loadingMP || loadingDolar || !contactoValido || !(total > 0)}
             style={{ background: payMethod === 'mercadopago' ? '#009EE3' : '#6B21D6', opacity: loadingMP ? .7 : 1 }}
             onClick={async () => {
               setLoadingMP(true);
               setErrorMP('');
+              const datos = armarDatosReserva();
               try {
-                const pref = await crearPreferenciaMercadoPago({
-                  grandTotal: total,
-                  montoAhora,
-                  origen: 'Buenos Aires',
-                  destino: 'Receptivo CABA',
-                  fechaInicio: fechas.fechaInicio,
-                  fechaFin: fechas.fechaFin,
-                  flotaUnidades: [{ id: unidadSel?.id, label: `INTERNO ${unidadSel?.interno}` }],
+                await iniciarPagoOnline({
+                  datos,
+                  monto: montoAhora,
+                  titulo: 'Surcante · Receptivo Buenos Aires',
+                  descripcion: `${fechas.fechaInicio} al ${fechas.fechaFin} · INTERNO ${unidadSel?.interno} · ${datos.nroCotizacion}`,
                 });
-                window.location.href = pref.init_point;
               } catch (e) {
+                console.error('Error MercadoPago:', e);
                 setErrorMP('No se pudo conectar con MercadoPago. Intentá con transferencia o efectivo.');
                 setLoadingMP(false);
               }
@@ -465,7 +483,7 @@ export default function ReceptivoCotizador({ onBack, initialContacto }) {
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 13, fontWeight: 600, color: sel ? '#fff' : 'var(--spd)' }}>City Tour CABA</div>
                   <div style={{ fontSize: 11, color: sel ? 'rgba(255,255,255,.7)' : 'var(--sp)' }}>
-                    {formatARS((preciosCityTour[unidadSel?.tipo] || 0) * (dolar || 0))} · con impuestos
+                    {formatARS((preciosCityTour[unidadSel?.tipo] || 0) * (dolar || 0))} + IVA
                   </div>
                 </div>
                 {sel && <span style={{ color: '#fff', fontWeight: 700 }}>✓</span>}

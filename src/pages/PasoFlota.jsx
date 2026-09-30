@@ -17,10 +17,7 @@ const TIPO_TO_ID = { 'MIX 60': 'u1', 'Comun 45': 'u2', 'Minibus 24': 'u3', 'Mini
 
 function usePreciosFirebase() {
   const [precios, setPrecios] = useState(null);
-  useEffect(() => {
-    const unsub = suscribirPrecios(setPrecios);
-    return unsub;
-  }, []);
+  useEffect(() => suscribirPrecios(setPrecios), []);
   return precios;
 }
 
@@ -43,21 +40,22 @@ export default function PasoFlota({ onNext }) {
   const [fechas, setFechas] = useState({ fechaInicio: '', fechaFin: '', mismodia: false, horaInicio: null, horaFin: null });
   const [qty, setQty] = useState({});
 
-  const { disponibilidad, loading } = useDisponibilidad(fechas.fechaInicio, fechas.fechaFin);
+  const { disponibilidad, loading, errorDisponibilidad } = useDisponibilidad(fechas.fechaInicio, fechas.fechaFin);
 
   const dias = fechas.mismodia ? 1 : getDiasServicio(fechas.fechaInicio, fechas.fechaFin);
-  const totalUnidades = Object.values(qty).reduce((a, b) => a + b, 0);
+  // Solo cuentan las unidades elegidas que siguen disponibles para las fechas actuales
+  const totalUnidades = disponibilidad.reduce((a, u) => a + ((u.disponible || !fechas.fechaInicio) ? (qty[u.id] || 0) : 0), 0);
   const canContinue = fechas.fechaInicio && fechas.fechaFin && totalUnidades > 0;
 
+  // Cada tarjeta es un ómnibus físico (un interno): se contrata 0 o 1 vez
   function chQty(uid, d) {
-    const unit = disponibilidad.find(u => u.id === uid);
-    const max = unit?.disponibles ?? 10;
-    setQty(prev => ({ ...prev, [uid]: Math.min(max, Math.max(0, (prev[uid] || 0) + d)) }));
+    setQty(prev => ({ ...prev, [uid]: Math.min(1, Math.max(0, (prev[uid] || 0) + d)) }));
   }
 
   function buildFlota() {
     const flota = [];
     disponibilidad.forEach(u => {
+      if (fechas.fechaInicio && !u.disponible) return;
       const cant = qty[u.id] || 0;
       for (let i = 0; i < cant; i++) {
         const config = getTipoConfig(u.tipo, preciosDB);
@@ -93,7 +91,7 @@ export default function PasoFlota({ onNext }) {
   }
 
   const flotaDesc = disponibilidad
-    .filter(u => (qty[u.id] || 0) > 0)
+    .filter(u => (qty[u.id] || 0) > 0 && (u.disponible || !fechas.fechaInicio))
     .map(u => `${qty[u.id]}× Int.${u.interno}`)
     .join(' + ');
 
@@ -116,6 +114,12 @@ export default function PasoFlota({ onNext }) {
       {loading && fechas.fechaInicio && (
         <div style={{ textAlign: 'center', padding: '20px 0', color: 'var(--text-3)', fontSize: 13 }}>
           ⏳ Verificando disponibilidad...
+        </div>
+      )}
+
+      {errorDisponibilidad && fechas.fechaInicio && (
+        <div style={{ background: '#FFF8E6', border: '1px solid #FFD166', borderRadius: 10, padding: '8px 12px', marginBottom: 10, fontSize: 12, color: '#7A5200', fontWeight: 600 }}>
+          ⚠️ No pudimos verificar la disponibilidad en este momento. Podés cotizar igual: la confirmamos por WhatsApp.
         </div>
       )}
 
@@ -151,7 +155,7 @@ export default function PasoFlota({ onNext }) {
                     <div className="counter">
                       <button className="counter-btn" disabled={cant === 0} onClick={() => chQty(u.id, -1)}>−</button>
                       <span className="counter-val">{cant}</span>
-                      <button className="counter-btn" onClick={() => chQty(u.id, 1)}>+</button>
+                      <button className="counter-btn" disabled={cant >= 1} onClick={() => chQty(u.id, 1)}>+</button>
                     </div>
                   </div>
                 )}

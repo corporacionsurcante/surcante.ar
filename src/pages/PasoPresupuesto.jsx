@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import { useDolar } from '../hooks/useDolar';
+import AvisoDolar from '../components/AvisoDolar';
 import { calcPresupuestoTotal, formatARS, formatDate } from '../utils/calculos';
 import { METODOS_PAGO, DATOS_BANCARIOS, WHATSAPP } from '../data/pagos';
-import { crearPreferenciaMercadoPago } from '../hooks/useMercadoPago';
+import { iniciarPagoOnline } from '../hooks/useMercadoPago';
+import { generarNroCotizacion } from '../utils/pdfCotizacion';
+import { armarReservaCharter } from '../utils/reservaCharter';
 
 function WhatsAppButtons({ getMsgFor, sufijo }) {
   return (
@@ -29,7 +32,7 @@ function WhatsAppButtons({ getMsgFor, sufijo }) {
 }
 
 export default function PasoPresupuesto({ reserva, onBack, onConfirm, isAdmin, initialContacto }) {
-  const { dolar, loading } = useDolar();
+  const { dolar, loading, error: errorDolar } = useDolar();
   const [payMethod, setPayMethod] = useState('transferencia');
   const [contacto, setContacto] = useState({
     nombre: initialContacto?.nombreCompleto || '',
@@ -71,23 +74,26 @@ export default function PasoPresupuesto({ reserva, onBack, onConfirm, isAdmin, i
   async function handlePagarMP() {
     setLoadingMP(true);
     setErrorMP('');
+    const pago = {
+      grandTotal,
+      sena: montoAhora,
+      saldo,
+      payMethod,
+      porcentaje,
+      clienteNombre: contacto.nombre.trim(),
+      clienteWhatsapp: contacto.whatsapp.trim(),
+    };
+    const nroCotizacion = generarNroCotizacion();
     try {
-      const pref = await crearPreferenciaMercadoPago({
-        grandTotal, montoAhora, origen, destino,
-        fechaInicio, fechaFin, flotaUnidades,
+      // Guarda la reserva y recién después redirige a MercadoPago
+      await iniciarPagoOnline({
+        datos: armarReservaCharter(reserva, pago, nroCotizacion),
+        monto: montoAhora,
+        titulo: `Surcante · ${origen} → ${destino}`,
+        descripcion: `${fechaInicio} al ${fechaFin} · ${flotaUnidades.length} unidad${flotaUnidades.length !== 1 ? 'es' : ''} · ${nroCotizacion}`,
       });
-      onConfirm({
-        grandTotal,
-        sena: montoAhora,
-        saldo,
-        payMethod,
-        porcentaje,
-        mpPreferenceId: pref.id,
-        clienteNombre: contacto.nombre.trim(),
-        clienteWhatsapp: contacto.whatsapp.trim(),
-      });
-      window.location.href = pref.init_point;
     } catch (e) {
+      console.error('Error MercadoPago:', e);
       setErrorMP('No se pudo conectar con MercadoPago. Intentá con transferencia o efectivo.');
       setLoadingMP(false);
     }
@@ -121,6 +127,8 @@ export default function PasoPresupuesto({ reserva, onBack, onConfirm, isAdmin, i
           </div>
         )}
       </div>
+
+      <AvisoDolar error={errorDolar} dolar={dolar} />
 
       <div className="section-label">Método de pago</div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
@@ -252,7 +260,10 @@ export default function PasoPresupuesto({ reserva, onBack, onConfirm, isAdmin, i
               {d.movNeto > 0 && (
                 <div className="prow sub"><span>Movimientos en destino</span><span>{formatARS(d.movNeto)}</span></div>
               )}
-              <div className="prow sub"><span>Con impuestos</span><span>{formatARS(d.ivaTotal)}</span></div>
+              <div className="prow sub"><span>IVA 21%</span><span>{formatARS(d.ivaTotal)}</span></div>
+              {detalles.length > 1 && (
+                <div className="prow sub"><span>Total unidad</span><span>{formatARS(d.total)}</span></div>
+              )}
             </div>
           );
         })}

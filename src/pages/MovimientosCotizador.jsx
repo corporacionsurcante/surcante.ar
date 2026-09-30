@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useDolar } from '../hooks/useDolar';
+import AvisoDolar from '../components/AvisoDolar';
+import { iniciarPagoOnline } from '../hooks/useMercadoPago';
 import { formatARS, formatDate, getDiasServicio } from '../utils/calculos';
 import { useDisponibilidad } from '../hooks/useDisponibilidad';
 import { DATOS_BANCARIOS, WHATSAPP } from '../data/pagos';
@@ -20,7 +22,9 @@ const TIPO_UNIT = {
 };
 
 export default function MovimientosCotizador({ onBack, initialContacto }) {
-  const { dolar, loading: loadingDolar } = useDolar();
+  const { dolar, loading: loadingDolar, error: errorDolar } = useDolar();
+  const [loadingMP, setLoadingMP] = useState(false);
+  const [errorMP, setErrorMP] = useState('');
   const [precioUSD, setPrecioUSD] = useState(PRECIO_DEFAULT_USD);
   const [fechas, setFechas] = useState({ fechaInicio: '', fechaFin: '', dias: 1 });
   const [unidadSel, setUnidadSel] = useState(null);
@@ -35,7 +39,7 @@ export default function MovimientosCotizador({ onBack, initialContacto }) {
   useEffect(() => {
     const unsub2 = onSnapshot(doc(db, 'config', 'mov_caba_precios'), snap => {
       if (snap.exists()) setPreciosMov(prev => ({ ...prev, ...snap.data() }));
-    });
+    }, e => console.error('[Firestore] config/mov_caba_precios:', e));
     return unsub2;
   }, []);
 
@@ -60,7 +64,7 @@ export default function MovimientosCotizador({ onBack, initialContacto }) {
   useEffect(() => {
     const unsub = onSnapshot(doc(db, 'config', 'receptivo_movimientos'), snap => {
       if (snap.exists() && snap.data().precioUSD) setPrecioUSD(snap.data().precioUSD);
-    });
+    }, e => console.error('[Firestore] config/receptivo_movimientos:', e));
     return unsub;
   }, []);
 
@@ -69,14 +73,45 @@ export default function MovimientosCotizador({ onBack, initialContacto }) {
   const subtotal = subtotalDia * (modo === 'dia' ? dias : 1);
   const iva = subtotal * 0.21;
   const total = subtotal + iva;
-  const montoAhora = Math.round(total * (payMethod === 'mercadopago' || payMethod === 'tarjeta' ? 0.10 : 0.30));
+  const porcentaje = payMethod === 'mercadopago' || payMethod === 'tarjeta' ? 0.10 : 0.30;
+  const montoAhora = Math.round(total * porcentaje);
   const saldo = total - montoAhora;
+
+  // Si cambian las fechas y la unidad elegida quedó ocupada, se deselecciona
+  useEffect(() => {
+    if (!unidadSel || !fechas.fechaInicio) return;
+    const u = disponibilidad.find(x => x.id === unidadSel.id);
+    if (u && !u.disponible) setUnidadSel(null);
+  }, [disponibilidad, unidadSel, fechas.fechaInicio]);
+
+  function armarDatosReserva() {
+    return {
+      tipo: 'movimientos-caba-gba',
+      nroCotizacion: generarNroCotizacion(),
+      clienteNombre: contacto.nombre.trim(),
+      clienteWhatsapp: contacto.whatsapp.trim(),
+      unidad: `${unidadSel?.tipo} · INTERNO ${unidadSel?.interno}`,
+      unidadId: unidadSel?.id || '',
+      fechaInicio: fechas.fechaInicio,
+      fechaFin: modo === 'horas' ? fechas.fechaInicio : fechas.fechaFin,
+      modo,
+      dias: modo === 'horas' ? 1 : dias,
+      horas: modo === 'horas' ? horas : null,
+      detallePrecio: modo === 'horas' ? descHoras : `Tarifa diaria × ${dias} día${dias > 1 ? 's' : ''}`,
+      descripcion: descripcion || '',
+      grandTotal: total,
+      sena: montoAhora,
+      saldo,
+      payMethod,
+      porcentaje,
+    };
+  }
 
   function buildWAMsg(nombre) {
     return encodeURIComponent(
       `Hola ${nombre}! Quiero reservar movimientos con Surcante.\n\n` +
       `📅 Fecha: ${fechas.fechaInicio}${dias > 1 ? ` → ${fechas.fechaFin}` : ''}\n` +
-      `⏱️ Días: ${dias}\n` +
+      (modo === 'horas' ? `⏱️ Horas: ${horas} (${descHoras})\n` : `⏱️ Días: ${dias}\n`) +
       `📝 Descripción: ${descripcion || 'Sin especificar'}\n` +
       `🚌 Unidad: ${unidadSel?.tipo} · INTERNO ${unidadSel?.interno}\n` +
       `💰 Total: ${formatARS(total)}\n` +
@@ -111,8 +146,8 @@ export default function MovimientosCotizador({ onBack, initialContacto }) {
               </div>
               <div className="sena-divider" />
               <div className="sena-item">
-                <div className="sena-label">Días</div>
-                <div className="sena-val">{dias}</div>
+                <div className="sena-label">{modo === 'horas' ? 'Horas' : 'Días'}</div>
+                <div className="sena-val">{modo === 'horas' ? `${horas}h` : dias}</div>
               </div>
             </div>
           )}
@@ -124,9 +159,11 @@ export default function MovimientosCotizador({ onBack, initialContacto }) {
           <div className="prow"><span>Unidad</span><span>{unidadSel?.tipo} · INTERNO {unidadSel?.interno} · {unidadSel?.patente}</span></div>
           <div className="prow"><span>Fechas</span><span>{formatDate(fechas.fechaInicio)}{dias > 1 ? ` → ${formatDate(fechas.fechaFin)}` : ''}</span></div>
           {descripcion && <div className="prow"><span>Descripción</span><span>{descripcion}</span></div>}
-          <div className="prow sub"><span>Con impuestos</span><span>{formatARS(iva)}</span></div>
+          <div className="prow sub"><span>IVA 21%</span><span>{formatARS(iva)}</span></div>
           <div className="prow total"><span>Total</span><span>{formatARS(total)}</span></div>
         </div>
+
+        <AvisoDolar error={errorDolar} dolar={dolar} />
 
         <div className="section-label">Método de pago</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 14 }}>
@@ -221,35 +258,48 @@ export default function MovimientosCotizador({ onBack, initialContacto }) {
           <button className="btn-primary green"
             disabled={!contactoValido}
             onClick={async () => {
-              const datos = {
-                tipo: 'movimientos-caba-gba',
-                nroCotizacion: generarNroCotizacion(),
-                clienteNombre: contacto.nombre,
-                clienteWhatsapp: contacto.whatsapp,
-                unidad: `${unidadSel?.tipo} · INTERNO ${unidadSel?.interno}`,
-                fechaInicio: fechas.fechaInicio,
-                fechaFin: fechas.fechaFin,
-                dias,
-                descripcion: descripcion || '',
-                grandTotal: total,
-                sena: montoAhora,
-                saldo,
-                payMethod,
-              };
+              const datos = armarDatosReserva();
               try {
                 await guardarReserva(datos);
-              } catch(e) { console.error('Error guardando reserva:', e); }
+              } catch (e) {
+                console.error('Error guardando reserva:', e);
+                datos.errorGuardado = true;
+              }
               setReservaOk(datos);
             }}>
             ✓ Confirmar reserva
           </button>
         )}
         {(payMethod === 'mercadopago' || payMethod === 'tarjeta') && (
-          <button className="btn-primary"
-            style={{ background: payMethod === 'mercadopago' ? '#009EE3' : '#6B21D6' }}
-            onClick={() => alert('Integración online en proceso. Por favor usá transferencia o efectivo.')}>
-            {payMethod === 'mercadopago' ? '💳' : '🏦'} Pagar {formatARS(montoAhora)}
-          </button>
+          <>
+            {errorMP && (
+              <div style={{ fontSize: 12, color: '#CF1322', background: '#FFF1F0', borderRadius: 8, padding: '8px 12px', marginBottom: 10 }}>
+                {errorMP}
+              </div>
+            )}
+            <button className="btn-primary"
+              disabled={loadingMP || loadingDolar || !contactoValido || !(total > 0)}
+              style={{ background: payMethod === 'mercadopago' ? '#009EE3' : '#6B21D6', opacity: loadingMP ? .7 : 1 }}
+              onClick={async () => {
+                setLoadingMP(true);
+                setErrorMP('');
+                const datos = armarDatosReserva();
+                try {
+                  await iniciarPagoOnline({
+                    datos,
+                    monto: montoAhora,
+                    titulo: 'Surcante · Movimientos CABA / GBA',
+                    descripcion: `${datos.fechaInicio}${datos.fechaFin !== datos.fechaInicio ? ` al ${datos.fechaFin}` : ''} · INTERNO ${unidadSel?.interno} · ${datos.nroCotizacion}`,
+                  });
+                } catch (e) {
+                  console.error('Error MercadoPago:', e);
+                  setErrorMP('No se pudo conectar con MercadoPago. Intentá con transferencia o efectivo.');
+                  setLoadingMP(false);
+                }
+              }}>
+              {loadingMP ? 'Redirigiendo...' : `${payMethod === 'mercadopago' ? '💳' : '🏦'} Pagar ${formatARS(montoAhora)} ${payMethod === 'mercadopago' ? 'con MercadoPago' : 'con tarjeta'}`}
+            </button>
+          </>
         )}
         <button className="btn-secondary" onClick={() => setStep(1)}>← Modificar servicio</button>
       </div>

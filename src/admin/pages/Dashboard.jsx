@@ -13,11 +13,12 @@ const ESTADOS = {
 export default function Dashboard() {
   const [reservas, setReservas] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  useEffect(() => {
-    const unsub = suscribirReservas(data => { setReservas(data); setLoading(false); });
-    return unsub;
-  }, []);
+  useEffect(() => suscribirReservas(
+    data => { setReservas(data); setLoading(false); setError(''); },
+    e => { setError(e?.code === 'permission-denied' ? 'Sin permiso para leer las reservas (revisá las reglas de Firestore).' : 'No se pudieron cargar las reservas.'); setLoading(false); },
+  ), []);
 
   const hoy = new Date().toDateString();
   const reservasHoy = reservas.filter(r => r.creadoEn?.toDate?.()?.toDateString() === hoy);
@@ -26,7 +27,12 @@ export default function Dashboard() {
     const ahora = new Date();
     return d && d.getMonth() === ahora.getMonth() && d.getFullYear() === ahora.getFullYear();
   });
-  const ingresosMes = totalMes.reduce((acc, r) => acc + (r.sena || 0), 0);
+  // Solo señas efectivamente cobradas (no las pendientes)
+  const ESTADOS_COBRADOS = ['seña_recibida', 'saldo_pendiente', 'confirmada'];
+  const ingresosMes = totalMes
+    .filter(r => ESTADOS_COBRADOS.includes(r.estado))
+    .reduce((acc, r) => acc + (r.sena || 0), 0);
+  const cotizadoMes = totalMes.filter(r => r.estado !== 'cancelada').reduce((acc, r) => acc + (r.grandTotal || 0), 0);
   const reservasActivas = reservas.filter(r => r.estado !== 'cancelada');
   const pendientesConfirmar = reservas.filter(r => r.estado === 'seña_pendiente' || r.estado === 'seña_recibida');
 
@@ -44,6 +50,7 @@ export default function Dashboard() {
   }
 
   if (loading) return <div className="admin-loading">Cargando...</div>;
+  if (error) return <div className="admin-empty"><div className="admin-empty-icon">⚠️</div>{error}</div>;
 
   return (
     <div>
@@ -56,12 +63,12 @@ export default function Dashboard() {
         <div className="metric-card dark">
           <div className="metric-label">Ingresos del mes</div>
           <div className="metric-val green">{formatARS(ingresosMes)}</div>
-          <div className="metric-sub">Señas recibidas</div>
+          <div className="metric-sub">Señas cobradas · {formatARS(cotizadoMes)} cotizado</div>
         </div>
         <div className="metric-card">
           <div className="metric-label">Reservas activas</div>
           <div className="metric-val purple">{reservasActivas.length}</div>
-          <div className="metric-sub">Total histórico</div>
+          <div className="metric-sub">No canceladas · histórico</div>
         </div>
         <div className="metric-card">
           <div className="metric-label">Por confirmar</div>
@@ -108,8 +115,8 @@ export default function Dashboard() {
                     </span>
                     {r.origen ? `${r.origen} → ${r.destino}` : r.descripcion || r.unidad || '—'}
                   </td>
-                  <td>{r.fechaInicio || '—'}</td>
                   <td>{r.clienteNombre || '—'}{r.clienteWhatsapp ? ` · ${r.clienteWhatsapp}` : ''}</td>
+                  <td>{r.fechaInicio || '—'}</td>
                   <td style={{ fontWeight: 700 }}>{formatARS(r.grandTotal || 0)}</td>
                   <td>{estadoBadge(r.estado)}</td>
                 </tr>
