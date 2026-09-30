@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth } from '../../firebase/config';
 import { isAdminAutorizado } from '../../firebase/services';
@@ -17,11 +17,15 @@ import { marcarNotificacionesComoLeidas } from '../../firebase/notificacionesSer
 import { activarNotificacionesPush, pushYaActivado } from '../../firebase/pushService';
 import '../admin.css';
 
+// Módulo Egresados: se carga bajo demanda para no agrandar el cotizador público
+const Egresados = lazy(() => import('./Egresados'));
+
 const NAV = [
   { id: 'dashboard',    label: 'Dashboard',     icon: '📊' },
   { id: 'gantt',        label: 'Diagrama',      icon: '📅' },
   { id: 'reservas',     label: 'Reservas',      icon: '📋' },
   { id: 'cotizaciones', label: 'Cotizaciones',  icon: '📄' },
+  { id: 'egresados',    label: 'Egresados',     icon: '🎓' },
   { id: 'flota',        label: 'Flota',         icon: '🚌' },
   { id: 'precios',      label: 'Precios',       icon: '💰' },
   { id: 'receptivo',    label: 'Receptivo',     icon: '🏛️' },
@@ -151,6 +155,11 @@ export default function AdminApp() {
         {tab === 'gantt'     && <Gantt />}
         {tab === 'reservas'  && <Reservas />}
         {tab === 'cotizaciones' && <Cotizaciones />}
+        {tab === 'egresados' && (
+          <Suspense fallback={<div className="admin-loading">Cargando módulo Egresados...</div>}>
+            <Egresados />
+          </Suspense>
+        )}
         {tab === 'flota'     && <Flota />}
         {tab === 'precios'   && <Precios />}
         {tab === 'receptivo' && <Receptivo />}
