@@ -1,39 +1,25 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { formatARS, formatDate } from '../utils/calculos';
 import { crearReserva } from '../firebase/services';
 import { WHATSAPP } from '../data/pagos';
 import { generarNroCotizacion, descargarPdfCotizacion } from '../utils/pdfCotizacion';
+import { armarReservaCharter } from '../utils/reservaCharter';
 
 export default function Confirmacion({ reserva, pago, onNueva }) {
-  const [nroCotizacion] = React.useState(generarNroCotizacion);
+  const [nroCotizacion] = useState(() => pago.nroCotizacion || generarNroCotizacion());
+  const [errorGuardado, setErrorGuardado] = useState(false);
+  const guardada = useRef(!!pago.reservaGuardada);
   const { origen, destino, fechaInicio, fechaFin, dias, flotaUnidades, kmTotal, puntosCarga } = reserva;
-  const { grandTotal, sena, saldo, payMethod, clienteNombre, clienteWhatsapp, porcentaje } = pago;
+  const { grandTotal, sena, saldo, payMethod, clienteNombre, porcentaje } = pago;
 
-  const datosPdf = {
-    tipo: 'charter',
-    nroCotizacion,
-    baseId: reserva.baseId || '',
-    baseNombre: reserva.baseNombre || '',
-    origen,
-    destino,
-    fechaInicio,
-    fechaFin,
-    dias,
-    kmTotal,
-    puntosCarga: puntosCarga || [],
-    clienteNombre: clienteNombre || '',
-    clienteWhatsapp: clienteWhatsapp || '',
-    flotaUnidades: flotaUnidades.map(u => ({ id: u.id, label: u.label, tipo: u.tid })),
-    grandTotal,
-    sena,
-    saldo,
-    payMethod,
-    porcentaje,
-  };
+  const datosPdf = armarReservaCharter(reserva, pago, nroCotizacion);
 
   useEffect(() => {
-    crearReserva(datosPdf).catch(() => {
-      // fallo silencioso: el PDF del cliente no depende de la persistencia
+    if (guardada.current) return; // el pago online ya la guardó antes de redirigir
+    guardada.current = true;
+    crearReserva(datosPdf).catch((e) => {
+      console.error('Error guardando reserva:', e);
+      setErrorGuardado(true);
     });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -49,6 +35,11 @@ export default function Confirmacion({ reserva, pago, onNueva }) {
       <div className="confirm-sub">
         En breve te contactamos por WhatsApp para coordinar el pago del saldo.
       </div>
+      {errorGuardado && (
+        <div style={{ background: '#FFF1F0', color: '#A8071A', borderRadius: 10, padding: '10px 12px', fontSize: 12.5, fontWeight: 600, marginBottom: 12, lineHeight: 1.45 }}>
+          ⚠️ No pudimos registrar la reserva automáticamente. Mandanos el número {nroCotizacion} por WhatsApp (botones de abajo) y la cargamos nosotros.
+        </div>
+      )}
 
       <div className="confirm-detail">
         <div className="confirm-row hl"><span>Total del viaje</span><span style={{ color: '#00C896' }}>{formatARS(grandTotal)}</span></div>

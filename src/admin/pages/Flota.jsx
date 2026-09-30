@@ -12,19 +12,27 @@ export default function Flota() {
   const [form, setForm] = useState(FORM_VACIO);
   const [saving, setSaving] = useState(false);
   const [confirmEliminar, setConfirmEliminar] = useState(false);
+  const [error, setError] = useState('');
 
-  useEffect(() => {
-    const unsub = suscribirUnidades(data => { setUnidades(data); setLoading(false); });
-    return unsub;
-  }, []);
+  useEffect(() => suscribirUnidades(
+    data => { setUnidades(data); setLoading(false); },
+    () => { setError('No se pudo leer la flota.'); setLoading(false); },
+  ), []);
+
+  async function handleInicializar() {
+    setError('');
+    try { await inicializarUnidades(); } catch (e) { console.error(e); setError('No se pudieron cargar las unidades.'); }
+  }
 
   function abrirNueva() {
+    setError('');
     setForm(FORM_VACIO);
     setConfirmEliminar(false);
     setModal('nueva');
   }
 
   function abrirEditar(u) {
+    setError('');
     setForm({
       interno: u.interno || '',
       patente: u.patente || '',
@@ -40,12 +48,18 @@ export default function Flota() {
 
   async function handleGuardar() {
     if (!form.interno || !form.patente) return;
+    const interno = parseInt(form.interno, 10);
+    if (!Number.isFinite(interno)) { setError('El número de interno no es válido.'); return; }
+    const repetido = unidades.find(u => Number(u.interno) === interno && (modal === 'nueva' || u.id !== modal.id));
+    if (repetido) { setError(`Ya existe la unidad con interno ${interno}.`); return; }
     setSaving(true);
+    setError('');
     try {
       const data = {
         ...form,
-        interno: parseInt(form.interno),
-        butacas: parseInt(form.butacas),
+        patente: String(form.patente).trim().toUpperCase(),
+        interno,
+        butacas: parseInt(form.butacas, 10) || 0,
       };
       if (modal === 'nueva') {
         await agregarUnidad(data);
@@ -53,15 +67,23 @@ export default function Flota() {
         await actualizarUnidad(modal.id, data);
       }
       setModal(null);
-    } catch(e) { console.error(e); }
+    } catch (e) {
+      console.error(e);
+      setError('No se pudo guardar la unidad. Revisá la conexión.');
+    }
     setSaving(false);
   }
 
   async function handleEliminar() {
     if (!modal?.id) return;
     setSaving(true);
-    await eliminarUnidad(modal.id);
-    setModal(null);
+    try {
+      await eliminarUnidad(modal.id);
+      setModal(null);
+    } catch (e) {
+      console.error(e);
+      setError('No se pudo eliminar la unidad.');
+    }
     setSaving(false);
   }
 
@@ -75,13 +97,17 @@ export default function Flota() {
         <div className="section-title">Flota ({unidades.length} unidades)</div>
         <div style={{ display: 'flex', gap: 8 }}>
           {unidades.length === 0 && (
-            <button className="section-action" style={{ background: '#555' }} onClick={inicializarUnidades}>
+            <button className="section-action" style={{ background: '#555' }} onClick={handleInicializar}>
               Cargar unidades Surcante
             </button>
           )}
           <button className="section-action" onClick={abrirNueva}>+ Nueva unidad</button>
         </div>
       </div>
+
+      {error && modal === null && (
+        <div style={{ background: '#FFF1F0', color: '#A8071A', borderRadius: 10, padding: '10px 12px', fontSize: 13, fontWeight: 600, marginBottom: 14 }}>⛔ {error}</div>
+      )}
 
       {unidades.length === 0 ? (
         <div className="admin-empty">
@@ -206,6 +232,9 @@ export default function Flota() {
               </div>
             </div>
 
+            {error && (
+              <div style={{ background: '#FFF1F0', color: '#A8071A', borderRadius: 8, padding: '8px 10px', fontSize: 12, fontWeight: 600, marginBottom: 10 }}>{error}</div>
+            )}
             <button onClick={handleGuardar} disabled={saving || !form.interno || !form.patente}
               style={{
                 width: '100%', padding: 13, background: '#7B2FBE', color: '#fff',

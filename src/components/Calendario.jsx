@@ -9,6 +9,13 @@ function isSameDay(a, b) {
 function isToday(d) { return isSameDay(d, new Date()); }
 function stripTime(d) { const r = new Date(d); r.setHours(0,0,0,0); return r; }
 
+// Fecha local → 'AAAA-MM-DD' (toISOString usa UTC y puede correr la fecha un día)
+export function fechaLocalISO(dt) {
+  if (!dt) return '';
+  const p = n => String(n).padStart(2, '0');
+  return `${dt.getFullYear()}-${p(dt.getMonth() + 1)}-${p(dt.getDate())}`;
+}
+
 // Fecha mínima permitida: hoy si son antes de las 18hs, mañana si son después
 function getFechaMinima() {
   const now = new Date();
@@ -21,6 +28,10 @@ function getFechaMinima() {
     return manana;
   }
   return stripTime(now);
+}
+
+export function fechaMinimaISO() {
+  return fechaLocalISO(getFechaMinima());
 }
 
 export default function Calendario({ onChange }) {
@@ -43,7 +54,7 @@ export default function Calendario({ onChange }) {
     else setViewMonth(m => m + 1);
   }
 
-  function fmt(dt) { return dt ? dt.toISOString().split('T')[0] : ''; }
+  const fmt = fechaLocalISO;
 
   function calcDias(i, f, md) {
     if (md || !f) return 1;

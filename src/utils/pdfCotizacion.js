@@ -1,8 +1,13 @@
 // Generación de PDF de cotización — Surcante
 // El PDF se genera al instante desde los datos guardados en Firestore,
 // tanto para el cliente (al finalizar) como para el admin (histórico día a día).
-import { jsPDF } from 'jspdf';
+// jsPDF se descarga recién cuando se genera el primer PDF (no pesa en la carga del cotizador)
 import { formatARS, formatDate } from './calculos';
+
+async function cargarJsPDF() {
+  const mod = await import('jspdf');
+  return mod.jsPDF;
+}
 
 const SP = [74, 15, 168];      // violeta Surcante #4A0FA8
 const SP_LIGHT = [244, 242, 250];
@@ -56,8 +61,10 @@ function buildFilas(r) {
   push('Destino', r.destino);
   push('Fecha de salida', safeFormatDate(r.fechaInicio));
   if (r.fechaFin && r.fechaFin !== r.fechaInicio) push('Fecha de regreso', safeFormatDate(r.fechaFin));
-  if (r.dias) push('Días de servicio', r.dias);
+  if (r.mismodia && r.horaInicio) push('Horario', `${r.horaInicio} a ${r.horaFin || '—'} hs`);
+  if (r.dias && !r.horas) push('Días de servicio', r.dias);
   if (r.horas) push('Horas de servicio', `${r.horas} hs`);
+  if (r.detallePrecio) push('Tarifa', r.detallePrecio);
   if (r.kmTotal) push('Km totales', `${Number(r.kmTotal).toLocaleString('es-AR')} km`);
   if (r.unidad) push('Unidad', r.unidad);
   if (r.flotaUnidades?.length) {
@@ -68,8 +75,9 @@ function buildFilas(r) {
   return filas;
 }
 
-export function generarPdfCotizacion(r) {
-  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+export async function generarPdfCotizacion(r) {
+  const JsPDF = await cargarJsPDF();
+  const doc = new JsPDF({ unit: 'mm', format: 'a4' });
   const W = 210;
   const M = 16;
   const nro = r.nroCotizacion || generarNroCotizacion();
@@ -196,12 +204,27 @@ export function generarPdfCotizacion(r) {
   return { doc, nro };
 }
 
-export function descargarPdfCotizacion(r) {
-  const { doc, nro } = generarPdfCotizacion(r);
-  doc.save(`Surcante-Presupuesto-${nro}.pdf`);
+export async function descargarPdfCotizacion(r) {
+  try {
+    const { doc, nro } = await generarPdfCotizacion(r);
+    doc.save(`Surcante-Presupuesto-${nro}.pdf`);
+  } catch (e) {
+    console.error('Error generando PDF:', e);
+    window.alert('No se pudo generar el PDF. Revisá la conexión e intentá de nuevo.');
+  }
 }
 
-export function abrirPdfCotizacion(r) {
-  const { doc } = generarPdfCotizacion(r);
-  window.open(doc.output('bloburl'), '_blank');
+export async function abrirPdfCotizacion(r) {
+  // La pestaña se abre en el mismo click (si no, el navegador la bloquea como popup)
+  const ventana = window.open('', '_blank');
+  try {
+    const { doc } = await generarPdfCotizacion(r);
+    const url = doc.output('bloburl');
+    if (ventana) ventana.location.href = url;
+    else window.open(url, '_blank');
+  } catch (e) {
+    console.error('Error generando PDF:', e);
+    if (ventana) ventana.close();
+    window.alert('No se pudo generar el PDF. Revisá la conexión e intentá de nuevo.');
+  }
 }

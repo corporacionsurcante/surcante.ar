@@ -38,7 +38,6 @@ export function baseMasCercana(punto) {
   , BASES[0]);
 }
 
-export const IVA = 0.21;
-export const SENA_PORCENTAJE = 0.30;
-export const KM_MOV_INCLUIDOS = 150; // km incluidos por movimiento en destino
+// IVA, seña y km incluidos se editan en Admin → Precios → Configuración general
+// (valores por defecto en src/utils/parametros.js).
 // Precios de unidades — se cargan desde Firebase (config/precios)

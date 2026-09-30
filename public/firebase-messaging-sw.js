@@ -22,8 +22,8 @@ messaging.onBackgroundMessage((payload) => {
   const body = payload.data?.body || payload.notification?.body || 'Nueva cotización recibida';
   self.registration.showNotification(title, {
     body,
-    icon: '/Logo_Surcante_01.png',
-    badge: '/Logo_Surcante_01.png',
+    icon: '/logo192.png',
+    badge: '/logo192.png',
     tag: 'surcante-cotizacion',
     data: { url: payload.data?.url || '/admin' },
   });

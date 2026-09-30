@@ -34,25 +34,33 @@ export default function ConfigModulos() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     const unsub = onSnapshot(doc(db, 'config', 'modulos'), snap => {
-      if (snap.exists()) setModulos(snap.data());
+      if (snap.exists()) setModulos(prev => ({ ...prev, ...snap.data() }));
       setLoading(false);
-    });
+    }, e => { console.error('[Firestore] config/modulos:', e); setError('No se pudo leer la configuración.'); setLoading(false); });
     return unsub;
   }, []);
 
   async function handleSave() {
     setSaving(true);
-    await setDoc(doc(db, 'config', 'modulos'), modulos);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+    setError('');
+    try {
+      await setDoc(doc(db, 'config', 'modulos'), modulos);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch (e) {
+      console.error(e);
+      setError('No se pudo guardar. Revisá la conexión y los permisos.');
+    }
     setSaving(false);
   }
 
+  // Un módulo sin valor guardado cuenta como activo (el cotizador usa `!== false`)
   function toggle(id) {
-    setModulos(prev => ({ ...prev, [id]: !prev[id] }));
+    setModulos(prev => ({ ...prev, [id]: prev[id] === false }));
   }
 
   if (loading) return <div className="admin-loading">Cargando configuración...</div>;
@@ -99,6 +107,7 @@ export default function ConfigModulos() {
         })}
       </div>
 
+      {error && <div style={{ color: '#CF1322', fontSize: 13, fontWeight: 600, marginBottom: 12 }}>{error}</div>}
       <button
         className={`precios-save ${saved ? 'saved' : ''}`}
         onClick={handleSave}

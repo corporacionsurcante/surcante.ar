@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import Topbar from './components/Topbar';
 import Steps from './components/Steps';
 import SelectorServicio from './pages/SelectorServicio';
@@ -9,7 +9,6 @@ import Confirmacion from './pages/Confirmacion';
 import ReceptivoCotizador from './pages/ReceptivoCotizador';
 import DisponibilidadCotizador from './pages/DisponibilidadCotizador';
 import MovimientosCotizador from './pages/MovimientosCotizador';
-import AdminApp from './admin/pages/AdminApp';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from './firebase/config';
 import { isAdminAutorizado } from './firebase/services';
@@ -17,6 +16,9 @@ import { WHATSAPP } from './data/pagos';
 import './index.css';
 import FooterLegal from './components/FooterLegal';
 import bgImage from './assets/bg-surcante.jpg';
+
+// El panel admin se descarga solo al entrar a /admin (el cotizador público queda más liviano)
+const AdminApp = lazy(() => import('./admin/pages/AdminApp'));
 
 const ACCESO_STORAGE_KEY = 'surcante_acceso_cliente';
 
@@ -28,7 +30,7 @@ function leerAccesoGuardado() {
     if (!data?.nombreCompleto || !data?.whatsapp) return null;
     // Expirar sesión a los 30 días
     if (data.ts && Date.now() - data.ts > 30 * 24 * 60 * 60 * 1000) {
-      window.localStorage.removeItem(ACCESO_STORAGE_KEY);
+      try { window.localStorage.removeItem(ACCESO_STORAGE_KEY); } catch (_) { /* noop */ }
       return null;
     }
     return data;
@@ -44,10 +46,10 @@ function CotizadorApp() {
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async u => {
-      if (u) {
-        const ok = await isAdminAutorizado(u.email);
-        setIsAdmin(ok);
-      } else {
+      if (!u) { setIsAdmin(false); return; }
+      try {
+        setIsAdmin(await isAdminAutorizado(u.email));
+      } catch (_) {
         setIsAdmin(false);
       }
     });
@@ -64,7 +66,7 @@ function CotizadorApp() {
   function handleAccesoConfirmado(data) {
     const withTs = { ...data, ts: Date.now() };
     setAccesoCliente(withTs);
-    window.localStorage.setItem(ACCESO_STORAGE_KEY, JSON.stringify(withTs));
+    try { window.localStorage.setItem(ACCESO_STORAGE_KEY, JSON.stringify(withTs)); } catch (_) { /* modo privado */ }
   }
 
   if (!accesoCliente) {
@@ -266,9 +268,37 @@ function AccesoPrevio({ onConfirm }) {
   );
 }
 
+// Links personales de operativos de egresados (/v/{token}).
+// El portal de pasajero / conductor / coordinador se habilita en la próxima etapa.
+function PortalViaje() {
+  return (
+    <>
+      <BgOverlay />
+      <div className="app-shell">
+        <Topbar />
+        <div className="confirm-page">
+          <div className="confirm-icon">🚌</div>
+          <div className="confirm-title">Tu acceso personal está listo</div>
+          <div className="confirm-sub">
+            Guardá este link: desde acá vas a ver tu ómnibus, la ubicación en tiempo real, tus contactos y la agenda de cada día.
+            Lo estamos terminando de preparar para tu viaje.
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
 export default function App() {
   const pathname = window.location.pathname;
-  if (pathname.startsWith('/admin')) return <AdminApp />;
+  if (pathname.startsWith('/admin')) {
+    return (
+      <Suspense fallback={<div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0A0A0F', color: 'rgba(255,255,255,.4)', fontSize: 14 }}>Cargando panel...</div>}>
+        <AdminApp />
+      </Suspense>
+    );
+  }
+  if (pathname.startsWith('/v/')) return <PortalViaje />;
   const urlParams = new URLSearchParams(window.location.search);
   if (pathname === '/pago-exitoso') return <RetornoPago tipo="exitoso" urlParams={urlParams} />;
   if (pathname === '/pago-fallido') return <RetornoPago tipo="fallido" urlParams={urlParams} />;

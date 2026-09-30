@@ -1,4 +1,4 @@
-import { IVA, KM_MOV_INCLUIDOS } from '../data/constants';
+import { PARAMETROS_DEFAULT } from './parametros';
 
 export function formatARS(n) {
   return '$' + Math.round(n).toLocaleString('es-AR');
@@ -8,27 +8,36 @@ export function calcKmTotal(kmBaseOrigen, kmOrigenDestino) {
   return kmBaseOrigen * 2 + kmOrigenDestino * 2;
 }
 
-export function calcPrecioUnidad({ unit, kmTotal, movPorDia, movKmPorDia, dolar }) {
+// Precio (USD) de un día de movimientos en destino: se suma el valor de cada movimiento
+// que agrega el cliente. movUSD = [1er movimiento, 2do movimiento, 3ro y siguientes (c/u)].
+// Ej. [303.69, 269.94, 236.20] → 1 mov = 303,69 · 2 mov = 573,63 · 3 mov = 809,83 · 4 mov = 1.046,03
+export function precioMovimientosDiaUSD(movUSD, movs) {
+  const lista = Array.isArray(movUSD) ? movUSD : [];
+  let usd = 0;
+  for (let k = 0; k < movs; k++) {
+    const v = Number(lista[Math.min(k, 2)]);
+    usd += Number.isFinite(v) ? v : 0;
+  }
+  return usd;
+}
+
+export function calcPrecioUnidad({ unit, kmTotal, movPorDia, movKmPorDia, dolar, params = PARAMETROS_DEFAULT }) {
   // Traslado base — solo km ida y vuelta, sin sumar km de movimientos
   const traslNeto = kmTotal * unit.usdKm * dolar;
 
-  // Movimientos en destino
-  // Precio fijo según cantidad de movimientos por día
-  // Si el total de km del día supera 150 km → se cobran km extra × precio/km
+  // Movimientos en destino: suma de los movimientos del día.
+  // Si los km del día superan los km incluidos → se cobran km extra × precio/km
   let movNeto = 0;
   let kmExtraMovTotal = 0;
 
-  movPorDia.forEach((movs, i) => {
-    if (movs <= 0) return;
-    const kmMov = movKmPorDia[i] || 0;
+  (movPorDia || []).forEach((movs, i) => {
+    if (!(movs > 0)) return;
+    const kmMov = (movKmPorDia || [])[i] || 0;
 
-    // Precio fijo del movimiento (por cantidad: 1, 2, 3+)
-    const cantIdx = Math.min(movs, 3) - 1;
-    const usdMovFijo = unit.movUSD[cantIdx] * (1 - unit.movDesc);
-    movNeto += usdMovFijo * dolar;
+    const usdMovDia = precioMovimientosDiaUSD(unit.movUSD, movs) * (1 - (unit.movDesc || 0));
+    movNeto += usdMovDia * dolar;
 
-    // Si los km del día superan 150, se cobran km extra × precio/km
-    const kmExtraDia = Math.max(0, kmMov - KM_MOV_INCLUIDOS);
+    const kmExtraDia = Math.max(0, kmMov - params.kmMovIncluidos);
     if (kmExtraDia > 0) {
       kmExtraMovTotal += kmExtraDia;
       movNeto += kmExtraDia * unit.usdKm * dolar;
@@ -36,7 +45,7 @@ export function calcPrecioUnidad({ unit, kmTotal, movPorDia, movKmPorDia, dolar 
   });
 
   const subtotal = traslNeto + movNeto;
-  const ivaTotal = subtotal * IVA;
+  const ivaTotal = subtotal * params.iva;
   const total = subtotal + ivaTotal;
 
   return {
@@ -50,20 +59,16 @@ export function calcPrecioUnidad({ unit, kmTotal, movPorDia, movKmPorDia, dolar 
   };
 }
 
-export function calcPresupuestoTotal({ flotaUnidades, kmTotal, movData, movKmData, syncMode, dolar, mismodia, dias }) {
+export function calcPresupuestoTotal({ flotaUnidades, kmTotal, movData, movKmData, syncMode, dolar, mismodia, dias, params = PARAMETROS_DEFAULT }) {
   let grandTotal = 0;
   const detalles = flotaUnidades.map((u) => {
     const movPorDia = syncMode ? movData['_sync'] : (movData[u.id] || []);
     const movKmPorDia = syncMode ? movKmData['_sync'] : (movKmData[u.id] || []);
-    const calc = calcPrecioUnidadConMinimo({ unit: u.type, kmTotal, movPorDia, movKmPorDia, dolar, mismodia, dias });
+    const calc = calcPrecioUnidadConMinimo({ unit: u.type, kmTotal, movPorDia, movKmPorDia, dolar, mismodia, dias, params });
     grandTotal += calc.total;
     return { ...u, ...calc };
   });
   return { grandTotal, detalles };
-}
-
-export function calcSena(total) {
-  return total * 0.30;
 }
 
 export function getNights(fechaInicio, fechaFin) {
@@ -100,8 +105,8 @@ export const VALOR_BASE_USD = {
   'Minibus 24': 245,
   'Minibus 19': 245,
 };
-export const KM_BASE_THRESHOLD = 300; // hasta este km aplica el valor base
-export const KM_MINIMO_THRESHOLD = 300;
+// Valores por defecto: los vigentes se editan en Admin → Precios → Configuración general
+export const KM_BASE_THRESHOLD = PARAMETROS_DEFAULT.kmBaseThreshold; // hasta este km aplica el valor base
 
 // Descuento por días consecutivos de tarifa mínima
 // Día 1: 0%, Días 2-5: 10%, Día 6+: 20%
@@ -112,21 +117,21 @@ export function getDescuentoDia(dia) {
 }
 
 // Calcula tarifa mínima total para N días con escala de descuento
-export function calcTarifaMinimaDias(tipoNombre, dias, dolar) {
+export function calcTarifaMinimaDias(tipoNombre, dias, dolar, params = PARAMETROS_DEFAULT) {
   const usdBase = PRECIO_MINIMO_USD[tipoNombre] || 400;
   let totalNeto = 0;
   for (let dia = 1; dia <= dias; dia++) {
     const descuento = getDescuentoDia(dia);
     totalNeto += usdBase * (1 - descuento) * dolar;
   }
-  const ivaTotal = totalNeto * IVA;
+  const ivaTotal = totalNeto * params.iva;
   return { totalNeto, ivaTotal, total: totalNeto + ivaTotal };
 }
 
-export const KM_ESTADIA_THRESHOLD = 800; // menos de esto + más de 3 días → estadía
+export const KM_ESTADIA_THRESHOLD = PARAMETROS_DEFAULT.kmEstadiaThreshold; // menos de esto + más de 3 días → estadía
 
-export function calcPrecioUnidadConMinimo({ unit, kmTotal, movPorDia, movKmPorDia, dolar, mismodia, dias }) {
-  const base = calcPrecioUnidad({ unit, kmTotal, movPorDia, movKmPorDia, dolar });
+export function calcPrecioUnidadConMinimo({ unit, kmTotal, movPorDia, movKmPorDia, dolar, mismodia, dias, params = PARAMETROS_DEFAULT }) {
+  const base = calcPrecioUnidad({ unit, kmTotal, movPorDia, movKmPorDia, dolar, params });
   const diasViaje = mismodia ? 1 : (dias || 1);
   const tipoKey = unit.tipoNombre || unit.tipo || 'Comun 45';
   const minimoUSD = PRECIO_MINIMO_USD[tipoKey] || 400;
@@ -137,11 +142,11 @@ export function calcPrecioUnidadConMinimo({ unit, kmTotal, movPorDia, movKmPorDi
   // Km se cotizan una sola vez.
   // Valor base: si el viaje dura 1, 2 o 3 días → todos los días pagan base
   //             si dura 4 días o más → el primer día no paga (días - 1)
-  if (kmTotal <= KM_BASE_THRESHOLD) {
+  if (kmTotal <= params.kmBaseThreshold) {
     const diasOcupacion = diasViaje <= 3 ? diasViaje : diasViaje - 1;
     const baseNeto = valorBaseUSD * diasOcupacion * dolar;
     const subtotal = base.traslNeto + baseNeto + base.movNeto;
-    const ivaTotal = subtotal * IVA;
+    const ivaTotal = subtotal * params.iva;
     const total = subtotal + ivaTotal;
     return {
       ...base,
@@ -157,11 +162,11 @@ export function calcPrecioUnidadConMinimo({ unit, kmTotal, movPorDia, movKmPorDi
   }
 
   // CASO 2: Media distancia (301-800 km) + más de 3 días → km + estadía desde día 3
-  if (kmTotal < KM_ESTADIA_THRESHOLD && diasViaje > 3) {
+  if (kmTotal < params.kmEstadiaThreshold && diasViaje > 3) {
     const diasEstadia = diasViaje - 2;
     const estadiaNeto = minimoUSD * diasEstadia * dolar;
     const subtotal = base.traslNeto + estadiaNeto + base.movNeto;
-    const ivaTotal = subtotal * IVA;
+    const ivaTotal = subtotal * params.iva;
     const total = subtotal + ivaTotal;
     return {
       ...base,

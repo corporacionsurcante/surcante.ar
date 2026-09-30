@@ -2,13 +2,25 @@ import React, { useState, useEffect } from 'react';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase/config';
 
+const DISPO_DEFAULT = { hora: 150, p6h: 650, p12h: 1200, p24h: 1800 };
+const usd = n => `USD ${Math.round(Number(n) || 0).toLocaleString('es-AR')}`;
+
 export default function SelectorServicio({ onSelect }) {
   const [modulos, setModulos] = useState({ charter: true, movimientos: true, disponibilidad: true, receptivo: true });
+  const [dispo, setDispo] = useState(DISPO_DEFAULT);
 
   useEffect(() => {
     const unsub = onSnapshot(doc(db, 'config', 'modulos'), snap => {
-      if (snap.exists()) setModulos(snap.data());
-    });
+      if (snap.exists()) setModulos(prev => ({ ...prev, ...snap.data() }));
+    }, e => console.error('[Firestore] config/modulos:', e));
+    return unsub;
+  }, []);
+
+  // Mismos precios que usa el cotizador "a disposición" (editables en Admin → Receptivo)
+  useEffect(() => {
+    const unsub = onSnapshot(doc(db, 'config', 'disponibilidad_precios'), snap => {
+      if (snap.exists()) setDispo({ ...DISPO_DEFAULT, ...snap.data() });
+    }, e => console.error('[Firestore] config/disponibilidad_precios:', e));
     return unsub;
   }, []);
 
@@ -86,7 +98,7 @@ export default function SelectorServicio({ onSelect }) {
           La unidad queda a tu disposición por el tiempo que necesitás. Sin preocuparte por la distancia.
         </div>
         <div style={{ display: 'flex', gap: 6, marginTop: 10, flexWrap: 'wrap' }}>
-          {['3 horas mín.', '6 horas · USD 650', '12 horas · USD 1.200', '24 horas · USD 1.800'].map(d => (
+          {['3 horas mín.', `6 horas · ${usd(dispo.p6h)}`, `12 horas · ${usd(dispo.p12h)}`, `24 horas · ${usd(dispo.p24h)}`].map(d => (
             <span key={d} style={{ background: '#FFF8E6', border: '1px solid #FFD166', borderRadius: 20, padding: '3px 10px', fontSize: 11, color: '#7A5200', fontWeight: 500 }}>{d}</span>
           ))}
         </div>

@@ -56,18 +56,22 @@ export async function activarNotificacionesPush(email) {
     try {
       reg.showNotification(title, {
         body,
-        icon: '/Logo_Surcante_01.png',
+        icon: '/logo192.png',
         tag: 'surcante-cotizacion',
         data: { url: '/admin' },
       });
     } catch (_) { /* noop */ }
   });
 
-  window.localStorage.setItem('surcante_push_activo', '1');
+  try { window.localStorage.setItem('surcante_push_activo', '1'); } catch (_) { /* noop */ }
   return token;
 }
 
 export function pushYaActivado() {
-  return window.localStorage.getItem('surcante_push_activo') === '1' &&
-    typeof Notification !== 'undefined' && Notification.permission === 'granted';
+  try {
+    return window.localStorage.getItem('surcante_push_activo') === '1' &&
+      typeof Notification !== 'undefined' && Notification.permission === 'granted';
+  } catch (_) {
+    return false;
+  }
 }

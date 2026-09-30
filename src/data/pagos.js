@@ -22,44 +22,5 @@ export const WHATSAPP = [
   },
 ];
 
-export const PORCENTAJES_PAGO = {
-  mercadopago: 0.10,  // 10% con MP
-  tarjeta: 0.10,      // 10% con tarjeta
-  transferencia: 0.30, // 30% transferencia
-  efectivo: 0.30,     // 30% efectivo (va a WhatsApp)
-};
-
-export const METODOS_PAGO = [
-  {
-    id: 'mercadopago',
-    label: 'MercadoPago',
-    icon: '💳',
-    descripcion: 'Pagás el 10% ahora online',
-    porcentaje: 0.10,
-    online: true,
-  },
-  {
-    id: 'tarjeta',
-    label: 'Tarjeta',
-    icon: '🏦',
-    descripcion: 'Pagás el 10% ahora online',
-    porcentaje: 0.10,
-    online: true,
-  },
-  {
-    id: 'transferencia',
-    label: 'Transferencia',
-    icon: '🏛️',
-    descripcion: 'Transferís el 30% para confirmar',
-    porcentaje: 0.30,
-    online: false,
-  },
-  {
-    id: 'efectivo',
-    label: 'Efectivo',
-    icon: '💵',
-    descripcion: 'Coordinás por WhatsApp',
-    porcentaje: 0.30,
-    online: false,
-  },
-];
+// Los porcentajes de seña y los métodos de pago salen de Admin → Precios →
+// Configuración general: ver src/utils/parametros.js (metodosPago).

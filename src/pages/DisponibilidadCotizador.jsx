@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useDolar } from '../hooks/useDolar';
+import { useParametros } from '../hooks/useParametros';
+import { metodosPago, porcentajeSena, fmtPorc } from '../utils/parametros';
+import AvisoDolar from '../components/AvisoDolar';
+import { iniciarPagoOnline } from '../hooks/useMercadoPago';
+import { fechaMinimaISO } from '../components/Calendario';
 import { formatARS } from '../utils/calculos';
 import { guardarReserva } from '../firebase/reservasService';
 import { doc, onSnapshot } from 'firebase/firestore';
@@ -42,13 +47,18 @@ function calcPrecioLocal(horas, precios) {
 }
 
 export default function DisponibilidadCotizador({ onBack, initialContacto }) {
-  const { dolar, loading: loadingDolar } = useDolar();
+  const { dolar, loading: cargandoDolar, error: errorDolar } = useDolar();
+  const { params, cargando: cargandoParams } = useParametros();
+  const loadingDolar = cargandoDolar || cargandoParams;
   const [precios, setPrecios] = useState(PRECIOS_DEFAULT);
+  const [loadingMP, setLoadingMP] = useState(false);
+  const [errorMP, setErrorMP] = useState('');
 
+  // Precios editables desde Admin → Receptivo → "A disposición"
   useEffect(() => {
     const unsub = onSnapshot(doc(db, 'config', 'disponibilidad_precios'), snap => {
       if (snap.exists()) setPrecios({ ...PRECIOS_DEFAULT, ...snap.data() });
-    });
+    }, e => console.error('[Firestore] config/disponibilidad_precios:', e));
     return unsub;
   }, []);
   const [fecha, setFecha] = useState('');
@@ -67,10 +77,39 @@ export default function DisponibilidadCotizador({ onBack, initialContacto }) {
 
   const { precioUSD, descripcion } = calcPrecioLocal(horas, precios);
   const subtotal = precioUSD * (dolar || 0);
-  const iva = subtotal * 0.21;
+  const iva = subtotal * params.iva;
   const total = subtotal + iva;
-  const montoAhora = Math.round(total * (payMethod === 'mercadopago' || payMethod === 'tarjeta' ? 0.10 : 0.30));
+  const METODOS = metodosPago(params);
+  const porcentaje = porcentajeSena(payMethod, params);
+  const montoAhora = Math.round(total * porcentaje);
   const saldo = total - montoAhora;
+
+  // Si cambia la fecha y la unidad elegida quedó ocupada, se deselecciona
+  useEffect(() => {
+    if (!unidadSel || !fecha) return;
+    const u = disponibilidad.find(x => x.id === unidadSel.id);
+    if (u && !u.disponible) setUnidadSel(null);
+  }, [disponibilidad, unidadSel, fecha]);
+
+  function armarDatosReserva() {
+    return {
+      tipo: 'disposicion',
+      nroCotizacion: generarNroCotizacion(),
+      clienteNombre: contacto.nombre.trim(),
+      clienteWhatsapp: contacto.whatsapp.trim(),
+      unidad: `${unidadSel?.tipo} · INTERNO ${unidadSel?.interno}`,
+      unidadId: unidadSel?.id || '',
+      fechaInicio: fecha,
+      fechaFin: fecha,
+      horas,
+      descripcion: descripcion || '',
+      grandTotal: total,
+      sena: montoAhora,
+      saldo,
+      payMethod,
+      porcentaje,
+    };
+  }
 
   function buildWAMsg(nombre) {
     return encodeURIComponent(
@@ -122,18 +161,15 @@ export default function DisponibilidadCotizador({ onBack, initialContacto }) {
           <div className="prow hl"><span>⏱️ {descripcion}</span><span>{formatARS(subtotal)}</span></div>
           <div className="prow"><span>Unidad</span><span>{unidadSel?.tipo} · INTERNO {unidadSel?.interno} · {unidadSel?.patente}</span></div>
           <div className="prow"><span>Fecha</span><span>{fecha}</span></div>
-          <div className="prow sub"><span>Con impuestos</span><span>{formatARS(iva)}</span></div>
+          <div className="prow sub"><span>IVA {fmtPorc(params.iva)}</span><span>{formatARS(iva)}</span></div>
           <div className="prow total"><span>Total</span><span>{formatARS(total)}</span></div>
         </div>
 
+        <AvisoDolar error={errorDolar} dolar={dolar} />
+
         <div className="section-label">Método de pago</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 14 }}>
-          {[
-            { id: 'transferencia', label: 'Transferencia', icon: '🏛️', desc: '30% para confirmar', porc: 0.30 },
-            { id: 'efectivo', label: 'Efectivo', icon: '💵', desc: 'Coordinás por WhatsApp', porc: 0.30 },
-            { id: 'mercadopago', label: 'MercadoPago', icon: '💳', desc: '10% ahora online', porc: 0.10 },
-            { id: 'tarjeta', label: 'Tarjeta', icon: '🏦', desc: '10% ahora online', porc: 0.10 },
-          ].map(m => (
+          {METODOS.map(m => (
             <div key={m.id} onClick={() => setPayMethod(m.id)}
               style={{
                 border: `1.5px solid ${payMethod === m.id ? 'var(--sp)' : 'var(--border)'}`,
@@ -219,24 +255,13 @@ export default function DisponibilidadCotizador({ onBack, initialContacto }) {
           <button className="btn-primary green"
             disabled={!contactoValido}
             onClick={async () => {
-              const datos = {
-                tipo: 'disposicion',
-                nroCotizacion: generarNroCotizacion(),
-                clienteNombre: contacto.nombre,
-                clienteWhatsapp: contacto.whatsapp,
-                unidad: `${unidadSel?.tipo} · INTERNO ${unidadSel?.interno}`,
-                fechaInicio: fecha,
-                fechaFin: fecha,
-                horas,
-                descripcion: descripcion || '',
-                grandTotal: total,
-                sena: montoAhora,
-                saldo,
-                payMethod,
-              };
+              const datos = armarDatosReserva();
               try {
                 await guardarReserva(datos);
-              } catch(e) { console.error('Error guardando reserva:', e); }
+              } catch (e) {
+                console.error('Error guardando reserva:', e);
+                datos.errorGuardado = true;
+              }
               setReservaOk(datos);
             }}>
             ✓ Confirmar reserva
@@ -244,11 +269,35 @@ export default function DisponibilidadCotizador({ onBack, initialContacto }) {
         )}
 
         {(payMethod === 'mercadopago' || payMethod === 'tarjeta') && (
-          <button className="btn-primary"
-            style={{ background: payMethod === 'mercadopago' ? '#009EE3' : '#6B21D6' }}
-            onClick={() => alert('Integración online en proceso. Por favor usá transferencia o efectivo.')}>
-            {payMethod === 'mercadopago' ? '💳' : '🏦'} Pagar {formatARS(montoAhora)}
-          </button>
+          <>
+            {errorMP && (
+              <div style={{ fontSize: 12, color: '#CF1322', background: '#FFF1F0', borderRadius: 8, padding: '8px 12px', marginBottom: 10 }}>
+                {errorMP}
+              </div>
+            )}
+            <button className="btn-primary"
+              disabled={loadingMP || loadingDolar || !contactoValido || !(total > 0)}
+              style={{ background: payMethod === 'mercadopago' ? '#009EE3' : '#6B21D6', opacity: loadingMP ? .7 : 1 }}
+              onClick={async () => {
+                setLoadingMP(true);
+                setErrorMP('');
+                const datos = armarDatosReserva();
+                try {
+                  await iniciarPagoOnline({
+                    datos,
+                    monto: montoAhora,
+                    titulo: `Surcante · Unidad a disposición ${horas} hs`,
+                    descripcion: `${fecha} · INTERNO ${unidadSel?.interno} · ${datos.nroCotizacion}`,
+                  });
+                } catch (e) {
+                  console.error('Error MercadoPago:', e);
+                  setErrorMP('No se pudo conectar con MercadoPago. Intentá con transferencia o efectivo.');
+                  setLoadingMP(false);
+                }
+              }}>
+              {loadingMP ? 'Redirigiendo...' : `${payMethod === 'mercadopago' ? '💳' : '🏦'} Pagar ${formatARS(montoAhora)} ${payMethod === 'mercadopago' ? 'con MercadoPago' : 'con tarjeta'}`}
+            </button>
+          </>
         )}
 
         <button className="btn-secondary" onClick={() => setStep(1)}>← Modificar servicio</button>
@@ -261,7 +310,7 @@ export default function DisponibilidadCotizador({ onBack, initialContacto }) {
     <div className="body">
       <div className="section-label">Fecha del servicio</div>
       <input type="date" value={fecha} onChange={e => setFecha(e.target.value)}
-        min={(() => { const now = new Date(); if (now.getHours() >= 18) { const m = new Date(now); m.setDate(m.getDate()+1); return m.toISOString().split('T')[0]; } return now.toISOString().split('T')[0]; })()}
+        min={fechaMinimaISO()}
         style={{ width: '100%', border: '1.5px solid var(--border)', borderRadius: 10, padding: '12px 14px', fontSize: 15, fontFamily: 'Inter, sans-serif', outline: 'none', marginBottom: 16 }} />
 
       <div className="section-label">Horas de servicio</div>

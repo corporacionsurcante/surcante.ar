@@ -31,26 +31,22 @@ REACT_APP_FIREBASE_VAPID_KEY = <la clave generada>
 FIREBASE_SERVICE_ACCOUNT = <pegar el contenido COMPLETO del JSON en una sola línea>
 ```
 
+   Marcarla para **Production y Preview** (si queda solo en Preview, en surcante.com no salen los avisos).
 3. Redeploy en Vercel.
 
 ### 3. Reglas de Firestore
 
-Permitir escritura en la colección `fcm_tokens` (donde se registran los dispositivos):
+Las reglas completas están versionadas en `firestore.rules` (raíz del repositorio). Cada vez que cambien,
+copiar el archivo entero en Firebase Console → Firestore → Reglas → **Publicar**.
 
-```
-match /fcm_tokens/{token} {
-  allow read: if false;
-  allow write: if request.auth != null;
-}
-```
-
-(El endpoint del servidor lee los tokens con firebase-admin, que saltea las reglas.)
+`fcm_tokens` es solo para admins. El aviso de cada cotización lo arma el servidor (`api/notificar.js`, con
+firebase-admin, que saltea las reglas): valida la reserva, crea la notificación del panel y manda el push.
 
 ---
 
 ## Instalar la "app" en el iPhone (cada admin, una sola vez)
 
-1. Abrir **Safari** en el iPhone e ir a `https://surcante-ar.vercel.app/admin` e iniciar sesión.
+1. Abrir **Safari** en el iPhone e ir a `https://surcante.com/admin` e iniciar sesión.
 2. Tocar el botón **Compartir** (cuadrado con flecha) → **"Agregar a pantalla de inicio"** → Agregar. Aparece el ícono **Surcante Admin**.
 3. Abrir la app **desde el ícono** de la pantalla de inicio (importante: no desde Safari).
 4. Tocar **"🔔 Activar avisos"** arriba a la derecha y aceptar el permiso.

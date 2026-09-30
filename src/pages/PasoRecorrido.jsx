@@ -1,23 +1,26 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { KM_MOV_INCLUIDOS, BASES, baseMasCercana } from '../data/constants';
+import { BASES, baseMasCercana } from '../data/constants';
+import { useParametros } from '../hooks/useParametros';
 
 const MAPS_KEY = process.env.REACT_APP_GOOGLE_MAPS_KEY;
 
+// Una sola carga del script de Google Maps (si falla, se puede reintentar)
+let mapsPromise = null;
 function loadGoogleMaps() {
-  return new Promise((resolve, reject) => {
-    if (window.google && window.google.maps) { resolve(); return; }
-    if (document.getElementById('gmap-script')) {
-      document.getElementById('gmap-script').addEventListener('load', resolve);
-      return;
-    }
-    const s = document.createElement('script');
-    s.id = 'gmap-script';
-    s.src = `https://maps.googleapis.com/maps/api/js?key=${MAPS_KEY}&libraries=places`;
-    s.async = true;
-    s.onload = resolve;
-    s.onerror = reject;
-    document.head.appendChild(s);
-  });
+  if (window.google && window.google.maps) return Promise.resolve();
+  if (!MAPS_KEY) return Promise.reject(new Error('Falta REACT_APP_GOOGLE_MAPS_KEY'));
+  if (!mapsPromise) {
+    mapsPromise = new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.id = 'gmap-script';
+      s.src = `https://maps.googleapis.com/maps/api/js?key=${MAPS_KEY}&libraries=places`;
+      s.async = true;
+      s.onload = () => resolve();
+      s.onerror = (e) => { mapsPromise = null; s.remove(); reject(e); };
+      document.head.appendChild(s);
+    });
+  }
+  return mapsPromise;
 }
 
 function calcRouteKm(origin, destination, waypoints = []) {
@@ -80,6 +83,8 @@ function AutocompleteInput({ placeholder, label, onSelect }) {
 }
 
 export default function PasoRecorrido({ reserva, onNext, onBack }) {
+  const { params } = useParametros();
+  const KM_MOV_INCLUIDOS = params.kmMovIncluidos;
   const { dias, flotaUnidades } = reserva;
   const [origenData, setOrigenData] = useState(null);
   const [destinoData, setDestinoData] = useState(null);
@@ -89,6 +94,8 @@ export default function PasoRecorrido({ reserva, onNext, onBack }) {
   const [baseManual, setBaseManual] = useState(false);
   const [calculando, setCalculando] = useState(false);
   const [errorCalculo, setErrorCalculo] = useState(false);
+  const [errorBase, setErrorBase] = useState(false);
+  const errorMaps = !MAPS_KEY;
   const [syncMode, setSyncMode] = useState(true);
   const [tabActivo, setTabActivo] = useState(flotaUnidades[0]?.id || null);
   const [diaEditando, setDiaEditando] = useState(null);
@@ -111,19 +118,21 @@ export default function PasoRecorrido({ reserva, onNext, onBack }) {
   }, [origenData, baseManual]);
 
   useEffect(() => {
-    if (!origenData) return;
+    if (!origenData) return undefined;
+    let vigente = true; // descarta respuestas viejas si el usuario cambia el origen
     setKmBaseOrigen(null);
+    setErrorBase(false);
     loadGoogleMaps().then(() => {
       const base = new window.google.maps.LatLng(baseSel.coords.lat, baseSel.coords.lng);
       const origen = new window.google.maps.LatLng(origenData.lat, origenData.lng);
-      calcRouteKm(base, origen)
-        .then(km => setKmBaseOrigen(km))
-        .catch(() => {});
-    });
+      return calcRouteKm(base, origen).then(km => { if (vigente) setKmBaseOrigen(km); });
+    }).catch(() => { if (vigente) setErrorBase(true); });
+    return () => { vigente = false; };
   }, [origenData, baseSel]);
 
   useEffect(() => {
-    if (!origenData || !destinoData) return;
+    if (!origenData || !destinoData) return undefined;
+    let vigente = true;
     setCalculando(true);
     setErrorCalculo(false);
     setKmRutaIda(null);
@@ -137,20 +146,21 @@ export default function PasoRecorrido({ reserva, onNext, onBack }) {
           location: new window.google.maps.LatLng(p.data.lat, p.data.lng),
           stopover: true,
         }));
-
-      calcRouteKm(origen, destino, waypoints)
-        .then(km => {
-          setKmRutaIda(km);
-          setCalculando(false);
-        })
-        .catch(() => {
-          setErrorCalculo(true);
-          setCalculando(false);
-        });
+      return calcRouteKm(origen, destino, waypoints);
+    }).then(km => {
+      if (!vigente) return;
+      setKmRutaIda(km);
+      setCalculando(false);
+    }).catch(() => {
+      if (!vigente) return;
+      setErrorCalculo(true);
+      setCalculando(false);
     });
+    return () => { vigente = false; };
   }, [origenData, destinoData, puntosCarga]);
 
-  const kmTotal = kmBaseOrigen && kmRutaIda
+  // 0 km es válido (origen en la misma base): se compara contra null
+  const kmTotal = kmBaseOrigen != null && kmRutaIda != null
     ? (kmBaseOrigen * 2) + (kmRutaIda * 2)
     : null;
 
@@ -175,7 +185,7 @@ export default function PasoRecorrido({ reserva, onNext, onBack }) {
   const diaKmVal = diaEditando !== null ? currentMovKm[diaEditando] : 0;
   const kmExtraDia = diaMovVal > 0 && diaKmVal > KM_MOV_INCLUIDOS ? diaKmVal - KM_MOV_INCLUIDOS : 0;
 
-  const canContinue = origenData && destinoData && kmTotal > 0 && !calculando;
+  const canContinue = origenData && destinoData && kmTotal != null && kmTotal > 0 && !calculando;
 
   const handleOrigenSelect = useCallback((data) => {
     setOrigenData(data);
@@ -299,7 +309,19 @@ export default function PasoRecorrido({ reserva, onNext, onBack }) {
         </div>
       )}
 
-      {kmTotal && !calculando && (
+      {errorBase && !errorCalculo && (
+        <div className="km-pill" style={{ background: 'var(--red-bg)', color: 'var(--red-text)' }}>
+          ⚠️ No se pudo calcular la distancia desde la base {baseSel.nombre}. Probá con la otra base o con otra dirección de origen.
+        </div>
+      )}
+
+      {errorMaps && (
+        <div className="km-pill" style={{ background: 'var(--red-bg)', color: 'var(--red-text)' }}>
+          ⚠️ El buscador de direcciones no está disponible. Escribinos por WhatsApp y te cotizamos a mano.
+        </div>
+      )}
+
+      {kmTotal != null && !calculando && (
         <div className="km-pill">
           🛣️ Base {baseSel.nombre}↔Origen: <strong>{kmBaseOrigen * 2} km</strong> · Recorrido (ida y vuelta): <strong>{kmRutaIda * 2} km</strong> · <strong>Total: {kmTotal} km</strong>
           {puntosCarga.filter(p => p.data).length > 0 && (

@@ -15,6 +15,10 @@ const EMOJIS = ['🏛️','🦁','🎢','🚤','⛪','🎭','🌳','🏖️','�
 
 const FORM_CIRCUITO_VACIO = { nombre: '', emoji: '🏛️', descripcion: '', precioUSD: { 'MIX 60': '', 'Comun 45': '', 'Minibus 24': '', 'Minibus 19': '' }, activo: true };
 
+// Mismos valores por defecto que usa el cotizador "Receptivo a disposición"
+const DISPO_DEFAULT = { hora: 150, p6h: 650, p12h: 1200, p24h: 1800 };
+const logErr = ctx => e => console.error(`[Firestore] ${ctx}:`, e);
+
 export default function Receptivo() {
   const [tab, setTab] = useState('citytour');
   const [cityTour, setCityTour] = useState(null);
@@ -26,32 +30,65 @@ export default function Receptivo() {
   const [savedMov, setSavedMov] = useState(false);
   const [preciosMov, setPreciosMov] = useState({ hora: 150, p3h: 350, p6h: 600, p12h: 1000, p24h: 1600, diario: 650 });
   const [savedMovH, setSavedMovH] = useState(false);
+  const [preciosDispo, setPreciosDispo] = useState(DISPO_DEFAULT);
+  const [savedDispo, setSavedDispo] = useState(false);
+  const [errorGuardar, setErrorGuardar] = useState('');
+
+  // Envuelve cada guardado: muestra el error en vez de quedar "Guardando..." para siempre
+  async function guardar(fn) {
+    setErrorGuardar('');
+    try {
+      await fn();
+      return true;
+    } catch (e) {
+      console.error(e);
+      setErrorGuardar('No se pudo guardar. Revisá la conexión y los permisos.');
+      return false;
+    }
+  }
 
   useEffect(() => {
     const unsub = onSnapshot(doc(db, 'config', 'mov_caba_precios'), snap => {
       if (snap.exists()) setPreciosMov(prev => ({ ...prev, ...snap.data() }));
-    });
+    }, logErr('config/mov_caba_precios'));
+    return unsub;
+  }, []);
+
+  useEffect(() => {
+    const unsub = onSnapshot(doc(db, 'config', 'disponibilidad_precios'), snap => {
+      if (snap.exists()) setPreciosDispo({ ...DISPO_DEFAULT, ...snap.data() });
+    }, logErr('config/disponibilidad_precios'));
     return unsub;
   }, []);
 
   async function saveMovHoras() {
-    await setDoc(doc(db, 'config', 'mov_caba_precios'), preciosMov);
-    setSavedMovH(true);
-    setTimeout(() => setSavedMovH(false), 2000);
+    if (await guardar(() => setDoc(doc(db, 'config', 'mov_caba_precios'), preciosMov))) {
+      setSavedMovH(true);
+      setTimeout(() => setSavedMovH(false), 2000);
+    }
+  }
+
+  async function saveDispo() {
+    const { actualizadoEn, ...datos } = preciosDispo;
+    if (await guardar(() => setDoc(doc(db, 'config', 'disponibilidad_precios'), datos))) {
+      setSavedDispo(true);
+      setTimeout(() => setSavedDispo(false), 2000);
+    }
   }
   const { dolar } = useDolar();
 
   useEffect(() => {
     const unsub = onSnapshot(doc(db, 'config', 'receptivo_movimientos'), snap => {
       if (snap.exists() && snap.data().precioUSD) setPrecioMovUSD(snap.data().precioUSD);
-    });
+    }, logErr('config/receptivo_movimientos'));
     return unsub;
   }, []);
 
   async function saveMovimientos() {
-    await setDoc(doc(db, 'config', 'receptivo_movimientos'), { precioUSD: precioMovUSD });
-    setSavedMov(true);
-    setTimeout(() => setSavedMov(false), 2000);
+    if (await guardar(() => setDoc(doc(db, 'config', 'receptivo_movimientos'), { precioUSD: precioMovUSD }))) {
+      setSavedMov(true);
+      setTimeout(() => setSavedMov(false), 2000);
+    }
   }
   const [modal, setModal] = useState(null);
   const [form, setForm] = useState(FORM_CIRCUITO_VACIO);
@@ -59,7 +96,7 @@ export default function Receptivo() {
   const [confirmEliminar, setConfirmEliminar] = useState(false);
 
   useEffect(() => {
-    const u1 = suscribirPreciosCityTour(d => { setCityTour(d); setLoading(false); });
+    const u1 = suscribirPreciosCityTour(d => { setCityTour(d); setLoading(false); }, () => setLoading(false));
     const u2 = suscribirCircuitos(setCircuitos);
     const u3 = suscribirTransfers(setTransfers);
     return () => { u1(); u2(); u3(); };
@@ -67,18 +104,22 @@ export default function Receptivo() {
 
   async function handleInicializar() {
     setSaving(true);
-    await inicializarPreciosCityTour();
-    await inicializarCircuitos();
-    await inicializarTransfers();
+    await guardar(async () => {
+      await inicializarPreciosCityTour();
+      await inicializarCircuitos();
+      await inicializarTransfers();
+    });
     setSaving(false);
   }
 
   // ---- CITY TOUR ----
   async function saveCityTour() {
     setSaving(true);
-    await actualizarPreciosCityTour(cityTour);
-    setSaved('citytour');
-    setTimeout(() => setSaved(''), 2000);
+    const { actualizadoEn, ...datos } = cityTour || {};
+    if (await guardar(() => actualizarPreciosCityTour(datos))) {
+      setSaved('citytour');
+      setTimeout(() => setSaved(''), 2000);
+    }
     setSaving(false);
   }
 
@@ -99,26 +140,25 @@ export default function Receptivo() {
     if (!form.nombre.trim()) return;
     setSaving(true);
     const data = { ...form, precioUSD: Object.fromEntries(TIPOS_UNIDAD.map(t => [t, parseFloat(form.precioUSD[t]) || 0])) };
-    if (modal === 'nuevo') await agregarCircuito(data);
-    else await actualizarCircuito(modal.id, data);
-    setModal(null);
+    const ok = await guardar(() => (modal === 'nuevo' ? agregarCircuito(data) : actualizarCircuito(modal.id, data)));
+    if (ok) setModal(null);
     setSaving(false);
   }
 
   async function handleEliminarCircuito() {
     if (!modal?.id) return;
     setSaving(true);
-    await eliminarCircuito(modal.id);
-    setModal(null);
+    if (await guardar(() => eliminarCircuito(modal.id))) setModal(null);
     setSaving(false);
   }
 
   // ---- TRANSFERS ----
   async function saveTransfer(id, data) {
     setSaving(true);
-    await actualizarTransfer(id, data);
-    setSaved('transfer_' + id);
-    setTimeout(() => setSaved(''), 2000);
+    if (await guardar(() => actualizarTransfer(id, data))) {
+      setSaved('transfer_' + id);
+      setTimeout(() => setSaved(''), 2000);
+    }
     setSaving(false);
   }
 
@@ -143,6 +183,7 @@ export default function Receptivo() {
           { id: 'circuitos', label: '🎡 Circuitos' },
           { id: 'transfers', label: '✈️ Transfers' },
           { id: 'movimientos', label: '🚐 Movimientos CABA/GBA' },
+          { id: 'disposicion', label: '⏱️ A disposición' },
         ].map(t => (
           <button key={t.id} onClick={() => setTab(t.id)}
             style={{
@@ -155,6 +196,52 @@ export default function Receptivo() {
           </button>
         ))}
       </div>
+
+      {errorGuardar && (
+        <div style={{ background: '#FFF1F0', color: '#A8071A', borderRadius: 10, padding: '10px 12px', fontSize: 13, fontWeight: 600, marginBottom: 14 }}>
+          ⛔ {errorGuardar}
+        </div>
+      )}
+
+      {tab === 'citytour' && !cityTour && (
+        <div className="admin-empty">
+          <div className="admin-empty-icon">🏛️</div>
+          <div style={{ marginBottom: 12 }}>No hay precios de City Tour cargados (el cotizador usa los valores por defecto).</div>
+          <button className="section-action" onClick={() => guardar(inicializarPreciosCityTour)}>Cargar precios por defecto</button>
+        </div>
+      )}
+
+      {/* A DISPOSICIÓN (cotizador "Receptivo a disposición") */}
+      {tab === 'disposicion' && (
+        <div>
+          <div className="section-header">
+            <div className="section-title">Receptivo a disposición — precios (USD, sin IVA)</div>
+          </div>
+          <div className="precios-card">
+            <div style={{ fontSize: 12, color: '#9090B0', marginBottom: 12 }}>
+              3 hs = 3 × precio por hora · 4 a 6 hs = pack 6 hs · 7 a 12 hs = pack 12 hs · 13 a 15 hs = pack 12 hs + horas extra · 16 a 24 hs = pack 24 hs.
+            </div>
+            {[
+              { key: 'hora', label: 'Precio por hora (y hora extra)' },
+              { key: 'p6h', label: 'Pack 6 horas' },
+              { key: 'p12h', label: 'Pack 12 horas' },
+              { key: 'p24h', label: 'Pack 24 horas' },
+            ].map(({ key, label }) => (
+              <div className="precio-field" key={key}>
+                <label>{label}</label>
+                <input type="number" step="1" min="0"
+                  value={preciosDispo[key] ?? ''}
+                  onChange={e => setPreciosDispo(prev => ({ ...prev, [key]: parseFloat(e.target.value) || 0 }))}
+                />
+                <ConversorUSD usdValue={preciosDispo[key]} dolar={dolar} onChangeUSD={v => setPreciosDispo(prev => ({ ...prev, [key]: v }))} />
+              </div>
+            ))}
+            <button className={`precios-save ${savedDispo ? 'saved' : ''}`} onClick={saveDispo}>
+              {savedDispo ? '✓ Guardado' : 'Guardar precios a disposición'}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* CITY TOUR */}
       {tab === 'citytour' && cityTour && (
@@ -200,7 +287,7 @@ export default function Receptivo() {
             <div className="admin-empty">
               <div className="admin-empty-icon">🎡</div>
               <div style={{ marginBottom: 12 }}>No hay circuitos. Inicializá los valores por defecto o agregá uno nuevo.</div>
-              <button className="section-action" onClick={inicializarCircuitos}>Cargar circuitos por defecto</button>
+              <button className="section-action" onClick={() => guardar(inicializarCircuitos)}>Cargar circuitos por defecto</button>
             </div>
           ) : (
             <div className="admin-table-wrap">
@@ -307,7 +394,7 @@ export default function Receptivo() {
             <div className="admin-empty">
               <div className="admin-empty-icon">✈️</div>
               <div style={{ marginBottom: 12 }}>No hay transfers configurados.</div>
-              <button className="section-action" onClick={inicializarTransfers}>Cargar transfers por defecto</button>
+              <button className="section-action" onClick={() => guardar(inicializarTransfers)}>Cargar transfers por defecto</button>
             </div>
           ) : (
             <div className="flota-grid">

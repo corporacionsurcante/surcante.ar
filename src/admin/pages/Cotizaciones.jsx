@@ -9,7 +9,7 @@ import { descargarPdfCotizacion, abrirPdfCotizacion } from '../../utils/pdfCotiz
 const TIPO_LABELS = {
   charter: '🚌 Charter',
   receptivo: '🏛️ Receptivo',
-  disposicion: '📅 Disposición',
+  disposicion: '⏱️ A disposición',
   'movimientos-caba-gba': '🔄 Movimientos',
 };
 
@@ -39,13 +39,14 @@ function labelDia(clave) {
 export default function Cotizaciones() {
   const [reservas, setReservas] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [busqueda, setBusqueda] = useState('');
   const [filtroTipo, setFiltroTipo] = useState('todas');
 
-  useEffect(() => {
-    const unsub = suscribirReservas(data => { setReservas(data); setLoading(false); });
-    return unsub;
-  }, []);
+  useEffect(() => suscribirReservas(
+    data => { setReservas(data); setLoading(false); setError(''); },
+    e => { setError(e?.code === 'permission-denied' ? 'Sin permiso para leer las cotizaciones (revisá las reglas de Firestore).' : 'No se pudieron cargar las cotizaciones.'); setLoading(false); },
+  ), []);
 
   const grupos = useMemo(() => {
     const q = busqueda.trim().toLowerCase();
@@ -65,6 +66,7 @@ export default function Cotizaciones() {
   }, [reservas, busqueda, filtroTipo]);
 
   if (loading) return <div className="admin-loading">Cargando cotizaciones...</div>;
+  if (error) return <div className="admin-empty"><div className="admin-empty-icon">⚠️</div>{error}</div>;
 
   const totalHoy = grupos.find(([k]) => k === claveDia(new Date()))?.[1] || [];
 
