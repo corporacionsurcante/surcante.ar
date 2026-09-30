@@ -266,9 +266,31 @@ function AccesoPrevio({ onConfirm }) {
   );
 }
 
+// Links personales de operativos de egresados (/v/{token}).
+// El portal de pasajero / conductor / coordinador se habilita en la próxima etapa.
+function PortalViaje() {
+  return (
+    <>
+      <BgOverlay />
+      <div className="app-shell">
+        <Topbar />
+        <div className="confirm-page">
+          <div className="confirm-icon">🚌</div>
+          <div className="confirm-title">Tu acceso personal está listo</div>
+          <div className="confirm-sub">
+            Guardá este link: desde acá vas a ver tu ómnibus, la ubicación en tiempo real, tus contactos y la agenda de cada día.
+            Lo estamos terminando de preparar para tu viaje.
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
 export default function App() {
   const pathname = window.location.pathname;
   if (pathname.startsWith('/admin')) return <AdminApp />;
+  if (pathname.startsWith('/v/')) return <PortalViaje />;
   const urlParams = new URLSearchParams(window.location.search);
   if (pathname === '/pago-exitoso') return <RetornoPago tipo="exitoso" urlParams={urlParams} />;
   if (pathname === '/pago-fallido') return <RetornoPago tipo="fallido" urlParams={urlParams} />;
