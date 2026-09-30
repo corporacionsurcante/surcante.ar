@@ -2,7 +2,9 @@ import React, { useState } from 'react';
 import { useDolar } from '../hooks/useDolar';
 import AvisoDolar from '../components/AvisoDolar';
 import { calcPresupuestoTotal, formatARS, formatDate } from '../utils/calculos';
-import { METODOS_PAGO, DATOS_BANCARIOS, WHATSAPP } from '../data/pagos';
+import { DATOS_BANCARIOS, WHATSAPP } from '../data/pagos';
+import { useParametros } from '../hooks/useParametros';
+import { metodosPago, fmtPorc } from '../utils/parametros';
 import { iniciarPagoOnline } from '../hooks/useMercadoPago';
 import { generarNroCotizacion } from '../utils/pdfCotizacion';
 import { armarReservaCharter } from '../utils/reservaCharter';
@@ -32,7 +34,9 @@ function WhatsAppButtons({ getMsgFor, sufijo }) {
 }
 
 export default function PasoPresupuesto({ reserva, onBack, onConfirm, isAdmin, initialContacto }) {
-  const { dolar, loading, error: errorDolar } = useDolar();
+  const { dolar, loading: loadingDolar, error: errorDolar } = useDolar();
+  const { params, cargando: cargandoParams } = useParametros();
+  const loading = loadingDolar || cargandoParams;
   const [payMethod, setPayMethod] = useState('transferencia');
   const [contacto, setContacto] = useState({
     nombre: initialContacto?.nombreCompleto || '',
@@ -47,11 +51,12 @@ export default function PasoPresupuesto({ reserva, onBack, onConfirm, isAdmin, i
           puntosCarga } = reserva;
 
   const { grandTotal, detalles } = dolar
-    ? calcPresupuestoTotal({ flotaUnidades, kmTotal, movData, movKmData, syncMode, dolar, mismodia, dias })
+    ? calcPresupuestoTotal({ flotaUnidades, kmTotal, movData, movKmData, syncMode, dolar, mismodia, dias, params })
     : { grandTotal: 0, detalles: [] };
 
-  const metodoActual = METODOS_PAGO.find(m => m.id === payMethod);
-  const porcentaje = metodoActual?.porcentaje || 0.30;
+  const METODOS = metodosPago(params);
+  const metodoActual = METODOS.find(m => m.id === payMethod) || METODOS[0];
+  const porcentaje = metodoActual.porc;
   const montoAhora = Math.round(grandTotal * porcentaje);
   const saldo = grandTotal - montoAhora;
 
@@ -132,7 +137,7 @@ export default function PasoPresupuesto({ reserva, onBack, onConfirm, isAdmin, i
 
       <div className="section-label">Método de pago</div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
-        {METODOS_PAGO.map(m => (
+        {METODOS.map(m => (
           <div key={m.id} onClick={() => setPayMethod(m.id)} style={{
             border: `1.5px solid ${payMethod === m.id ? 'var(--sp)' : 'var(--border)'}`,
             borderRadius: 12, padding: '12px 14px',
@@ -145,10 +150,10 @@ export default function PasoPresupuesto({ reserva, onBack, onConfirm, isAdmin, i
               <div style={{ fontSize: 14, fontWeight: 600, color: payMethod === m.id ? 'var(--spd)' : 'var(--text)' }}>
                 {m.label}
               </div>
-              <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 2 }}>{m.descripcion}</div>
+              <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 2 }}>{m.desc}</div>
             </div>
             <div style={{ fontSize: 15, fontWeight: 700, color: payMethod === m.id ? 'var(--sp)' : 'var(--text-2)' }}>
-              {formatARS(Math.round(grandTotal * m.porcentaje))}
+              {formatARS(Math.round(grandTotal * m.porc))}
             </div>
           </div>
         ))}
@@ -158,7 +163,7 @@ export default function PasoPresupuesto({ reserva, onBack, onConfirm, isAdmin, i
       {payMethod === 'mercadopago' && (
         <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 12, padding: 14, marginBottom: 14 }}>
           <div style={{ fontSize: 13, color: 'var(--text-2)', marginBottom: 12, fontWeight: 500 }}>
-            Pagás el <strong>10%</strong> ({formatARS(montoAhora)}) ahora con MercadoPago. El saldo lo coordinamos antes del viaje.
+            Pagás el <strong>{fmtPorc(porcentaje)}</strong> ({formatARS(montoAhora)}) ahora con MercadoPago. El saldo lo coordinamos antes del viaje.
           </div>
           {errorMP && (
             <div style={{ fontSize: 12, color: '#CF1322', background: '#FFF1F0', borderRadius: 8, padding: '8px 12px', marginBottom: 10 }}>
@@ -183,7 +188,7 @@ export default function PasoPresupuesto({ reserva, onBack, onConfirm, isAdmin, i
       {payMethod === 'tarjeta' && (
         <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 12, padding: 14, marginBottom: 14 }}>
           <div style={{ fontSize: 13, color: 'var(--text-2)', marginBottom: 12, fontWeight: 500 }}>
-            Pagás el <strong>10%</strong> ({formatARS(montoAhora)}) con tarjeta a través de MercadoPago.
+            Pagás el <strong>{fmtPorc(porcentaje)}</strong> ({formatARS(montoAhora)}) con tarjeta a través de MercadoPago.
           </div>
           {errorMP && (
             <div style={{ fontSize: 12, color: '#CF1322', background: '#FFF1F0', borderRadius: 8, padding: '8px 12px', marginBottom: 10 }}>
@@ -260,7 +265,7 @@ export default function PasoPresupuesto({ reserva, onBack, onConfirm, isAdmin, i
               {d.movNeto > 0 && (
                 <div className="prow sub"><span>Movimientos en destino</span><span>{formatARS(d.movNeto)}</span></div>
               )}
-              <div className="prow sub"><span>IVA 21%</span><span>{formatARS(d.ivaTotal)}</span></div>
+              <div className="prow sub"><span>IVA {fmtPorc(params.iva)}</span><span>{formatARS(d.ivaTotal)}</span></div>
               {detalles.length > 1 && (
                 <div className="prow sub"><span>Total unidad</span><span>{formatARS(d.total)}</span></div>
               )}
@@ -287,13 +292,14 @@ export default function PasoPresupuesto({ reserva, onBack, onConfirm, isAdmin, i
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4 }}>
                 {[
                   ['Km totales', `${d.kmTotalConExtra?.toLocaleString('es-AR')} km`],
+                  d.kmExtra > 0 ? ['Km extra movimientos', `${d.kmExtra.toLocaleString('es-AR')} km`] : null,
                   ['USD/km', `USD ${d.type?.usdKm}`],
                   ['Traslado neto', formatARS(d.traslNeto)],
                   d.esValorBase && d.baseNeto > 0 ? ['Valor base', `${d.diasOcupacion} días × USD ${d.valorBaseUSD}`] : null,
                   d.esEstadia && d.estadiaNeto > 0 ? ['Estadía', `${d.diasEstadia} días desde D3`] : null,
                   d.movNeto > 0 ? ['Movimientos', formatARS(d.movNeto)] : null,
                   ['Subtotal neto', formatARS(d.subtotal)],
-                  ['IVA 21%', formatARS(d.ivaTotal)],
+                  [`IVA ${fmtPorc(params.iva)}`, formatARS(d.ivaTotal)],
                   ['Total unidad', formatARS(d.total)],
                 ].filter(Boolean).map(([label, value]) => (
                   <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 6px', background: 'rgba(255,255,255,.04)', borderRadius: 5 }}>

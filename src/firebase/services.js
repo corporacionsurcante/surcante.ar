@@ -3,6 +3,7 @@ import {
   query, orderBy, onSnapshot, serverTimestamp, setDoc, getDoc
 } from 'firebase/firestore';
 import { db } from './config';
+import { PARAMETROS_DEFAULT } from '../utils/parametros';
 
 // Errores de Firestore en suscripciones: se registran y se avisa al componente
 // (si no, las pantallas quedan en "Cargando..." para siempre).
@@ -84,12 +85,11 @@ export async function actualizarPrecios(data) {
 
 export async function inicializarPrecios() {
   await setDoc(doc(db, 'config', 'precios'), {
-    u1: { movUSD: [110, 170, 250], movDesc: 0, usdKm: 2.50 },
-    u2: { movUSD: [110, 170, 250], movDesc: 0.20, usdKm: 2.00 },
-    u3: { movUSD: [110, 170, 250], movDesc: 0.30, usdKm: 1.80 },
-    kmMovIncluidos: 50,
-    iva: 0.21,
-    senaPorc: 0.30,
+    // movUSD = USD por movimiento: [1.er, 2.º, 3.º y siguientes c/u]
+    u1: { movUSD: [303.69, 269.94, 236.20], movDesc: 0, usdKm: 2.16, valorBaseUSD: 506.14 },
+    u2: { movUSD: [303.69, 236.20, 202.46], movDesc: 0, usdKm: 2.02, valorBaseUSD: 506.14 },
+    u3: { movUSD: [269.94, 202.46, 134.97], movDesc: 0, usdKm: 1.89, valorBaseUSD: 472.40 },
+    ...PARAMETROS_DEFAULT,
     actualizadoEn: serverTimestamp(),
   });
 }

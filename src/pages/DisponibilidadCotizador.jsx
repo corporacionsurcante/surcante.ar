@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useDolar } from '../hooks/useDolar';
+import { useParametros } from '../hooks/useParametros';
+import { metodosPago, porcentajeSena, fmtPorc } from '../utils/parametros';
 import AvisoDolar from '../components/AvisoDolar';
 import { iniciarPagoOnline } from '../hooks/useMercadoPago';
 import { fechaMinimaISO } from '../components/Calendario';
@@ -45,7 +47,9 @@ function calcPrecioLocal(horas, precios) {
 }
 
 export default function DisponibilidadCotizador({ onBack, initialContacto }) {
-  const { dolar, loading: loadingDolar, error: errorDolar } = useDolar();
+  const { dolar, loading: cargandoDolar, error: errorDolar } = useDolar();
+  const { params, cargando: cargandoParams } = useParametros();
+  const loadingDolar = cargandoDolar || cargandoParams;
   const [precios, setPrecios] = useState(PRECIOS_DEFAULT);
   const [loadingMP, setLoadingMP] = useState(false);
   const [errorMP, setErrorMP] = useState('');
@@ -73,9 +77,10 @@ export default function DisponibilidadCotizador({ onBack, initialContacto }) {
 
   const { precioUSD, descripcion } = calcPrecioLocal(horas, precios);
   const subtotal = precioUSD * (dolar || 0);
-  const iva = subtotal * 0.21;
+  const iva = subtotal * params.iva;
   const total = subtotal + iva;
-  const porcentaje = payMethod === 'mercadopago' || payMethod === 'tarjeta' ? 0.10 : 0.30;
+  const METODOS = metodosPago(params);
+  const porcentaje = porcentajeSena(payMethod, params);
   const montoAhora = Math.round(total * porcentaje);
   const saldo = total - montoAhora;
 
@@ -156,7 +161,7 @@ export default function DisponibilidadCotizador({ onBack, initialContacto }) {
           <div className="prow hl"><span>⏱️ {descripcion}</span><span>{formatARS(subtotal)}</span></div>
           <div className="prow"><span>Unidad</span><span>{unidadSel?.tipo} · INTERNO {unidadSel?.interno} · {unidadSel?.patente}</span></div>
           <div className="prow"><span>Fecha</span><span>{fecha}</span></div>
-          <div className="prow sub"><span>IVA 21%</span><span>{formatARS(iva)}</span></div>
+          <div className="prow sub"><span>IVA {fmtPorc(params.iva)}</span><span>{formatARS(iva)}</span></div>
           <div className="prow total"><span>Total</span><span>{formatARS(total)}</span></div>
         </div>
 
@@ -164,12 +169,7 @@ export default function DisponibilidadCotizador({ onBack, initialContacto }) {
 
         <div className="section-label">Método de pago</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 14 }}>
-          {[
-            { id: 'transferencia', label: 'Transferencia', icon: '🏛️', desc: '30% para confirmar', porc: 0.30 },
-            { id: 'efectivo', label: 'Efectivo', icon: '💵', desc: 'Coordinás por WhatsApp', porc: 0.30 },
-            { id: 'mercadopago', label: 'MercadoPago', icon: '💳', desc: '10% ahora online', porc: 0.10 },
-            { id: 'tarjeta', label: 'Tarjeta', icon: '🏦', desc: '10% ahora online', porc: 0.10 },
-          ].map(m => (
+          {METODOS.map(m => (
             <div key={m.id} onClick={() => setPayMethod(m.id)}
               style={{
                 border: `1.5px solid ${payMethod === m.id ? 'var(--sp)' : 'var(--border)'}`,

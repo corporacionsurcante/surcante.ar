@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { KM_MOV_INCLUIDOS, BASES, baseMasCercana } from '../data/constants';
+import { BASES, baseMasCercana } from '../data/constants';
+import { useParametros } from '../hooks/useParametros';
 
 const MAPS_KEY = process.env.REACT_APP_GOOGLE_MAPS_KEY;
 
@@ -82,6 +83,8 @@ function AutocompleteInput({ placeholder, label, onSelect }) {
 }
 
 export default function PasoRecorrido({ reserva, onNext, onBack }) {
+  const { params } = useParametros();
+  const KM_MOV_INCLUIDOS = params.kmMovIncluidos;
   const { dias, flotaUnidades } = reserva;
   const [origenData, setOrigenData] = useState(null);
   const [destinoData, setDestinoData] = useState(null);

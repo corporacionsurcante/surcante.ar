@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useDolar } from '../hooks/useDolar';
+import { useParametros } from '../hooks/useParametros';
+import { metodosPago, fmtPorc } from '../utils/parametros';
 import AvisoDolar from '../components/AvisoDolar';
 import { useDisponibilidad } from '../hooks/useDisponibilidad';
 import { getDiasServicio, formatARS, formatDate } from '../utils/calculos';
@@ -20,7 +22,9 @@ const TIPO_UNIT = {
 };
 
 export default function ReceptivoCotizador({ onBack, initialContacto }) {
-  const { dolar, loading: loadingDolar, error: errorDolar } = useDolar();
+  const { dolar, loading: cargandoDolar, error: errorDolar } = useDolar();
+  const { params, cargando: cargandoParams } = useParametros();
+  const loadingDolar = cargandoDolar || cargandoParams;
   const [cityTourPrecios, setCityTourPrecios] = useState(null);
   const [circuitosDB, setCircuitosDB] = useState(null);
   const [transfersDB, setTransfersDB] = useState(null);
@@ -128,17 +132,12 @@ export default function ReceptivoCotizador({ onBack, initialContacto }) {
   }
 
   const subtotal = Array.from({ length: dias }, (_, i) => getPrecioDia(i + 1)).reduce((a, b) => a + b, 0);
-  const iva = subtotal * 0.21;
+  const iva = subtotal * params.iva;
   const total = subtotal + iva;
   const diasConPrograma = programa.filter(p => p.items && p.items.length > 0).length;
 
   // ---- PASO 3: PRESUPUESTO ----
-  const METODOS = [
-    { id: 'transferencia', label: 'Transferencia', icon: '🏛️', desc: '30% para confirmar', porc: 0.30 },
-    { id: 'efectivo',      label: 'Efectivo',      icon: '💵', desc: 'Coordinás por WhatsApp', porc: 0.30 },
-    { id: 'mercadopago',   label: 'MercadoPago',   icon: '💳', desc: '10% ahora online', porc: 0.10 },
-    { id: 'tarjeta',       label: 'Tarjeta',       icon: '🏦', desc: '10% ahora online', porc: 0.10 },
-  ];
+  const METODOS = metodosPago(params);
   const metodoActual = METODOS.find(m => m.id === payMethod) || METODOS[0];
   const montoAhora = Math.round(total * metodoActual.porc);
   const saldoPendiente = total - montoAhora;
@@ -243,7 +242,7 @@ export default function ReceptivoCotizador({ onBack, initialContacto }) {
               </div>
             );
           })}
-          <div className="prow"><span>IVA 21%</span><span>{formatARS(iva)}</span></div>
+          <div className="prow"><span>IVA {fmtPorc(params.iva)}</span><span>{formatARS(iva)}</span></div>
           <div className="prow total"><span>Total</span><span>{formatARS(total)}</span></div>
         </div>
 
@@ -316,7 +315,7 @@ export default function ReceptivoCotizador({ onBack, initialContacto }) {
         {(payMethod === 'mercadopago' || payMethod === 'tarjeta') && (
           <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 12, padding: 14, marginBottom: 14 }}>
             <div style={{ fontSize: 13, color: 'var(--text-2)', marginBottom: 12, fontWeight: 500 }}>
-              Pagás el <strong>10%</strong> ({formatARS(montoAhora)}) ahora online. El saldo lo coordinamos antes del servicio.
+              Pagás el <strong>{fmtPorc(metodoActual.porc)}</strong> ({formatARS(montoAhora)}) ahora online. El saldo lo coordinamos antes del servicio.
             </div>
             {errorMP && (
               <div style={{ fontSize: 12, color: '#CF1322', background: '#FFF1F0', borderRadius: 8, padding: '8px 12px', marginBottom: 10 }}>

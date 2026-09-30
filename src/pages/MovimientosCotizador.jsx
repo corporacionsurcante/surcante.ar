@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useDolar } from '../hooks/useDolar';
+import { useParametros } from '../hooks/useParametros';
+import { metodosPago, porcentajeSena, fmtPorc } from '../utils/parametros';
 import AvisoDolar from '../components/AvisoDolar';
 import { iniciarPagoOnline } from '../hooks/useMercadoPago';
 import { formatARS, formatDate, getDiasServicio } from '../utils/calculos';
@@ -22,7 +24,9 @@ const TIPO_UNIT = {
 };
 
 export default function MovimientosCotizador({ onBack, initialContacto }) {
-  const { dolar, loading: loadingDolar, error: errorDolar } = useDolar();
+  const { dolar, loading: cargandoDolar, error: errorDolar } = useDolar();
+  const { params, cargando: cargandoParams } = useParametros();
+  const loadingDolar = cargandoDolar || cargandoParams;
   const [loadingMP, setLoadingMP] = useState(false);
   const [errorMP, setErrorMP] = useState('');
   const [precioUSD, setPrecioUSD] = useState(PRECIO_DEFAULT_USD);
@@ -71,9 +75,10 @@ export default function MovimientosCotizador({ onBack, initialContacto }) {
   const { precioUSD: precioHorasUSD, descripcion: descHoras } = calcPrecioHoras(horas, preciosMov);
   const subtotalDia = modo === 'dia' ? precioUSD * (dolar || 0) : precioHorasUSD * (dolar || 0);
   const subtotal = subtotalDia * (modo === 'dia' ? dias : 1);
-  const iva = subtotal * 0.21;
+  const iva = subtotal * params.iva;
   const total = subtotal + iva;
-  const porcentaje = payMethod === 'mercadopago' || payMethod === 'tarjeta' ? 0.10 : 0.30;
+  const METODOS = metodosPago(params);
+  const porcentaje = porcentajeSena(payMethod, params);
   const montoAhora = Math.round(total * porcentaje);
   const saldo = total - montoAhora;
 
@@ -159,7 +164,7 @@ export default function MovimientosCotizador({ onBack, initialContacto }) {
           <div className="prow"><span>Unidad</span><span>{unidadSel?.tipo} · INTERNO {unidadSel?.interno} · {unidadSel?.patente}</span></div>
           <div className="prow"><span>Fechas</span><span>{formatDate(fechas.fechaInicio)}{dias > 1 ? ` → ${formatDate(fechas.fechaFin)}` : ''}</span></div>
           {descripcion && <div className="prow"><span>Descripción</span><span>{descripcion}</span></div>}
-          <div className="prow sub"><span>IVA 21%</span><span>{formatARS(iva)}</span></div>
+          <div className="prow sub"><span>IVA {fmtPorc(params.iva)}</span><span>{formatARS(iva)}</span></div>
           <div className="prow total"><span>Total</span><span>{formatARS(total)}</span></div>
         </div>
 
@@ -167,12 +172,7 @@ export default function MovimientosCotizador({ onBack, initialContacto }) {
 
         <div className="section-label">Método de pago</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 14 }}>
-          {[
-            { id: 'transferencia', label: 'Transferencia', icon: '🏛️', desc: '30% para confirmar', porc: 0.30 },
-            { id: 'efectivo',      label: 'Efectivo',      icon: '💵', desc: 'Coordinás por WhatsApp', porc: 0.30 },
-            { id: 'mercadopago',   label: 'MercadoPago',   icon: '💳', desc: '10% ahora online', porc: 0.10 },
-            { id: 'tarjeta',       label: 'Tarjeta',       icon: '🏦', desc: '10% ahora online', porc: 0.10 },
-          ].map(m => (
+          {METODOS.map(m => (
             <div key={m.id} onClick={() => setPayMethod(m.id)}
               style={{
                 border: `1.5px solid ${payMethod === m.id ? 'var(--sp)' : 'var(--border)'}`,

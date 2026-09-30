@@ -4,39 +4,49 @@ import Calendario from '../components/Calendario';
 import { useDisponibilidad } from '../hooks/useDisponibilidad';
 import { suscribirPrecios } from '../firebase/services';
 
-// Defaults mientras carga Firebase
+// Respaldo si no se puede leer config/precios (valores cargados en el admin a jun-2026)
 const TIPO_UNIT_DEFAULT = {
-  'MIX 60':    { usdKm: 2.50, movDesc: 0,    movUSD: [110,170,250], valorBaseUSD: 320 },
-  'Comun 45':  { usdKm: 2.00, movDesc: 0.20, movUSD: [110,170,250], valorBaseUSD: 280 },
-  'Minibus 24':{ usdKm: 1.80, movDesc: 0.30, movUSD: [110,170,250], valorBaseUSD: 245 },
-  'Minibus 19':{ usdKm: 1.80, movDesc: 0.30, movUSD: [110,170,250], valorBaseUSD: 245 },
+  'MIX 60':    { usdKm: 2.16, movDesc: 0, movUSD: [303.69, 269.94, 236.20], valorBaseUSD: 506.14 },
+  'Comun 45':  { usdKm: 2.02, movDesc: 0, movUSD: [303.69, 236.20, 202.46], valorBaseUSD: 506.14 },
+  'Minibus 24':{ usdKm: 1.89, movDesc: 0, movUSD: [269.94, 202.46, 134.97], valorBaseUSD: 472.40 },
+  'Minibus 19':{ usdKm: 1.89, movDesc: 0, movUSD: [269.94, 202.46, 134.97], valorBaseUSD: 472.40 },
 };
 
 // Mapeo tipo → id Firebase
 const TIPO_TO_ID = { 'MIX 60': 'u1', 'Comun 45': 'u2', 'Minibus 24': 'u3', 'Minibus 19': 'u3' };
 
+// Devuelve { precios, cargado }: el botón Continuar espera a tener los precios
+// (si no, la cotización saldría con los valores de respaldo).
 function usePreciosFirebase() {
-  const [precios, setPrecios] = useState(null);
-  useEffect(() => suscribirPrecios(setPrecios), []);
-  return precios;
+  const [estado, setEstado] = useState({ precios: null, cargado: false });
+  useEffect(() => suscribirPrecios(
+    data => setEstado({ precios: data, cargado: true }),
+    () => setEstado({ precios: null, cargado: true }),
+  ), []);
+  return estado;
+}
+
+function numOr(v, def) {
+  const n = Number(v);
+  return Number.isFinite(n) && n > 0 ? n : def;
 }
 
 function getTipoConfig(tipo, preciosDB) {
+  const def = TIPO_UNIT_DEFAULT[tipo] || TIPO_UNIT_DEFAULT['Comun 45'];
   const id = TIPO_TO_ID[tipo];
-  if (preciosDB && id && preciosDB[id]) {
-    const p = preciosDB[id];
-    return {
-      usdKm: p.usdKm || TIPO_UNIT_DEFAULT[tipo]?.usdKm || 2.00,
-      movDesc: p.movDesc || 0,
-      movUSD: p.movUSD || [110,170,250],
-      valorBaseUSD: p.valorBaseUSD || TIPO_UNIT_DEFAULT[tipo]?.valorBaseUSD || 280,
-    };
-  }
-  return TIPO_UNIT_DEFAULT[tipo] || TIPO_UNIT_DEFAULT['Comun 45'];
+  const p = preciosDB && id ? preciosDB[id] : null;
+  if (!p) return def;
+  const movDesc = Number(p.movDesc);
+  return {
+    usdKm: numOr(p.usdKm, def.usdKm),
+    movDesc: Number.isFinite(movDesc) && movDesc >= 0 && movDesc < 1 ? movDesc : 0,
+    movUSD: Array.isArray(p.movUSD) && p.movUSD.length ? p.movUSD.map(Number) : def.movUSD,
+    valorBaseUSD: numOr(p.valorBaseUSD, def.valorBaseUSD),
+  };
 }
 
 export default function PasoFlota({ onNext }) {
-  const preciosDB = usePreciosFirebase();
+  const { precios: preciosDB, cargado: preciosCargados } = usePreciosFirebase();
   const [fechas, setFechas] = useState({ fechaInicio: '', fechaFin: '', mismodia: false, horaInicio: null, horaFin: null });
   const [qty, setQty] = useState({});
 
@@ -45,7 +55,7 @@ export default function PasoFlota({ onNext }) {
   const dias = fechas.mismodia ? 1 : getDiasServicio(fechas.fechaInicio, fechas.fechaFin);
   // Solo cuentan las unidades elegidas que siguen disponibles para las fechas actuales
   const totalUnidades = disponibilidad.reduce((a, u) => a + ((u.disponible || !fechas.fechaInicio) ? (qty[u.id] || 0) : 0), 0);
-  const canContinue = fechas.fechaInicio && fechas.fechaFin && totalUnidades > 0;
+  const canContinue = fechas.fechaInicio && fechas.fechaFin && totalUnidades > 0 && preciosCargados;
 
   // Cada tarjeta es un ómnibus físico (un interno): se contrata 0 o 1 vez
   function chQty(uid, d) {
@@ -170,7 +180,7 @@ export default function PasoFlota({ onNext }) {
       )}
 
       <button className="btn-primary" disabled={!canContinue} onClick={handleContinue}>
-        Continuar →
+        {preciosCargados ? 'Continuar →' : 'Cargando tarifas...'}
       </button>
     </div>
   );
