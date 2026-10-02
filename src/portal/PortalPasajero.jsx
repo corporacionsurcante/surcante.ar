@@ -5,6 +5,15 @@ import { colorBus, labelFecha, hoyISO, nombreCompleto, linkWhatsApp } from '../a
 
 const QR_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
 
+/** Devuelve true si la actividad es visible para un pasajero/usuario con el busId dado.
+ *  Una actividad sin buses asignados (array vacío o ausente) es visible para todos los buses.
+ */
+function actividadParaBus(act, busId) {
+  if (!busId) return true;                         // sin bus asignado → se ven todas
+  if (!act.buses?.length) return true;             // actividad para todos los buses
+  return act.buses.includes(busId);
+}
+
 function cargarQRCode() {
   if (window.QRCode) return Promise.resolve();
   return new Promise((res, rej) => {
@@ -111,8 +120,7 @@ export default function PortalPasajero({ sesion }) {
 /* ── Hoy ── */
 function TabHoy({ dia, avisos, fecha, rol, busId }) {
   const actividades = (dia?.actividades || []).filter(a =>
-    (rol !== 'pasajero' || !a.soloStaff) &&
-    (!busId || !a.buses?.length || a.buses.includes(busId))
+    (rol !== 'pasajero' || !a.soloStaff) && actividadParaBus(a, busId)
   );
   return (
     <div className="portal-section">
@@ -246,7 +254,7 @@ function TabAgenda({ itinerario, hoy, abiertos, setAbiertos, busId }) {
         const esHoy = dia.id === hoy;
         const abierto = abiertos[dia.id];
         const actividades = (dia.actividades || []).filter(a =>
-          !a.soloStaff && (!busId || !a.buses?.length || a.buses.includes(busId))
+          !a.soloStaff && actividadParaBus(a, busId)
         );
         return (
           <div key={dia.id} className={`portal-dia-card${esHoy ? ' hoy' : ''}`}>
