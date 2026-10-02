@@ -225,6 +225,16 @@ function TabQR({ opId, refId, pasajeros }) {
 
   return (
     <div className="portal-section">
+      {/* Video y canvas siempre en el DOM para que videoRef.current nunca sea null */}
+      <div className="portal-qr-wrap" style={{ display: escaneando ? 'block' : 'none' }}>
+        <video ref={videoRef} className="portal-qr-video" playsInline muted />
+        <div className="portal-qr-overlay" />
+      </div>
+      <canvas ref={canvasRef} style={{ display: 'none' }} />
+      {escaneando && (
+        <button className="portal-btn-secondary portal-qr-cancel" onClick={detener}>Cancelar</button>
+      )}
+
       {!escaneando && !resultado && (
         <div className="portal-card">
           <div className="portal-card-header">Escáner QR</div>
@@ -234,17 +244,6 @@ function TabQR({ opId, refId, pasajeros }) {
           {errorCam && <div className="portal-aviso-warning" style={{ marginBottom: 10 }}>{errorCam}</div>}
           <button className="portal-btn-primary" onClick={iniciar}>Abrir cámara</button>
         </div>
-      )}
-
-      {escaneando && (
-        <>
-          <div className="portal-qr-wrap">
-            <video ref={videoRef} className="portal-qr-video" playsInline muted />
-            <div className="portal-qr-overlay" />
-          </div>
-          <canvas ref={canvasRef} style={{ display: 'none' }} />
-          <button className="portal-btn-secondary portal-qr-cancel" onClick={detener}>Cancelar</button>
-        </>
       )}
 
       {!escaneando && resultado && (
