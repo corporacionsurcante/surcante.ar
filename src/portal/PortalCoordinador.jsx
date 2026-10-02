@@ -150,6 +150,7 @@ function TabQR({ opId, refId, pasajeros }) {
   const [escaneando, setEscaneando] = useState(false);
   const [resultado, setResultado] = useState(null); // { ok, pax, codigo }
   const [errorCam, setErrorCam] = useState('');
+  const [errorCheckin, setErrorCheckin] = useState('');
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const streamRef = useRef(null);
@@ -160,6 +161,7 @@ function TabQR({ opId, refId, pasajeros }) {
   async function iniciar() {
     setResultado(null);
     setErrorCam('');
+    setErrorCheckin('');
     try {
       await cargarJsQR();
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
@@ -213,18 +215,22 @@ function TabQR({ opId, refId, pasajeros }) {
     }
 
     if (encontrado) {
-      setResultado({ ok: true, pax: encontrado, codigo: limpio });
-      // Registrar check-in: transacción para preservar creadoEn en re-escaneos
+      // Registrar check-in antes de mostrar éxito (transacción preserva creadoEn en re-escaneos)
       const checkinRef = doc(db, 'operativos', opId, 'checkins', encontrado.id);
-      runTransaction(db, async tx => {
-        const snap = await tx.get(checkinRef);
-        const base = { paxId: encontrado.id, coordinadorId: refId, codigo: limpio, actualizadoEn: serverTimestamp() };
-        if (snap.exists()) {
-          tx.update(checkinRef, { coordinadorId: refId, codigo: limpio, actualizadoEn: serverTimestamp() });
-        } else {
-          tx.set(checkinRef, { ...base, creadoEn: serverTimestamp() });
-        }
-      }).catch(() => {});
+      try {
+        await runTransaction(db, async tx => {
+          const snap = await tx.get(checkinRef);
+          if (snap.exists()) {
+            tx.update(checkinRef, { coordinadorId: refId, codigo: limpio, actualizadoEn: serverTimestamp() });
+          } else {
+            tx.set(checkinRef, { paxId: encontrado.id, coordinadorId: refId, codigo: limpio, creadoEn: serverTimestamp(), actualizadoEn: serverTimestamp() });
+          }
+        });
+        setResultado({ ok: true, pax: encontrado, codigo: limpio });
+      } catch (e) {
+        setResultado({ ok: true, pax: encontrado, codigo: limpio });
+        setErrorCheckin('Check-in no registrado (sin conexión). Volvé a escanear cuando recuperes señal.');
+      }
     } else {
       setResultado({ ok: false, pax: null, codigo: limpio });
     }
@@ -260,6 +266,7 @@ function TabQR({ opId, refId, pasajeros }) {
               <div className="portal-qr-encontrado">✅ Pasajero encontrado</div>
               <div className="portal-qr-codigo">{resultado.codigo}</div>
               <FilaPaxDetalle pax={resultado.pax} />
+              {errorCheckin && <div className="portal-aviso-warning" style={{ marginTop: 8 }}>{errorCheckin}</div>}
             </>
           ) : (
             <>
