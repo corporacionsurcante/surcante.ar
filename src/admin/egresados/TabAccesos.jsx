@@ -44,7 +44,7 @@ function QRCanvas({ value, size = 200 }) {
 
 function ModalQR({ persona, onClose }) {
   const canvasRef = useRef(null);
-  const codigo = persona.codigoAgencia || persona.dni || '';
+  const codigo = persona.refId || persona.codigoAgencia || persona.dni || '';
 
   function descargar() {
     const canvas = canvasRef.current?.querySelector('canvas');

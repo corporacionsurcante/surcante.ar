@@ -302,7 +302,7 @@ function TabYo({ pax }) {
     </div>
   );
 
-  const codigoQR = pax.codigoAgencia || pax.dni || null;
+  const codigoQR = pax.id || pax.codigoAgencia || pax.dni || null;
 
   const filas = [
     ['Nombre', nombreCompleto(pax) || '—'],
