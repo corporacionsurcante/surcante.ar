@@ -254,7 +254,7 @@ export default function TabAccesos({ opId, op, buses, staff, pasajeros, accesos 
                             WhatsApp{tel ? '' : ' …'}
                           </button>
                           <button className="eg-btn eg-btn-ghost eg-btn-sm" onClick={() => copiar(p)}>📋 Copiar</button>
-                          {p.rol === 'pasajero' && (p.codigoAgencia || p.dni) && (
+                          {p.rol === 'pasajero' && (p.refId || p.codigoAgencia || p.dni) && (
                             <button className="eg-btn eg-btn-ghost eg-btn-sm" onClick={() => setQrPersona(p)} title="Ver y descargar QR del pasajero">📱 QR</button>
                           )}
                           <button className="eg-btn eg-btn-ghost eg-btn-sm" title="Invalida el link anterior"

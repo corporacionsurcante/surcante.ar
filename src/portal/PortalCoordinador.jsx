@@ -67,7 +67,7 @@ export default function PortalCoordinador({ sesion }) {
       </nav>
 
       <main className="portal-main">
-        {tab === 'hoy' && <TabHoyCoord dia={diaHoy} avisos={avisos} fecha={hoy} />}
+        {tab === 'hoy' && <TabHoyCoord dia={diaHoy} avisos={avisos} fecha={hoy} busId={busId} />}
         {tab === 'pasajeros' && (
           <div className="portal-section">
             <input
@@ -91,8 +91,8 @@ export default function PortalCoordinador({ sesion }) {
 }
 
 /* ── Hoy ── */
-function TabHoyCoord({ dia, avisos, fecha }) {
-  const actividades = dia?.actividades || [];
+function TabHoyCoord({ dia, avisos, fecha, busId }) {
+  const actividades = (dia?.actividades || []).filter(a => !busId || !a.buses?.length || a.buses.includes(busId));
   return (
     <div className="portal-section">
       <div className="portal-card-label">{labelFecha(fecha, { largo: true })}</div>
