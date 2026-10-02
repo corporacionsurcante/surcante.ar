@@ -153,9 +153,13 @@ service cloud.firestore {
       match /checkins/{checkinId} {
         allow read: if isAdmin()
           || (portalEnOp(opId) && request.auth.token.rol in ['conductor', 'coordinador']);
-        // Coordinadores pueden crear y actualizar check-ins (re-escaneo idempotente)
+        // Coordinadores pueden crear/actualizar solo sus propios check-ins con campos válidos
         allow create, update: if isAdmin()
-          || (portalEnOp(opId) && request.auth.token.rol == 'coordinador');
+          || (portalEnOp(opId)
+              && request.auth.token.rol == 'coordinador'
+              && request.resource.data.paxId == checkinId
+              && request.resource.data.coordinadorId == request.auth.token.refId
+              && request.resource.data.keys().hasOnly(['paxId','coordinadorId','codigo','creadoEn','actualizadoEn']));
         allow delete: if isAdmin();
       }
 

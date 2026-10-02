@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { doc, getDoc, getDocs, setDoc, collection, onSnapshot, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, getDocs, setDoc, collection, onSnapshot, runTransaction, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { colorBus, labelFecha, hoyISO, nombreCompleto } from '../admin/egresados/utils';
 
@@ -214,13 +214,17 @@ function TabQR({ opId, refId, pasajeros }) {
 
     if (encontrado) {
       setResultado({ ok: true, pax: encontrado, codigo: limpio });
-      // Registrar check-in (setDoc con paxId como ID evita duplicados)
-      setDoc(doc(db, 'operativos', opId, 'checkins', encontrado.id), {
-        paxId: encontrado.id,
-        coordinadorId: refId,
-        codigo: limpio,
-        creadoEn: serverTimestamp(),
-      }, { merge: true }).catch(() => {});
+      // Registrar check-in: transacción para preservar creadoEn en re-escaneos
+      const checkinRef = doc(db, 'operativos', opId, 'checkins', encontrado.id);
+      runTransaction(db, async tx => {
+        const snap = await tx.get(checkinRef);
+        const base = { paxId: encontrado.id, coordinadorId: refId, codigo: limpio, actualizadoEn: serverTimestamp() };
+        if (snap.exists()) {
+          tx.update(checkinRef, { coordinadorId: refId, codigo: limpio, actualizadoEn: serverTimestamp() });
+        } else {
+          tx.set(checkinRef, { ...base, creadoEn: serverTimestamp() });
+        }
+      }).catch(() => {});
     } else {
       setResultado({ ok: false, pax: null, codigo: limpio });
     }
