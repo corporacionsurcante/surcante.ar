@@ -1,7 +1,41 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { doc, getDoc, getDocs, collection, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { colorBus, labelFecha, hoyISO, nombreCompleto, linkWhatsApp } from '../admin/egresados/utils';
+
+const QR_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
+
+function cargarQRCode() {
+  if (window.QRCode) return Promise.resolve();
+  return new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = QR_CDN;
+    s.onload = res;
+    s.onerror = () => rej(new Error('No se pudo cargar el generador QR'));
+    document.head.appendChild(s);
+  });
+}
+
+function QRDisplay({ value, size = 180 }) {
+  const ref = useRef(null);
+  const [err, setErr] = useState('');
+  useEffect(() => {
+    if (!value || !ref.current) return;
+    let cancelled = false;
+    cargarQRCode().then(() => {
+      if (cancelled || !ref.current) return;
+      ref.current.innerHTML = '';
+      new window.QRCode(ref.current, {
+        text: value, width: size, height: size,
+        colorDark: '#1a1a2e', colorLight: '#ffffff',
+        correctLevel: window.QRCode.CorrectLevel.M,
+      });
+    }).catch(e => { if (!cancelled) setErr(e.message); });
+    return () => { cancelled = true; };
+  }, [value, size]);
+  if (err) return <div style={{ fontSize: 12, color: '#cf1322' }}>{err}</div>;
+  return <div ref={ref} style={{ lineHeight: 0 }} />;
+}
 
 export default function PortalPasajero({ sesion }) {
   const { opId, refId, busId } = sesion;
@@ -241,6 +275,8 @@ function TabAgenda({ itinerario, hoy, abiertos, setAbiertos }) {
 
 /* ── Yo ── */
 function TabYo({ pax }) {
+  const [fullscreenQR, setFullscreenQR] = useState(false);
+
   if (!pax) return (
     <div className="portal-section">
       <div className="portal-card">
@@ -248,6 +284,8 @@ function TabYo({ pax }) {
       </div>
     </div>
   );
+
+  const codigoQR = pax.codigoAgencia || pax.dni || null;
 
   const filas = [
     ['Nombre', nombreCompleto(pax) || '—'],
@@ -261,6 +299,28 @@ function TabYo({ pax }) {
 
   return (
     <div className="portal-section">
+      {codigoQR && (
+        <div className="portal-card" style={{ alignItems: 'center', textAlign: 'center' }}>
+          <div className="portal-card-header">Mi código QR</div>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, paddingTop: 4 }}>
+            <div style={{ background: '#fff', borderRadius: 10, padding: 10, border: '1px solid #e0d4f7' }}>
+              <QRDisplay value={codigoQR} size={180} />
+            </div>
+            <div style={{ fontSize: 15, fontWeight: 800, color: '#7b2fbe', letterSpacing: '.04em' }}>{codigoQR}</div>
+            <div style={{ fontSize: 12, color: '#b0b0c8', lineHeight: 1.5 }}>
+              Mostrá este QR al coordinador para el check-in
+            </div>
+            <button
+              className="portal-btn-secondary"
+              style={{ fontSize: 13, padding: '8px 18px' }}
+              onClick={() => setFullscreenQR(true)}
+            >
+              🔍 Ampliar QR
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="portal-card">
         <div className="portal-card-header">Mis datos</div>
         {filas.map(([label, valor]) => (
@@ -295,6 +355,19 @@ function TabYo({ pax }) {
         <div className="portal-card portal-info-general">
           <div className="portal-card-header">Observaciones</div>
           <p>{pax.observaciones}</p>
+        </div>
+      )}
+
+      {fullscreenQR && codigoQR && (
+        <div
+          style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,.85)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20 }}
+          onClick={() => setFullscreenQR(false)}
+        >
+          <div style={{ background: '#fff', borderRadius: 16, padding: 20 }} onClick={e => e.stopPropagation()}>
+            <QRDisplay value={codigoQR} size={260} />
+          </div>
+          <div style={{ fontSize: 22, fontWeight: 900, color: '#fff', letterSpacing: '.06em' }}>{codigoQR}</div>
+          <div style={{ fontSize: 13, color: 'rgba(255,255,255,.6)' }}>Tocá en cualquier lugar para cerrar</div>
         </div>
       )}
     </div>
