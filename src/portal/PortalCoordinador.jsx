@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { doc, getDoc, getDocs, addDoc, collection, onSnapshot, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, getDocs, collection, onSnapshot, runTransaction, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { colorBus, labelFecha, hoyISO, nombreCompleto } from '../admin/egresados/utils';
 
@@ -67,7 +67,7 @@ export default function PortalCoordinador({ sesion }) {
       </nav>
 
       <main className="portal-main">
-        {tab === 'hoy' && <TabHoyCoord dia={diaHoy} avisos={avisos} fecha={hoy} />}
+        {tab === 'hoy' && <TabHoyCoord dia={diaHoy} avisos={avisos} fecha={hoy} busId={busId} />}
         {tab === 'pasajeros' && (
           <div className="portal-section">
             <input
@@ -91,8 +91,8 @@ export default function PortalCoordinador({ sesion }) {
 }
 
 /* ── Hoy ── */
-function TabHoyCoord({ dia, avisos, fecha }) {
-  const actividades = dia?.actividades || [];
+function TabHoyCoord({ dia, avisos, fecha, busId }) {
+  const actividades = (dia?.actividades || []).filter(a => !busId || !a.buses?.length || a.buses.includes(busId));
   return (
     <div className="portal-section">
       <div className="portal-card-label">{labelFecha(fecha, { largo: true })}</div>
@@ -106,13 +106,16 @@ function TabHoyCoord({ dia, avisos, fecha }) {
           <div className="portal-act-hora">{act.hora || '—'}</div>
           <div>
             <div className="portal-act-titulo">{act.titulo}</div>
-            {act.nota && <div className="portal-act-nota">{act.nota}</div>}
-            {act.notaCoord && <div className="portal-act-nota nota-coord">📋 {act.notaCoord}</div>}
+            {(act.paraPasajeros || act.nota) && <div className="portal-act-nota">{act.paraPasajeros || act.nota}</div>}
+            {(act.paraCoordinadores || act.notaCoord) && <div className="portal-act-nota nota-coord">📋 {act.paraCoordinadores || act.notaCoord}</div>}
           </div>
         </div>
       ))}
-      {dia?.notaGeneral && (
-        <div className="portal-card portal-info-general"><p>{dia.notaGeneral}</p></div>
+      {(dia?.resumen || dia?.notaGeneral) && (
+        <div className="portal-card portal-info-general"><p>{dia.resumen || dia.notaGeneral}</p></div>
+      )}
+      {dia?.notasCoordinadores && (
+        <div className="portal-card portal-info-general"><p>📋 {dia.notasCoordinadores}</p></div>
       )}
       {avisos.map(a => (
         <div key={a.id} className="portal-aviso-row">
@@ -147,6 +150,7 @@ function TabQR({ opId, refId, pasajeros }) {
   const [escaneando, setEscaneando] = useState(false);
   const [resultado, setResultado] = useState(null); // { ok, pax, codigo }
   const [errorCam, setErrorCam] = useState('');
+  const [errorCheckin, setErrorCheckin] = useState('');
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const streamRef = useRef(null);
@@ -157,6 +161,7 @@ function TabQR({ opId, refId, pasajeros }) {
   async function iniciar() {
     setResultado(null);
     setErrorCam('');
+    setErrorCheckin('');
     try {
       await cargarJsQR();
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
@@ -210,14 +215,22 @@ function TabQR({ opId, refId, pasajeros }) {
     }
 
     if (encontrado) {
-      setResultado({ ok: true, pax: encontrado, codigo: limpio });
-      // Registrar check-in
-      addDoc(collection(db, 'operativos', opId, 'checkins'), {
-        paxId: encontrado.id,
-        coordinadorId: refId,
-        codigo: limpio,
-        creadoEn: serverTimestamp(),
-      }).catch(() => {});
+      // Registrar check-in antes de mostrar éxito (transacción preserva creadoEn en re-escaneos)
+      const checkinRef = doc(db, 'operativos', opId, 'checkins', encontrado.id);
+      try {
+        await runTransaction(db, async tx => {
+          const snap = await tx.get(checkinRef);
+          if (snap.exists()) {
+            tx.update(checkinRef, { coordinadorId: refId, codigo: limpio, actualizadoEn: serverTimestamp() });
+          } else {
+            tx.set(checkinRef, { paxId: encontrado.id, coordinadorId: refId, codigo: limpio, creadoEn: serverTimestamp(), actualizadoEn: serverTimestamp() });
+          }
+        });
+        setResultado({ ok: true, pax: encontrado, codigo: limpio });
+      } catch (e) {
+        setResultado({ ok: true, pax: encontrado, codigo: limpio });
+        setErrorCheckin('Check-in no registrado (sin conexión). Volvé a escanear cuando recuperes señal.');
+      }
     } else {
       setResultado({ ok: false, pax: null, codigo: limpio });
     }
@@ -253,6 +266,7 @@ function TabQR({ opId, refId, pasajeros }) {
               <div className="portal-qr-encontrado">✅ Pasajero encontrado</div>
               <div className="portal-qr-codigo">{resultado.codigo}</div>
               <FilaPaxDetalle pax={resultado.pax} />
+              {errorCheckin && <div className="portal-aviso-warning" style={{ marginTop: 8 }}>{errorCheckin}</div>}
             </>
           ) : (
             <>
@@ -276,7 +290,7 @@ function TabQR({ opId, refId, pasajeros }) {
 function FilaPax({ pax }) {
   return (
     <div className="portal-pax-row">
-      <div className="portal-pax-nombre">{pax.apellido ? `${pax.apellido}, ${pax.nombre}` : `${pax.nombre} ${pax.apellido}`}</div>
+      <div className="portal-pax-nombre">{pax.apellido ? `${pax.apellido}, ${pax.nombre}` : pax.nombre}</div>
       <div className="portal-pax-datos">
         {pax.dni && <span>DNI {pax.dni}</span>}
         {pax.hotel && <span>{pax.hotel}</span>}

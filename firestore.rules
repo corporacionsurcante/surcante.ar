@@ -153,10 +153,22 @@ service cloud.firestore {
       match /checkins/{checkinId} {
         allow read: if isAdmin()
           || (portalEnOp(opId) && request.auth.token.rol in ['conductor', 'coordinador']);
-        // Solo coordinadores pueden crear check-ins
+        // Coordinadores: crear con campos validados
         allow create: if isAdmin()
-          || (portalEnOp(opId) && request.auth.token.rol == 'coordinador');
-        allow update, delete: if isAdmin();
+          || (portalEnOp(opId)
+              && request.auth.token.rol == 'coordinador'
+              && request.resource.data.paxId == checkinId
+              && request.resource.data.coordinadorId == request.auth.token.refId
+              && request.resource.data.keys().hasOnly(['paxId','coordinadorId','codigo','creadoEn','actualizadoEn']));
+        // Coordinadores: actualizar solo sin modificar creadoEn
+        allow update: if isAdmin()
+          || (portalEnOp(opId)
+              && request.auth.token.rol == 'coordinador'
+              && request.resource.data.paxId == checkinId
+              && request.resource.data.coordinadorId == request.auth.token.refId
+              && request.resource.data.creadoEn == resource.data.creadoEn
+              && request.resource.data.keys().hasOnly(['paxId','coordinadorId','codigo','creadoEn','actualizadoEn']));
+        allow delete: if isAdmin();
       }
 
       match /reportes/{repId} {

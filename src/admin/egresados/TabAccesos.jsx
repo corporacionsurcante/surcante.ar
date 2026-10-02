@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useRef, useEffect } from 'react';
 import {
   generarAccesos, regenerarAcceso, eliminarAcceso, marcarAccesoEnviado,
 } from '../../firebase/egresadosService';
@@ -8,6 +8,93 @@ import {
   descargarCSV, ROLES, telefonoWhatsApp,
 } from './utils';
 
+const QR_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
+
+function cargarQRCode() {
+  if (window.QRCode) return Promise.resolve();
+  return new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = QR_CDN;
+    s.onload = res;
+    s.onerror = () => rej(new Error('No se pudo cargar el generador QR'));
+    document.head.appendChild(s);
+  });
+}
+
+function QRCanvas({ value, size = 200 }) {
+  const ref = useRef(null);
+  const [err, setErr] = useState('');
+  useEffect(() => {
+    if (!value || !ref.current) return;
+    let cancelled = false;
+    cargarQRCode().then(() => {
+      if (cancelled || !ref.current) return;
+      ref.current.innerHTML = '';
+      new window.QRCode(ref.current, {
+        text: value, width: size, height: size,
+        colorDark: '#1a1a2e', colorLight: '#ffffff',
+        correctLevel: window.QRCode.CorrectLevel.M,
+      });
+    }).catch(e => { if (!cancelled) setErr(e.message); });
+    return () => { cancelled = true; };
+  }, [value, size]);
+  if (err) return <div style={{ fontSize: 12, color: '#cf1322' }}>{err}</div>;
+  return <div ref={ref} style={{ lineHeight: 0 }} />;
+}
+
+function ModalQR({ persona, onClose }) {
+  const canvasRef = useRef(null);
+  const codigo = persona.refId || persona.codigoAgencia || persona.dni || '';
+
+  function descargar() {
+    const canvas = canvasRef.current?.querySelector('canvas');
+    if (!canvas) return;
+    const url = canvas.toDataURL('image/png');
+    const a = document.createElement('a');
+    a.download = `QR-${codigo}-${apellidoNombre(persona).replace(/[^a-zA-Z0-9]/g, '_')}.png`;
+    a.href = url;
+    a.click();
+  }
+
+  return (
+    <div
+      style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
+      onClick={onClose}
+    >
+      <div
+        style={{ background: '#fff', borderRadius: 16, padding: 28, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, maxWidth: 320, width: '100%', boxShadow: '0 8px 40px rgba(0,0,0,.25)' }}
+        onClick={e => e.stopPropagation()}
+      >
+        <div style={{ fontWeight: 800, fontSize: 15, color: '#1a1a2e', textAlign: 'center' }}>{apellidoNombre(persona)}</div>
+        <div style={{ background: '#fff', border: '1px solid #e0d4f7', borderRadius: 10, padding: 10 }} ref={canvasRef}>
+          <QRCanvas value={codigo} size={200} />
+        </div>
+        <div style={{ fontSize: 18, fontWeight: 800, color: '#7b2fbe', letterSpacing: '.04em' }}>{codigo}</div>
+        {persona.hotel && (
+          <div style={{ fontSize: 13, color: '#666', textAlign: 'center', lineHeight: 1.5 }}>
+            {persona.hotel}{persona.habitacion ? ` · Hab. ${persona.habitacion}` : ''}<br/>
+            {persona.asiento ? `Asiento ${persona.asiento}` : ''}
+          </div>
+        )}
+        <div style={{ display: 'flex', gap: 8, width: '100%' }}>
+          <button
+            style={{ flex: 1, background: '#7b2fbe', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 0', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}
+            onClick={descargar}
+          >
+            ⬇ Descargar PNG
+          </button>
+          <button
+            style={{ background: '#f4f2fa', color: '#7b2fbe', border: 'none', borderRadius: 8, padding: '10px 14px', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}
+            onClick={onClose}
+          >
+            ✕
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const ORDEN_ROL = { conductor: 0, coordinador: 1, pasajero: 2 };
 
 export default function TabAccesos({ opId, op, buses, staff, pasajeros, accesos }) {
@@ -16,6 +103,7 @@ export default function TabAccesos({ opId, op, buses, staff, pasajeros, accesos 
   const [soloSinLink, setSoloSinLink] = useState(false);
   const [busqueda, setBusqueda] = useState('');
   const [trabajando, setTrabajando] = useState(false);
+  const [qrPersona, setQrPersona] = useState(null);
   const [toast, mostrar] = useToast();
 
   const accesoPorRef = useMemo(() => {
@@ -166,6 +254,9 @@ export default function TabAccesos({ opId, op, buses, staff, pasajeros, accesos 
                             WhatsApp{tel ? '' : ' …'}
                           </button>
                           <button className="eg-btn eg-btn-ghost eg-btn-sm" onClick={() => copiar(p)}>📋 Copiar</button>
+                          {p.rol === 'pasajero' && (p.refId || p.codigoAgencia || p.dni) && (
+                            <button className="eg-btn eg-btn-ghost eg-btn-sm" onClick={() => setQrPersona(p)} title="Ver y descargar QR del pasajero">📱 QR</button>
+                          )}
                           <button className="eg-btn eg-btn-ghost eg-btn-sm" title="Invalida el link anterior"
                             onClick={async () => { await regenerarAcceso(opId, d.acc); mostrar('🔄 Link regenerado: el anterior ya no funciona'); }}>🔄</button>
                           <BotonEliminar small texto="" confirmar="¿Revocar?" onConfirm={() => eliminarAcceso(d.acc.id)} />
@@ -180,6 +271,7 @@ export default function TabAccesos({ opId, op, buses, staff, pasajeros, accesos 
         </div>
       )}
       {toast}
+      {qrPersona && <ModalQR persona={qrPersona} onClose={() => setQrPersona(null)} />}
     </>
   );
 }

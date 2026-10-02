@@ -1,6 +1,6 @@
 // Vercel Serverless Function — crea preferencia de pago en MercadoPago.
 // Se ejecuta en el servidor: el Access Token nunca llega al navegador.
-// Acepta MP_ACCESS_TOKEN (recomendado) o REACT_APP_MP_ACCESS_TOKEN (nombre histórico).
+
 
 function leerBody(req) {
   if (req.body && typeof req.body === 'object') return req.body;
@@ -14,7 +14,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Método no permitido' });
   }
 
-  const token = process.env.MP_ACCESS_TOKEN || process.env.REACT_APP_MP_ACCESS_TOKEN;
+  const token = process.env.MP_ACCESS_TOKEN;
   if (!token) {
     console.error('Falta MP_ACCESS_TOKEN');
     return res.status(500).json({ error: 'MercadoPago no configurado' });

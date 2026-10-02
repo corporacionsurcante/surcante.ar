@@ -67,7 +67,7 @@ export default function PortalConductor({ sesion }) {
       </nav>
 
       <main className="portal-main">
-        {tab === 'hoy'      && <TabHoyConductor dia={diaHoy} avisos={avisos} fecha={hoy} />}
+        {tab === 'hoy'      && <TabHoyConductor dia={diaHoy} avisos={avisos} fecha={hoy} busId={busId} />}
         {tab === 'servicio' && <TabServicio opId={opId} busId={busId} refId={refId} bus={bus} busColor={busColor} />}
         {tab === 'pasajeros' && (
           <div className="portal-section">
@@ -89,8 +89,8 @@ export default function PortalConductor({ sesion }) {
 }
 
 /* ── Hoy ── */
-function TabHoyConductor({ dia, avisos, fecha }) {
-  const actividades = dia?.actividades || [];
+function TabHoyConductor({ dia, avisos, fecha, busId }) {
+  const actividades = (dia?.actividades || []).filter(a => !busId || !a.buses?.length || a.buses.includes(busId));
   return (
     <div className="portal-section">
       <div className="portal-card-label">{labelFecha(fecha, { largo: true })}</div>
@@ -104,13 +104,16 @@ function TabHoyConductor({ dia, avisos, fecha }) {
           <div className="portal-act-hora">{act.hora || '—'}</div>
           <div>
             <div className="portal-act-titulo">{act.titulo}</div>
-            {act.nota && <div className="portal-act-nota">{act.nota}</div>}
-            {act.notaConductor && <div className="portal-act-nota nota-conductor">🧑‍✈️ {act.notaConductor}</div>}
+            {(act.paraPasajeros || act.nota) && <div className="portal-act-nota">{act.paraPasajeros || act.nota}</div>}
+            {(act.paraConductores || act.notaConductor) && <div className="portal-act-nota nota-conductor">🧑‍✈️ {act.paraConductores || act.notaConductor}</div>}
           </div>
         </div>
       ))}
-      {dia?.notaGeneral && (
-        <div className="portal-card portal-info-general"><p>{dia.notaGeneral}</p></div>
+      {(dia?.resumen || dia?.notaGeneral) && (
+        <div className="portal-card portal-info-general"><p>{dia.resumen || dia.notaGeneral}</p></div>
+      )}
+      {dia?.notasConductores && (
+        <div className="portal-card portal-info-general"><p>🧑‍✈️ {dia.notasConductores}</p></div>
       )}
       {avisos.map(a => (
         <div key={a.id} className="portal-aviso-row">
@@ -227,7 +230,7 @@ function TabServicio({ opId, busId, refId, bus, busColor }) {
 function FilaPax({ pax }) {
   return (
     <div className="portal-pax-row">
-      <div className="portal-pax-nombre">{pax.apellido ? `${pax.apellido}, ${pax.nombre}` : `${pax.nombre} ${pax.apellido}`}</div>
+      <div className="portal-pax-nombre">{pax.apellido ? `${pax.apellido}, ${pax.nombre}` : pax.nombre}</div>
       <div className="portal-pax-datos">
         {pax.dni && <span>DNI {pax.dni}</span>}
         {pax.hotel && <span>{pax.hotel}</span>}
