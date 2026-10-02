@@ -11,6 +11,7 @@ import TabPersonal from './TabPersonal';
 import TabPasajeros from './TabPasajeros';
 import TabItinerario from './TabItinerario';
 import TabAccesos from './TabAccesos';
+import ImportarMaestro from './ImportarMaestro';
 import { BotonEliminar, AvisoPermisos } from './ui';
 import { ESTADOS_OPERATIVO, fechaCorta, ordenarBuses } from './utils';
 
@@ -38,6 +39,7 @@ export default function OperativoDetalle({ opId, agencia, onVolverAgencias, onVo
     try { return window.sessionStorage.getItem(TAB_KEY) || 'resumen'; } catch (_) { return 'resumen'; }
   });
   const [editar, setEditar] = useState(false);
+  const [importando, setImportando] = useState(false);
   const [errorPermisos, setErrorPermisos] = useState('');
 
   useEffect(() => {
@@ -110,6 +112,7 @@ export default function OperativoDetalle({ opId, agencia, onVolverAgencias, onVo
             onChange={e => actualizarOperativo(opId, { estado: e.target.value })}>
             {Object.entries(ESTADOS_OPERATIVO).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
           </select>
+          <button className="eg-btn eg-btn-soft" onClick={() => setImportando(true)}>📥 Importar Excel</button>
           <button className="eg-btn eg-btn-ghost" onClick={() => setEditar(true)}>✏️ Datos del viaje</button>
         </div>
       </div>
@@ -142,6 +145,15 @@ export default function OperativoDetalle({ opId, agencia, onVolverAgencias, onVo
       )}
 
       {editar && <OperativoForm agencia={agencia} operativo={op} onClose={() => setEditar(false)} />}
+      {importando && (
+        <ImportarMaestro
+          opId={opId}
+          buses={busesOrdenados}
+          staff={staff}
+          pasajeros={pasajeros}
+          onClose={() => setImportando(false)}
+        />
+      )}
     </>
   );
 }
