@@ -66,6 +66,7 @@ export default function PortalPasajero({ sesion }) {
   const [itinerario, setItinerario] = useState([]);
   const [avisos, setAvisos] = useState([]);
   const [abiertos, setAbiertos] = useState({});
+  const [errorFirestore, setErrorFirestore] = useState('');
 
   useEffect(() => {
     getDoc(doc(db, 'operativos', opId))
@@ -79,10 +80,15 @@ export default function PortalPasajero({ sesion }) {
     getDocs(collection(db, 'operativos', opId, 'staff'))
       .then(snap => setStaff(snap.docs.map(d => ({ id: d.id, ...d.data() }))));
     const unsubs = [
-      onSnapshot(collection(db, 'operativos', opId, 'itinerario'), snap => {
-        const dias = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => a.id.localeCompare(b.id));
-        setItinerario(dias);
-      }),
+      onSnapshot(
+        collection(db, 'operativos', opId, 'itinerario'),
+        snap => {
+          const dias = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => a.id.localeCompare(b.id));
+          setItinerario(dias);
+          setErrorFirestore('');
+        },
+        err => setErrorFirestore(err.code || err.message)
+      ),
       onSnapshot(collection(db, 'operativos', opId, 'avisos'), snap =>
         setAvisos(snap.docs.map(d => ({ id: d.id, ...d.data() }))
           .sort((a, b) => (b.creadoEn?.seconds || 0) - (a.creadoEn?.seconds || 0)))
@@ -126,6 +132,11 @@ export default function PortalPasajero({ sesion }) {
       </nav>
 
       <main className="portal-main">
+        {errorFirestore && (
+          <div className="portal-card" style={{ margin: '12px 0', background: '#2d1a1a', borderLeft: '3px solid #cf1322', fontSize: 13, color: '#ff6b6b' }}>
+            ⚠️ Error al cargar datos: <code>{errorFirestore}</code>. Si el problema persiste, contactá al administrador.
+          </div>
+        )}
         {tab === 'hoy'    && <TabHoy dia={diaActivo} avisos={avisos} fecha={hoy} rol="pasajero" busId={busId} />}
         {tab === 'bus'    && <TabBus bus={bus} conductor={conductor} coordinador={coordinador} busColor={busColor} />}
         {tab === 'agenda' && <TabAgenda itinerario={itinerario} hoy={hoy} abiertos={abiertos} setAbiertos={setAbiertos} busId={busId} />}
