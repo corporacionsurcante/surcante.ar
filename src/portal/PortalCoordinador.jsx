@@ -22,6 +22,7 @@ export default function PortalCoordinador({ sesion }) {
   const [avisos, setAvisos] = useState([]);
   const [busqueda, setBusqueda] = useState('');
   const [abiertos, setAbiertos] = useState({});
+  const [errorFirestore, setErrorFirestore] = useState('');
 
   useEffect(() => {
     getDoc(doc(db, 'operativos', opId))
@@ -35,9 +36,14 @@ export default function PortalCoordinador({ sesion }) {
         .sort((a, b) => `${a.apellido} ${a.nombre}`.localeCompare(`${b.apellido} ${b.nombre}`, 'es')))
     );
     const unsubs = [
-      onSnapshot(collection(db, 'operativos', opId, 'itinerario'), snap => {
-        setItinerario(snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => a.id.localeCompare(b.id)));
-      }),
+      onSnapshot(
+        collection(db, 'operativos', opId, 'itinerario'),
+        snap => {
+          setItinerario(snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => a.id.localeCompare(b.id)));
+          setErrorFirestore('');
+        },
+        err => setErrorFirestore(err.code || err.message)
+      ),
       onSnapshot(collection(db, 'operativos', opId, 'avisos'), snap =>
         setAvisos(snap.docs.map(d => ({ id: d.id, ...d.data() }))
           .sort((a, b) => (b.creadoEn?.seconds || 0) - (a.creadoEn?.seconds || 0)))
@@ -84,6 +90,11 @@ export default function PortalCoordinador({ sesion }) {
       </nav>
 
       <main className="portal-main">
+        {errorFirestore && (
+          <div className="portal-card" style={{ margin: '12px 0', background: '#2d1a1a', borderLeft: '3px solid #cf1322', fontSize: 13, color: '#ff6b6b' }}>
+            ⚠️ Error al cargar datos: <code>{errorFirestore}</code>. Si el problema persiste, contactá al administrador.
+          </div>
+        )}
         {tab === 'hoy' && <TabHoyCoord dia={diaActivo} avisos={avisos} fecha={hoy} busId={busId} />}
         {tab === 'agenda' && <TabAgendaCoord itinerario={itinerario} hoy={hoy} busId={busId} abiertos={abiertos} setAbiertos={setAbiertos} />}
         {tab === 'pasajeros' && (
