@@ -110,7 +110,7 @@ export default function PortalPasajero({ sesion }) {
 
 /* ── Hoy ── */
 function TabHoy({ dia, avisos, fecha, rol }) {
-  const actividades = dia?.actividades || [];
+  const actividades = (dia?.actividades || []).filter(a => rol !== 'pasajero' || !a.soloStaff);
   return (
     <div className="portal-section">
       <div className="portal-card-label">{labelFecha(fecha, { largo: true })}</div>
@@ -242,7 +242,7 @@ function TabAgenda({ itinerario, hoy, abiertos, setAbiertos }) {
       {itinerario.map(dia => {
         const esHoy = dia.id === hoy;
         const abierto = abiertos[dia.id];
-        const actividades = dia.actividades || [];
+        const actividades = (dia.actividades || []).filter(a => !a.soloStaff);
         return (
           <div key={dia.id} className={`portal-dia-card${esHoy ? ' hoy' : ''}`}>
             <button className="portal-dia-header" onClick={() => toggle(dia.id)}>
