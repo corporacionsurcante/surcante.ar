@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { doc, getDoc, getDocs, setDoc, collection, onSnapshot, runTransaction, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, getDocs, collection, onSnapshot, runTransaction, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { colorBus, labelFecha, hoyISO, nombreCompleto } from '../admin/egresados/utils';
 
