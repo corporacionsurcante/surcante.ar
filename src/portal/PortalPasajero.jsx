@@ -3,6 +3,15 @@ import { doc, getDoc, getDocs, collection, onSnapshot } from 'firebase/firestore
 import { db } from '../firebase/config';
 import { colorBus, labelFecha, hoyISO, nombreCompleto, linkWhatsApp } from '../admin/egresados/utils';
 
+// Devuelve el día del itinerario más relevante: hoy si existe, el próximo día del viaje, o el último.
+function diaActivoDeItinerario(itinerario, hoy) {
+  if (!itinerario.length) return null;
+  const actual = itinerario.find(d => d.id === hoy);
+  if (actual) return actual;
+  const futuros = itinerario.filter(d => d.id > hoy);
+  return futuros.length ? futuros[0] : itinerario[itinerario.length - 1];
+}
+
 const QR_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
 
 /** Devuelve true si la actividad es visible para un pasajero/usuario con el busId dado.
@@ -56,7 +65,7 @@ export default function PortalPasajero({ sesion }) {
   const [staff, setStaff] = useState([]);
   const [itinerario, setItinerario] = useState([]);
   const [avisos, setAvisos] = useState([]);
-  const [abiertos, setAbiertos] = useState({ [hoy]: true });
+  const [abiertos, setAbiertos] = useState({});
 
   useEffect(() => {
     getDoc(doc(db, 'operativos', opId))
@@ -69,20 +78,29 @@ export default function PortalPasajero({ sesion }) {
     }
     getDocs(collection(db, 'operativos', opId, 'staff'))
       .then(snap => setStaff(snap.docs.map(d => ({ id: d.id, ...d.data() }))));
-    getDocs(collection(db, 'operativos', opId, 'itinerario'))
-      .then(snap => {
-        setItinerario(snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => a.id.localeCompare(b.id)));
-      });
-    return onSnapshot(collection(db, 'operativos', opId, 'avisos'), snap =>
-      setAvisos(snap.docs.map(d => ({ id: d.id, ...d.data() }))
-        .sort((a, b) => (b.creadoEn?.seconds || 0) - (a.creadoEn?.seconds || 0)))
-    );
+    const unsubs = [
+      onSnapshot(collection(db, 'operativos', opId, 'itinerario'), snap => {
+        const dias = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => a.id.localeCompare(b.id));
+        setItinerario(dias);
+      }),
+      onSnapshot(collection(db, 'operativos', opId, 'avisos'), snap =>
+        setAvisos(snap.docs.map(d => ({ id: d.id, ...d.data() }))
+          .sort((a, b) => (b.creadoEn?.seconds || 0) - (a.creadoEn?.seconds || 0)))
+      ),
+    ];
+    return () => unsubs.forEach(u => u());
   }, [opId, refId, busId]);
+
+  const diaActivo = useMemo(() => diaActivoDeItinerario(itinerario, hoy), [itinerario, hoy]);
+
+  // Abrir el día activo en la agenda cuando el itinerario carga por primera vez
+  useEffect(() => {
+    if (diaActivo) setAbiertos(prev => ({ ...prev, [diaActivo.id]: true }));
+  }, [diaActivo?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const conductor = staff.find(s => s.rol === 'conductor' && s.busId === busId);
   const coordinador = staff.find(s => s.rol === 'coordinador' && s.busId === busId);
   const busColor = colorBus(bus);
-  const diaHoy = itinerario.find(d => d.id === hoy);
 
   return (
     <div className="portal-wrap">
@@ -108,7 +126,7 @@ export default function PortalPasajero({ sesion }) {
       </nav>
 
       <main className="portal-main">
-        {tab === 'hoy'    && <TabHoy dia={diaHoy} avisos={avisos} fecha={hoy} rol="pasajero" busId={busId} />}
+        {tab === 'hoy'    && <TabHoy dia={diaActivo} avisos={avisos} fecha={hoy} rol="pasajero" busId={busId} />}
         {tab === 'bus'    && <TabBus bus={bus} conductor={conductor} coordinador={coordinador} busColor={busColor} />}
         {tab === 'agenda' && <TabAgenda itinerario={itinerario} hoy={hoy} abiertos={abiertos} setAbiertos={setAbiertos} busId={busId} />}
         {tab === 'yo'     && <TabYo pax={pax} />}
@@ -122,13 +140,25 @@ function TabHoy({ dia, avisos, fecha, rol, busId }) {
   const actividades = (dia?.actividades || []).filter(a =>
     (rol !== 'pasajero' || !a.soloStaff) && actividadParaBus(a, busId)
   );
+  const esHoy = dia?.id === fecha;
+  const etiqueta = !dia ? labelFecha(fecha, { largo: true })
+    : esHoy ? labelFecha(fecha, { largo: true })
+    : dia.id > fecha
+      ? `Próximas actividades · ${labelFecha(dia.id, { largo: true })}`
+      : `Último día del viaje · ${labelFecha(dia.id, { largo: true })}`;
+
   return (
     <div className="portal-section">
-      <div className="portal-card-label">{labelFecha(fecha, { largo: true })}</div>
+      <div className="portal-card-label">{etiqueta}</div>
 
-      {actividades.length === 0 && (
+      {!dia && (
         <div className="portal-card">
-          <p style={{ fontSize: 13, color: '#b0b0c8', margin: 0 }}>Sin actividades registradas para hoy.</p>
+          <p style={{ fontSize: 13, color: '#b0b0c8', margin: 0 }}>El itinerario del viaje todavía no está cargado.</p>
+        </div>
+      )}
+      {dia && actividades.length === 0 && (
+        <div className="portal-card">
+          <p style={{ fontSize: 13, color: '#b0b0c8', margin: 0 }}>Sin actividades registradas para este día.</p>
         </div>
       )}
       {actividades.map((act, i) => (
