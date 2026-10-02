@@ -29,5 +29,6 @@ export function armarReservaCharter(reserva, pago, nroCotizacion) {
     saldo: pago.saldo,
     payMethod: pago.payMethod,
     porcentaje: pago.porcentaje,
+    tarifaDinamica: pago.tarifaDinamica || null,
   };
 }

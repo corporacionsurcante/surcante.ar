@@ -65,6 +65,9 @@ function buildFilas(r) {
   if (r.dias && !r.horas) push('Días de servicio', r.dias);
   if (r.horas) push('Horas de servicio', `${r.horas} hs`);
   if (r.detallePrecio) push('Tarifa', r.detallePrecio);
+  if (r.tarifaDinamica?.aplica) {
+    push('Fin de semana largo', `Tarifa x${String(r.tarifaDinamica.multiplicador).replace('.', ',')} incluida (${formatARS(r.tarifaDinamica.recargo || 0)} con impuestos)${r.tarifaDinamica.motivo ? ' · ' + r.tarifaDinamica.motivo : ''}`);
+  }
   if (r.kmTotal) push('Km totales', `${Number(r.kmTotal).toLocaleString('es-AR')} km`);
   if (r.unidad) push('Unidad', r.unidad);
   if (r.flotaUnidades?.length) {

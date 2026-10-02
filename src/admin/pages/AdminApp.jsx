@@ -11,6 +11,7 @@ import Gantt from './Gantt';
 import Receptivo from './Receptivo';
 import ConfigModulos from './ConfigModulos';
 import Cotizaciones from './Cotizaciones';
+import TarifaDinamica from './TarifaDinamica';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { marcarNotificacionesComoLeidas } from '../../firebase/notificacionesService';
@@ -28,6 +29,7 @@ const NAV = [
   { id: 'egresados',    label: 'Egresados',     icon: '🎓' },
   { id: 'flota',        label: 'Flota',         icon: '🚌' },
   { id: 'precios',      label: 'Precios',       icon: '💰' },
+  { id: 'tarifa',       label: 'Tarifa dinámica', icon: '📈' },
   { id: 'receptivo',    label: 'Receptivo',     icon: '🏛️' },
   { id: 'config',       label: 'Config',        icon: '⚙️' },
 ];
@@ -191,6 +193,7 @@ export default function AdminApp() {
         )}
         {tab === 'flota'     && <Flota />}
         {tab === 'precios'   && <Precios />}
+        {tab === 'tarifa'    && <TarifaDinamica />}
         {tab === 'receptivo' && <Receptivo />}
         {tab === 'config'    && <ConfigModulos />}
       </div>

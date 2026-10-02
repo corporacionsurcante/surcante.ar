@@ -8,6 +8,9 @@ import { metodosPago, fmtPorc } from '../utils/parametros';
 import { iniciarPagoOnline } from '../hooks/useMercadoPago';
 import { generarNroCotizacion } from '../utils/pdfCotizacion';
 import { armarReservaCharter } from '../utils/reservaCharter';
+import { useTarifaDinamica } from '../hooks/useTarifaDinamica';
+import { resumenTarifa, escalarDetalle } from '../utils/feriados';
+import AvisoTarifaDinamica from '../components/AvisoTarifaDinamica';
 
 function WhatsAppButtons({ getMsgFor, sufijo }) {
   return (
@@ -36,7 +39,8 @@ function WhatsAppButtons({ getMsgFor, sufijo }) {
 export default function PasoPresupuesto({ reserva, onBack, onConfirm, isAdmin, initialContacto }) {
   const { dolar, loading: loadingDolar, error: errorDolar } = useDolar();
   const { params, cargando: cargandoParams } = useParametros();
-  const loading = loadingDolar || cargandoParams;
+  const tarifaDin = useTarifaDinamica();
+  const loading = loadingDolar || cargandoParams || tarifaDin.loading;
   const [payMethod, setPayMethod] = useState('transferencia');
   const [contacto, setContacto] = useState({
     nombre: initialContacto?.nombreCompleto || '',
@@ -50,9 +54,16 @@ export default function PasoPresupuesto({ reserva, onBack, onConfirm, isAdmin, i
           origen, destino, fechaInicio, fechaFin, dias, mismodia, horaInicio, horaFin,
           puntosCarga } = reserva;
 
-  const { grandTotal, detalles } = dolar
+  const { grandTotal: grandTotalBase, detalles: detallesBase } = dolar
     ? calcPresupuestoTotal({ flotaUnidades, kmTotal, movData, movKmData, syncMode, dolar, mismodia, dias, params })
     : { grandTotal: 0, detalles: [] };
+
+  // Tarifa dinámica: fines de semana largos (se activa desde Admin → Tarifa dinámica)
+  const td = tarifaDin.evaluar(fechaInicio, mismodia ? fechaInicio : fechaFin);
+  const multTarifa = td.aplica ? td.multiplicador : 1;
+  const detalles = detallesBase.map(d => escalarDetalle(d, multTarifa));
+  const grandTotal = grandTotalBase * multTarifa;
+  const infoTarifa = resumenTarifa(td, grandTotal - grandTotalBase);
 
   const METODOS = metodosPago(params);
   const metodoActual = METODOS.find(m => m.id === payMethod) || METODOS[0];
@@ -87,6 +98,7 @@ export default function PasoPresupuesto({ reserva, onBack, onConfirm, isAdmin, i
       porcentaje,
       clienteNombre: contacto.nombre.trim(),
       clienteWhatsapp: contacto.whatsapp.trim(),
+      tarifaDinamica: infoTarifa,
     };
     const nroCotizacion = generarNroCotizacion();
     try {
@@ -238,6 +250,8 @@ export default function PasoPresupuesto({ reserva, onBack, onConfirm, isAdmin, i
         </div>
       )}
 
+      <AvisoTarifaDinamica info={infoTarifa} />
+
       <div className="section-label">Resumen</div>
       <div className="pcard">
         <div className="prow"><span>📍 Origen</span><span style={{ fontWeight: 600 }}>{origen}</span></div>
@@ -352,6 +366,7 @@ export default function PasoPresupuesto({ reserva, onBack, onConfirm, isAdmin, i
             porcentaje,
             clienteNombre: contacto.nombre.trim(),
             clienteWhatsapp: contacto.whatsapp.trim(),
+            tarifaDinamica: infoTarifa,
           })}>
           ✓ Confirmar reserva
         </button>

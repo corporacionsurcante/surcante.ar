@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useDolar } from '../hooks/useDolar';
 import { useParametros } from '../hooks/useParametros';
+import { useTarifaDinamica } from '../hooks/useTarifaDinamica';
+import { resumenTarifa } from '../utils/feriados';
+import AvisoTarifaDinamica from '../components/AvisoTarifaDinamica';
 import { metodosPago, porcentajeSena, fmtPorc } from '../utils/parametros';
 import AvisoDolar from '../components/AvisoDolar';
 import { iniciarPagoOnline } from '../hooks/useMercadoPago';
@@ -49,7 +52,8 @@ function calcPrecioLocal(horas, precios) {
 export default function DisponibilidadCotizador({ onBack, initialContacto }) {
   const { dolar, loading: cargandoDolar, error: errorDolar } = useDolar();
   const { params, cargando: cargandoParams } = useParametros();
-  const loadingDolar = cargandoDolar || cargandoParams;
+  const tarifaDin = useTarifaDinamica();
+  const loadingDolar = cargandoDolar || cargandoParams || tarifaDin.loading;
   const [precios, setPrecios] = useState(PRECIOS_DEFAULT);
   const [loadingMP, setLoadingMP] = useState(false);
   const [errorMP, setErrorMP] = useState('');
@@ -76,7 +80,11 @@ export default function DisponibilidadCotizador({ onBack, initialContacto }) {
   const { disponibilidad, loading: loadingDisp } = useDisponibilidad(fecha, fecha);
 
   const { precioUSD, descripcion } = calcPrecioLocal(horas, precios);
-  const subtotal = precioUSD * (dolar || 0);
+  const subtotalBase = precioUSD * (dolar || 0);
+  // Tarifa dinámica: fines de semana largos (Admin → Tarifa dinámica)
+  const td = tarifaDin.aplicar(subtotalBase, fecha, fecha);
+  const subtotal = td.total;
+  const infoTarifa = resumenTarifa(td, (subtotal - subtotalBase) * (1 + params.iva));
   const iva = subtotal * params.iva;
   const total = subtotal + iva;
   const METODOS = metodosPago(params);
@@ -108,6 +116,7 @@ export default function DisponibilidadCotizador({ onBack, initialContacto }) {
       saldo,
       payMethod,
       porcentaje,
+      tarifaDinamica: infoTarifa,
     };
   }
 
@@ -155,6 +164,8 @@ export default function DisponibilidadCotizador({ onBack, initialContacto }) {
             </div>
           )}
         </div>
+
+        <AvisoTarifaDinamica info={infoTarifa} />
 
         <div className="section-label">Detalle del servicio</div>
         <div className="pcard">

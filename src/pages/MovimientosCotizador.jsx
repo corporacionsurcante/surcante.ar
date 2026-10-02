@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useDolar } from '../hooks/useDolar';
 import { useParametros } from '../hooks/useParametros';
+import { useTarifaDinamica } from '../hooks/useTarifaDinamica';
+import { resumenTarifa } from '../utils/feriados';
+import AvisoTarifaDinamica from '../components/AvisoTarifaDinamica';
 import { metodosPago, porcentajeSena, fmtPorc } from '../utils/parametros';
 import AvisoDolar from '../components/AvisoDolar';
 import { iniciarPagoOnline } from '../hooks/useMercadoPago';
@@ -26,7 +29,8 @@ const TIPO_UNIT = {
 export default function MovimientosCotizador({ onBack, initialContacto }) {
   const { dolar, loading: cargandoDolar, error: errorDolar } = useDolar();
   const { params, cargando: cargandoParams } = useParametros();
-  const loadingDolar = cargandoDolar || cargandoParams;
+  const tarifaDin = useTarifaDinamica();
+  const loadingDolar = cargandoDolar || cargandoParams || tarifaDin.loading;
   const [loadingMP, setLoadingMP] = useState(false);
   const [errorMP, setErrorMP] = useState('');
   const [precioUSD, setPrecioUSD] = useState(PRECIO_DEFAULT_USD);
@@ -74,7 +78,11 @@ export default function MovimientosCotizador({ onBack, initialContacto }) {
 
   const { precioUSD: precioHorasUSD, descripcion: descHoras } = calcPrecioHoras(horas, preciosMov);
   const subtotalDia = modo === 'dia' ? precioUSD * (dolar || 0) : precioHorasUSD * (dolar || 0);
-  const subtotal = subtotalDia * (modo === 'dia' ? dias : 1);
+  const subtotalBase = subtotalDia * (modo === 'dia' ? dias : 1);
+  // Tarifa dinámica: fines de semana largos (Admin → Tarifa dinámica)
+  const td = tarifaDin.aplicar(subtotalBase, fechas.fechaInicio, modo === 'horas' ? fechas.fechaInicio : fechas.fechaFin);
+  const subtotal = td.total;
+  const infoTarifa = resumenTarifa(td, (subtotal - subtotalBase) * (1 + params.iva));
   const iva = subtotal * params.iva;
   const total = subtotal + iva;
   const METODOS = metodosPago(params);
@@ -109,6 +117,7 @@ export default function MovimientosCotizador({ onBack, initialContacto }) {
       saldo,
       payMethod,
       porcentaje,
+      tarifaDinamica: infoTarifa,
     };
   }
 
@@ -157,6 +166,8 @@ export default function MovimientosCotizador({ onBack, initialContacto }) {
             </div>
           )}
         </div>
+
+        <AvisoTarifaDinamica info={infoTarifa} />
 
         <div className="section-label">Detalle del servicio</div>
         <div className="pcard">

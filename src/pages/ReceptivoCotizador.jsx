@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useDolar } from '../hooks/useDolar';
 import { useParametros } from '../hooks/useParametros';
+import { useTarifaDinamica } from '../hooks/useTarifaDinamica';
+import { resumenTarifa } from '../utils/feriados';
+import AvisoTarifaDinamica from '../components/AvisoTarifaDinamica';
 import { metodosPago, fmtPorc } from '../utils/parametros';
 import AvisoDolar from '../components/AvisoDolar';
 import { useDisponibilidad } from '../hooks/useDisponibilidad';
@@ -24,7 +27,8 @@ const TIPO_UNIT = {
 export default function ReceptivoCotizador({ onBack, initialContacto }) {
   const { dolar, loading: cargandoDolar, error: errorDolar } = useDolar();
   const { params, cargando: cargandoParams } = useParametros();
-  const loadingDolar = cargandoDolar || cargandoParams;
+  const tarifaDin = useTarifaDinamica();
+  const loadingDolar = cargandoDolar || cargandoParams || tarifaDin.loading;
   const [cityTourPrecios, setCityTourPrecios] = useState(null);
   const [circuitosDB, setCircuitosDB] = useState(null);
   const [transfersDB, setTransfersDB] = useState(null);
@@ -131,7 +135,11 @@ export default function ReceptivoCotizador({ onBack, initialContacto }) {
     setPrograma(prev => prev.filter(p => p.dia !== diaNum));
   }
 
-  const subtotal = Array.from({ length: dias }, (_, i) => getPrecioDia(i + 1)).reduce((a, b) => a + b, 0);
+  const subtotalBase = Array.from({ length: dias }, (_, i) => getPrecioDia(i + 1)).reduce((a, b) => a + b, 0);
+  // Tarifa dinámica: fines de semana largos (Admin → Tarifa dinámica)
+  const td = tarifaDin.aplicar(subtotalBase, fechas.fechaInicio, fechas.fechaFin);
+  const subtotal = td.total;
+  const infoTarifa = resumenTarifa(td, (subtotal - subtotalBase) * (1 + params.iva));
   const iva = subtotal * params.iva;
   const total = subtotal + iva;
   const diasConPrograma = programa.filter(p => p.items && p.items.length > 0).length;
@@ -172,6 +180,7 @@ export default function ReceptivoCotizador({ onBack, initialContacto }) {
       saldo: saldoPendiente,
       payMethod,
       porcentaje: metodoActual.porc,
+      tarifaDinamica: infoTarifa,
     };
   }
 
@@ -216,6 +225,8 @@ export default function ReceptivoCotizador({ onBack, initialContacto }) {
             </div>
           )}
         </div>
+
+        <AvisoTarifaDinamica info={infoTarifa} />
 
         <div className="section-label">Programa del servicio</div>
         <div className="pcard">
