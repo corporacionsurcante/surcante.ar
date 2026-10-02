@@ -258,7 +258,7 @@ function TabAgenda({ itinerario, hoy, abiertos, setAbiertos }) {
                       <div className="portal-act-hora">{act.hora || '—'}</div>
                       <div>
                         <div className="portal-act-titulo">{act.titulo}</div>
-                        {act.nota && <div className="portal-act-nota">{act.nota}</div>}
+                        {(act.paraPasajeros || act.nota) && <div className="portal-act-nota">{act.paraPasajeros || act.nota}</div>}
                       </div>
                     </div>
                   ))
@@ -276,6 +276,10 @@ function TabAgenda({ itinerario, hoy, abiertos, setAbiertos }) {
 /* ── Yo ── */
 function TabYo({ pax }) {
   const [fullscreenQR, setFullscreenQR] = useState(false);
+  const overlayRef = useRef(null);
+  useEffect(() => {
+    if (fullscreenQR) overlayRef.current?.focus();
+  }, [fullscreenQR]);
 
   if (!pax) return (
     <div className="portal-section">
@@ -360,10 +364,11 @@ function TabYo({ pax }) {
 
       {fullscreenQR && codigoQR && (
         <div
+          ref={overlayRef}
           role="dialog"
           aria-modal="true"
           aria-label="QR ampliado"
-          style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,.85)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20 }}
+          style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,.85)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20, outline: 'none' }}
           onClick={() => setFullscreenQR(false)}
           onKeyDown={e => e.key === 'Escape' && setFullscreenQR(false)}
           tabIndex={-1}

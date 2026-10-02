@@ -35,6 +35,12 @@ export default async function handler(req, res) {
     const now = admin.firestore.FieldValue.serverTimestamp();
     const base = `${req.headers['x-forwarded-proto'] || 'https'}://${req.headers.host}`;
 
+    // ── Agencia de prueba ──────────────────────────────────────────────────
+    await db.doc('agencias/agencia-test').set({
+      nombre: 'Agencia de Prueba',
+      creadoEn: now,
+    }, { merge: true });
+
     // ── Operativo ──────────────────────────────────────────────────────────
     const opRef = await db.collection('operativos').add({
       nombre: 'Prueba de funcionamiento',

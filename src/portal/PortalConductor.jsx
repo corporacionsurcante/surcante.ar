@@ -104,8 +104,8 @@ function TabHoyConductor({ dia, avisos, fecha }) {
           <div className="portal-act-hora">{act.hora || '—'}</div>
           <div>
             <div className="portal-act-titulo">{act.titulo}</div>
-            {act.nota && <div className="portal-act-nota">{act.nota}</div>}
-            {act.notaConductor && <div className="portal-act-nota nota-conductor">🧑‍✈️ {act.notaConductor}</div>}
+            {(act.paraPasajeros || act.nota) && <div className="portal-act-nota">{act.paraPasajeros || act.nota}</div>}
+            {(act.paraConductores || act.notaConductor) && <div className="portal-act-nota nota-conductor">🧑‍✈️ {act.paraConductores || act.notaConductor}</div>}
           </div>
         </div>
       ))}
