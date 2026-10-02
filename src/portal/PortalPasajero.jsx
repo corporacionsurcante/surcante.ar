@@ -125,12 +125,12 @@ function TabHoy({ dia, avisos, fecha, rol }) {
           <div className="portal-act-hora">{act.hora || '—'}</div>
           <div>
             <div className="portal-act-titulo">{act.titulo}</div>
-            {act.nota && <div className="portal-act-nota">{act.nota}</div>}
-            {rol === 'conductor' && act.notaConductor && (
-              <div className="portal-act-nota nota-conductor">🧑‍✈️ {act.notaConductor}</div>
+            {(act.paraPasajeros || act.nota) && <div className="portal-act-nota">{act.paraPasajeros || act.nota}</div>}
+            {rol === 'conductor' && (act.paraConductores || act.notaConductor) && (
+              <div className="portal-act-nota nota-conductor">🧑‍✈️ {act.paraConductores || act.notaConductor}</div>
             )}
-            {rol === 'coordinador' && act.notaCoord && (
-              <div className="portal-act-nota nota-coord">📋 {act.notaCoord}</div>
+            {rol === 'coordinador' && (act.paraCoordinadores || act.notaCoord) && (
+              <div className="portal-act-nota nota-coord">📋 {act.paraCoordinadores || act.notaCoord}</div>
             )}
           </div>
         </div>
@@ -360,14 +360,24 @@ function TabYo({ pax }) {
 
       {fullscreenQR && codigoQR && (
         <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="QR ampliado"
           style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,.85)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20 }}
           onClick={() => setFullscreenQR(false)}
+          onKeyDown={e => e.key === 'Escape' && setFullscreenQR(false)}
+          tabIndex={-1}
         >
           <div style={{ background: '#fff', borderRadius: 16, padding: 20 }} onClick={e => e.stopPropagation()}>
             <QRDisplay value={codigoQR} size={260} />
           </div>
           <div style={{ fontSize: 22, fontWeight: 900, color: '#fff', letterSpacing: '.06em' }}>{codigoQR}</div>
-          <div style={{ fontSize: 13, color: 'rgba(255,255,255,.6)' }}>Tocá en cualquier lugar para cerrar</div>
+          <button
+            onClick={() => setFullscreenQR(false)}
+            style={{ background: 'rgba(255,255,255,.15)', border: '1px solid rgba(255,255,255,.3)', color: '#fff', borderRadius: 8, padding: '8px 20px', fontSize: 13, cursor: 'pointer' }}
+          >
+            Cerrar
+          </button>
         </div>
       )}
     </div>

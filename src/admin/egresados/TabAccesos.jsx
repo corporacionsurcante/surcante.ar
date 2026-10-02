@@ -23,6 +23,7 @@ function cargarQRCode() {
 
 function QRCanvas({ value, size = 200 }) {
   const ref = useRef(null);
+  const [err, setErr] = useState('');
   useEffect(() => {
     if (!value || !ref.current) return;
     let cancelled = false;
@@ -34,9 +35,10 @@ function QRCanvas({ value, size = 200 }) {
         colorDark: '#1a1a2e', colorLight: '#ffffff',
         correctLevel: window.QRCode.CorrectLevel.M,
       });
-    }).catch(() => {});
+    }).catch(e => { if (!cancelled) setErr(e.message); });
     return () => { cancelled = true; };
   }, [value, size]);
+  if (err) return <div style={{ fontSize: 12, color: '#cf1322' }}>{err}</div>;
   return <div ref={ref} style={{ lineHeight: 0 }} />;
 }
 

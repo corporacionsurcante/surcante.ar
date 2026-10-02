@@ -39,9 +39,11 @@ export default async function handler(req, res) {
     const opRef = await db.collection('operativos').add({
       nombre: 'Prueba de funcionamiento',
       destino: 'Bariloche',
-      desde: diaISO(0),
-      hasta: diaISO(6),
+      fechaInicio: diaISO(0),
+      fechaFin: diaISO(6),
       estado: 'en_curso',
+      agenciaId: 'agencia-test',
+      agenciaNombre: 'Agencia de Prueba',
       creadoEn: now,
     });
     const opId = opRef.id;
@@ -81,70 +83,72 @@ export default async function handler(req, res) {
     paxData.forEach((p, i) => b.set(paxRefs[i], { ...p, creadoEn: now }));
 
     // ── Itinerario — 7 días ────────────────────────────────────────────────
+    function actId() { return genToken().slice(0, 8); }
+
     const dias = [
       {
         id: diaISO(0),
         actividades: [
-          { hora: '06:00', titulo: 'Concentración y salida', nota: 'Punto de encuentro frente al colegio. Documentos obligatorios.', notaConductor: 'Cargar nafta antes de salir — estación YPF autopista', notaCoord: 'Pasar lista completa antes de arrancar. Verificar equipaje.' },
-          { hora: '12:00', titulo: 'Parada técnica en Neuquén', nota: 'Almuerzo libre, 1 hora de descanso.' },
-          { hora: '18:30', titulo: 'Llegada a Bariloche', nota: 'Check-in hotel. Tiempo libre en el centro.' },
-          { hora: '21:00', titulo: 'Cena de bienvenida', nota: 'Restaurante del hotel — menú incluido.', notaCoord: 'Reunión post-cena para repasar el día siguiente.' },
+          { id: actId(), hora: '06:00', titulo: 'Concentración y salida', paraPasajeros: 'Punto de encuentro frente al colegio. Documentos obligatorios.', paraConductores: 'Cargar nafta antes de salir — estación YPF autopista', paraCoordinadores: 'Pasar lista completa antes de arrancar. Verificar equipaje.' },
+          { id: actId(), hora: '12:00', titulo: 'Parada técnica en Neuquén', paraPasajeros: 'Almuerzo libre, 1 hora de descanso.' },
+          { id: actId(), hora: '18:30', titulo: 'Llegada a Bariloche', paraPasajeros: 'Check-in hotel. Tiempo libre en el centro.' },
+          { id: actId(), hora: '21:00', titulo: 'Cena de bienvenida', paraPasajeros: 'Restaurante del hotel — menú incluido.', paraCoordinadores: 'Reunión post-cena para repasar el día siguiente.' },
         ],
         notaGeneral: '🚌 ¡Arrancamos! Documentos y pase de ski listos.',
       },
       {
         id: diaISO(1),
         actividades: [
-          { hora: '08:00', titulo: 'Desayuno', nota: 'Bufet incluido en el hotel.' },
-          { hora: '09:30', titulo: 'Cerro Catedral', nota: 'Ski y snow en pistas de Catedral. Llevar ropa abrigada y lentes de sol.', notaConductor: 'Dejar en la terminal de ómnibus base cerro — recoger 17:30 mismo lugar.' },
-          { hora: '17:30', titulo: 'Regreso al hotel', nota: 'Ducha y descanso. Cena a las 21:00.' },
-          { hora: '21:00', titulo: 'Cena', nota: 'Menú incluido.' },
+          { id: actId(), hora: '08:00', titulo: 'Desayuno', paraPasajeros: 'Bufet incluido en el hotel.' },
+          { id: actId(), hora: '09:30', titulo: 'Cerro Catedral', paraPasajeros: 'Ski y snow en pistas de Catedral. Llevar ropa abrigada y lentes de sol.', paraConductores: 'Dejar en la terminal de ómnibus base cerro — recoger 17:30 mismo lugar.' },
+          { id: actId(), hora: '17:30', titulo: 'Regreso al hotel', paraPasajeros: 'Ducha y descanso. Cena a las 21:00.' },
+          { id: actId(), hora: '21:00', titulo: 'Cena', paraPasajeros: 'Menú incluido.' },
         ],
       },
       {
         id: diaISO(2),
         actividades: [
-          { hora: '08:00', titulo: 'Desayuno', nota: 'Bufet incluido.' },
-          { hora: '10:00', titulo: 'Circuito Chico', nota: 'Lago Nahuel Huapi, Cerro Campanario y Villa La Angostura. Impresionante vista panorámica.', notaConductor: 'Estacionar en el mirador del Campanario — máx 1h. Luego plaza Angostura.' },
-          { hora: '13:30', titulo: 'Almuerzo libre en Villa La Angostura', nota: 'Reunirse en la plaza a las 15:30.' },
-          { hora: '15:30', titulo: 'Lago Espejo y Correntoso', nota: 'Parada para fotos. Uno de los lagos más transparentes del mundo.' },
-          { hora: '21:00', titulo: 'Cena', nota: 'Menú incluido.' },
+          { id: actId(), hora: '08:00', titulo: 'Desayuno', paraPasajeros: 'Bufet incluido.' },
+          { id: actId(), hora: '10:00', titulo: 'Circuito Chico', paraPasajeros: 'Lago Nahuel Huapi, Cerro Campanario y Villa La Angostura. Vista panorámica.', paraConductores: 'Estacionar en el mirador del Campanario — máx 1h. Luego plaza Angostura.' },
+          { id: actId(), hora: '13:30', titulo: 'Almuerzo libre en Villa La Angostura', paraPasajeros: 'Reunirse en la plaza a las 15:30.' },
+          { id: actId(), hora: '15:30', titulo: 'Lago Espejo y Correntoso', paraPasajeros: 'Parada para fotos. Uno de los lagos más transparentes del mundo.' },
+          { id: actId(), hora: '21:00', titulo: 'Cena', paraPasajeros: 'Menú incluido.' },
         ],
       },
       {
         id: diaISO(3),
         actividades: [
-          { hora: '08:00', titulo: 'Desayuno', nota: 'Bufet incluido.' },
-          { hora: '09:00', titulo: 'Trekking Cerro Llao Llao', nota: 'Caminata de 2 hs. Calzado cómodo, agua y protector solar obligatorio.', notaCoord: 'Grupos de máx 15 personas. Guía certificado en el punto de encuentro.' },
-          { hora: '12:30', titulo: 'Almuerzo en el Hotel Llao Llao', nota: 'Uno de los hoteles más famosos de la Patagonia.' },
-          { hora: '15:00', titulo: 'Tiempo libre en Bariloche', nota: 'Compras, chocolate, cerveza artesanal. Reunirse en plaza Perito Moreno a las 19:00.' },
-          { hora: '21:00', titulo: 'Cena', nota: 'Menú incluido.' },
+          { id: actId(), hora: '08:00', titulo: 'Desayuno', paraPasajeros: 'Bufet incluido.' },
+          { id: actId(), hora: '09:00', titulo: 'Trekking Cerro Llao Llao', paraPasajeros: 'Caminata de 2 hs. Calzado cómodo, agua y protector solar obligatorio.', paraCoordinadores: 'Grupos de máx 15 personas. Guía certificado en el punto de encuentro.' },
+          { id: actId(), hora: '12:30', titulo: 'Almuerzo en el Hotel Llao Llao', paraPasajeros: 'Uno de los hoteles más famosos de la Patagonia.' },
+          { id: actId(), hora: '15:00', titulo: 'Tiempo libre en Bariloche', paraPasajeros: 'Compras, chocolate, cerveza artesanal. Reunirse en plaza Perito Moreno a las 19:00.' },
+          { id: actId(), hora: '21:00', titulo: 'Cena', paraPasajeros: 'Menú incluido.' },
         ],
       },
       {
         id: diaISO(4),
         actividades: [
-          { hora: '08:00', titulo: 'Desayuno', nota: 'Bufet incluido.' },
-          { hora: '09:30', titulo: 'Isla Victoria y Bosque de Arrayanes', nota: 'Excursión en barco. Paisaje único de árboles centenarios.', notaConductor: 'Dejar en el muelle Puerto Pañuelo. Recoger 17:00 mismo muelle.' },
-          { hora: '17:00', titulo: 'Regreso al hotel', nota: 'Tarde libre.' },
-          { hora: '21:00', titulo: 'Noche de egresados', nota: 'Cena especial + actividades. El momento más esperado. 🎉', notaCoord: 'Coordinar con el hotel la música y la sorpresa.' },
+          { id: actId(), hora: '08:00', titulo: 'Desayuno', paraPasajeros: 'Bufet incluido.' },
+          { id: actId(), hora: '09:30', titulo: 'Isla Victoria y Bosque de Arrayanes', paraPasajeros: 'Excursión en barco. Paisaje único de árboles centenarios.', paraConductores: 'Dejar en el muelle Puerto Pañuelo. Recoger 17:00 mismo muelle.' },
+          { id: actId(), hora: '17:00', titulo: 'Regreso al hotel', paraPasajeros: 'Tarde libre.' },
+          { id: actId(), hora: '21:00', titulo: 'Noche de egresados', paraPasajeros: 'Cena especial + actividades. El momento más esperado. 🎉', paraCoordinadores: 'Coordinar con el hotel la música y la sorpresa.' },
         ],
         notaGeneral: '🎉 ¡Noche de egresados!',
       },
       {
         id: diaISO(5),
         actividades: [
-          { hora: '09:00', titulo: 'Desayuno (sin horario fijo)', nota: 'Servicio extendido hasta las 11:00. Día de descanso.' },
-          { hora: '12:00', titulo: 'Tiempo libre', nota: 'Playa del lago, paseos, compras finales.' },
-          { hora: '14:00', titulo: 'Almuerzo libre', nota: 'Última comida en Bariloche. Recordá los souvenirs.' },
-          { hora: '16:00', titulo: 'Preparación del regreso', nota: 'Armar valijas. Check-out del hotel antes de las 18:00.', notaCoord: 'Verificar que todos tengan sus pertenencias.' },
-          { hora: '18:30', titulo: 'Salida de regreso', nota: 'Inicio del viaje de vuelta a Buenos Aires.', notaConductor: 'Parada técnica en Zapala ~22:00. Cargar combustible en Ruta 22.' },
+          { id: actId(), hora: '09:00', titulo: 'Desayuno (sin horario fijo)', paraPasajeros: 'Servicio extendido hasta las 11:00. Día de descanso.' },
+          { id: actId(), hora: '12:00', titulo: 'Tiempo libre', paraPasajeros: 'Playa del lago, paseos, compras finales.' },
+          { id: actId(), hora: '14:00', titulo: 'Almuerzo libre', paraPasajeros: 'Última comida en Bariloche. Recordá los souvenirs.' },
+          { id: actId(), hora: '16:00', titulo: 'Preparación del regreso', paraPasajeros: 'Armar valijas. Check-out del hotel antes de las 18:00.', paraCoordinadores: 'Verificar que todos tengan sus pertenencias.' },
+          { id: actId(), hora: '18:30', titulo: 'Salida de regreso', paraPasajeros: 'Inicio del viaje de vuelta a Buenos Aires.', paraConductores: 'Parada técnica en Zapala ~22:00. Cargar combustible en Ruta 22.' },
         ],
       },
       {
         id: diaISO(6),
         actividades: [
-          { hora: '05:00', titulo: 'Llegada a Buenos Aires', nota: 'Arribo estimado según tráfico. Avisar a familias con anticipación.', notaConductor: 'Dejar en el colegio — portón principal.', notaCoord: 'Entregar a cada pasajero su equipaje. Pasar lista final.' },
+          { id: actId(), hora: '05:00', titulo: 'Llegada a Buenos Aires', paraPasajeros: 'Arribo estimado según tráfico. Avisar a familias con anticipación.', paraConductores: 'Dejar en el colegio — portón principal.', paraCoordinadores: 'Entregar a cada pasajero su equipaje. Pasar lista final.' },
         ],
         notaGeneral: '🏠 ¡Bienvenidos de vuelta! Gracias por este viaje increíble.',
       },

@@ -106,8 +106,8 @@ function TabHoyCoord({ dia, avisos, fecha }) {
           <div className="portal-act-hora">{act.hora || '—'}</div>
           <div>
             <div className="portal-act-titulo">{act.titulo}</div>
-            {act.nota && <div className="portal-act-nota">{act.nota}</div>}
-            {act.notaCoord && <div className="portal-act-nota nota-coord">📋 {act.notaCoord}</div>}
+            {(act.paraPasajeros || act.nota) && <div className="portal-act-nota">{act.paraPasajeros || act.nota}</div>}
+            {(act.paraCoordinadores || act.notaCoord) && <div className="portal-act-nota nota-coord">📋 {act.paraCoordinadores || act.notaCoord}</div>}
           </div>
         </div>
       ))}
