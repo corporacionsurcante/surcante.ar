@@ -147,9 +147,14 @@ function TabHoy({ dia, avisos, fecha, rol, busId }) {
         </div>
       ))}
 
-      {dia?.notaGeneral && (
+      {(dia?.resumen || dia?.notaGeneral) && (
         <div className="portal-card portal-info-general">
-          <p>{dia.notaGeneral}</p>
+          <p>{dia.resumen || dia.notaGeneral}</p>
+        </div>
+      )}
+      {dia?.sugerencias && (
+        <div className="portal-card portal-info-general">
+          <p>💡 {dia.sugerencias}</p>
         </div>
       )}
 
@@ -276,7 +281,8 @@ function TabAgenda({ itinerario, hoy, abiertos, setAbiertos, busId }) {
                     </div>
                   ))
                 }
-                {dia.notaGeneral && <div className="portal-info-text">{dia.notaGeneral}</div>}
+                {(dia.resumen || dia.notaGeneral) && <div className="portal-info-text">{dia.resumen || dia.notaGeneral}</div>}
+                {dia.sugerencias && <div className="portal-info-text">💡 {dia.sugerencias}</div>}
               </div>
             )}
           </div>

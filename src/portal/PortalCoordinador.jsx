@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { doc, getDoc, getDocs, addDoc, collection, onSnapshot, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, getDocs, setDoc, collection, onSnapshot, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { colorBus, labelFecha, hoyISO, nombreCompleto } from '../admin/egresados/utils';
 
@@ -111,8 +111,11 @@ function TabHoyCoord({ dia, avisos, fecha }) {
           </div>
         </div>
       ))}
-      {dia?.notaGeneral && (
-        <div className="portal-card portal-info-general"><p>{dia.notaGeneral}</p></div>
+      {(dia?.resumen || dia?.notaGeneral) && (
+        <div className="portal-card portal-info-general"><p>{dia.resumen || dia.notaGeneral}</p></div>
+      )}
+      {dia?.notasCoordinadores && (
+        <div className="portal-card portal-info-general"><p>📋 {dia.notasCoordinadores}</p></div>
       )}
       {avisos.map(a => (
         <div key={a.id} className="portal-aviso-row">
@@ -211,13 +214,13 @@ function TabQR({ opId, refId, pasajeros }) {
 
     if (encontrado) {
       setResultado({ ok: true, pax: encontrado, codigo: limpio });
-      // Registrar check-in
-      addDoc(collection(db, 'operativos', opId, 'checkins'), {
+      // Registrar check-in (setDoc con paxId como ID evita duplicados)
+      setDoc(doc(db, 'operativos', opId, 'checkins', encontrado.id), {
         paxId: encontrado.id,
         coordinadorId: refId,
         codigo: limpio,
         creadoEn: serverTimestamp(),
-      }).catch(() => {});
+      }, { merge: true }).catch(() => {});
     } else {
       setResultado({ ok: false, pax: null, codigo: limpio });
     }
@@ -276,7 +279,7 @@ function TabQR({ opId, refId, pasajeros }) {
 function FilaPax({ pax }) {
   return (
     <div className="portal-pax-row">
-      <div className="portal-pax-nombre">{pax.apellido ? `${pax.apellido}, ${pax.nombre}` : `${pax.nombre} ${pax.apellido}`}</div>
+      <div className="portal-pax-nombre">{pax.apellido ? `${pax.apellido}, ${pax.nombre}` : pax.nombre}</div>
       <div className="portal-pax-datos">
         {pax.dni && <span>DNI {pax.dni}</span>}
         {pax.hotel && <span>{pax.hotel}</span>}
