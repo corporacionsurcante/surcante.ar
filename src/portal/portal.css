@@ -1,0 +1,562 @@
+/* Portal de viaje — pasajeros, conductores y coordinadores (mobile-first) */
+
+.portal-wrap {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #f4f2fa;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* ─── Header ─── */
+.portal-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: linear-gradient(135deg, #1a1a2e, #7b2fbe);
+  color: #fff;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.portal-header-logo {
+  font-size: 26px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.portal-header-title {
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.portal-header-sub {
+  font-size: 11px;
+  opacity: 0.7;
+  margin-top: 2px;
+}
+
+.portal-bus-badge {
+  margin-left: auto;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+/* ─── Tabs ─── */
+.portal-tabs {
+  display: flex;
+  background: #fff;
+  border-bottom: 1.5px solid #e8e0f0;
+  overflow-x: auto;
+  scrollbar-width: none;
+  position: sticky;
+  top: 58px;
+  z-index: 9;
+}
+.portal-tabs::-webkit-scrollbar { display: none; }
+
+.portal-tab {
+  flex: 1;
+  min-width: 72px;
+  padding: 10px 6px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #7070a0;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color .12s, border-color .12s;
+  font-family: inherit;
+}
+.portal-tab.activo {
+  color: #7b2fbe;
+  border-bottom-color: #7b2fbe;
+}
+
+/* ─── Main ─── */
+.portal-main {
+  flex: 1;
+  padding: 12px 14px 40px;
+  max-width: 580px;
+  width: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.portal-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ─── Cards ─── */
+.portal-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 14px;
+  border: 1px solid #e8e0f0;
+}
+
+.portal-card-header {
+  font-size: 12px;
+  font-weight: 700;
+  color: #7b2fbe;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  padding: 2px 0 10px;
+}
+
+.portal-card-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #9090b0;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  margin-bottom: 8px;
+}
+
+/* ─── Actividades ─── */
+.portal-actividad {
+  display: flex;
+  gap: 12px;
+  padding: 10px 14px;
+  background: #fff;
+  border-radius: 10px;
+  border: 1px solid #e8e0f0;
+  align-items: flex-start;
+}
+
+.portal-act-hora {
+  font-size: 11px;
+  font-weight: 800;
+  color: #7b2fbe;
+  min-width: 40px;
+  padding-top: 2px;
+  flex-shrink: 0;
+}
+
+.portal-act-titulo {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1a2e;
+}
+
+.portal-act-nota {
+  font-size: 12px;
+  color: #555;
+  margin-top: 4px;
+  line-height: 1.55;
+}
+
+.nota-conductor { color: #1565c0; }
+.nota-coord { color: #00796b; }
+
+/* ─── Bus info ─── */
+.portal-bus-nombre {
+  font-size: 20px;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+
+.portal-bus-meta {
+  font-size: 12px;
+  color: #888;
+}
+
+.portal-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  border: 1.5px solid;
+  width: fit-content;
+}
+
+/* ─── Contacto ─── */
+.portal-contact-nombre {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin-bottom: 6px;
+}
+
+.portal-contact-tel {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  color: #25d366;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+/* ─── Info personal (pasajero) ─── */
+.portal-dato-fila {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 7px 0;
+  border-bottom: 1px solid #f0ecf8;
+  gap: 12px;
+}
+.portal-dato-fila:last-child { border-bottom: none; }
+
+.portal-dato-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #9090b0;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  flex-shrink: 0;
+  min-width: 110px;
+}
+
+.portal-dato-valor {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1a1a2e;
+  text-align: right;
+}
+
+.portal-info-general {
+  background: #f9f6ff;
+  border-color: #e0d4f7;
+}
+.portal-info-general p {
+  font-size: 13px;
+  color: #444;
+  line-height: 1.6;
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+/* ─── Agenda días ─── */
+.portal-dia-card {
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #e8e0f0;
+  overflow: hidden;
+}
+.portal-dia-card.hoy { border-color: #7b2fbe; }
+
+.portal-dia-header {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1a1a2e;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+}
+.portal-dia-card.hoy .portal-dia-header { color: #7b2fbe; }
+
+.portal-dia-toggle {
+  font-size: 9px;
+  color: #b0b0c8;
+}
+
+.portal-dia-body {
+  border-top: 1px solid #f0ecf8;
+  padding: 8px 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.portal-empty-sm {
+  font-size: 12px;
+  color: #b0b0c8;
+  padding: 6px 0;
+}
+
+/* ─── Servicio GPS (conductor) ─── */
+.portal-servicio-estado {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #9090b0;
+  margin-bottom: 12px;
+}
+.portal-servicio-estado.activo { color: #00a07a; }
+
+.portal-servicio-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #ccc;
+  flex-shrink: 0;
+}
+.portal-servicio-estado.activo .portal-servicio-dot {
+  background: #00c896;
+  box-shadow: 0 0 0 4px #00c89635;
+  animation: portal-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes portal-pulse {
+  0%, 100% { box-shadow: 0 0 0 4px #00c89635; }
+  50% { box-shadow: 0 0 0 8px #00c89620; }
+}
+
+.portal-gps-info {
+  font-size: 11px;
+  color: #b0b0c8;
+  font-family: monospace;
+  margin-bottom: 10px;
+}
+
+.portal-info-text {
+  font-size: 12px;
+  color: #a0a0c0;
+  line-height: 1.5;
+  padding: 0 2px;
+}
+
+/* ─── Botones ─── */
+.portal-btn-primary {
+  width: 100%;
+  padding: 15px;
+  background: #7b2fbe;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: opacity .12s;
+}
+.portal-btn-primary:disabled { opacity: .4; cursor: not-allowed; }
+.portal-btn-primary:not(:disabled):active { opacity: .85; }
+
+.portal-btn-iniciar { background: #00a07a; }
+
+.portal-btn-danger {
+  width: 100%;
+  padding: 14px;
+  background: #cf1322;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.portal-btn-secondary {
+  width: 100%;
+  padding: 12px;
+  background: #f4f2fa;
+  color: #7b2fbe;
+  border: 1.5px solid #d0c0ee;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+/* ─── Lista de pasajeros ─── */
+.portal-busqueda {
+  width: 100%;
+  border: 1.5px solid #e0d4f7;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+  background: #fff;
+  box-sizing: border-box;
+}
+.portal-busqueda:focus { border-color: #7b2fbe; }
+
+.portal-pax-row {
+  background: #fff;
+  border: 1px solid #e8e0f0;
+  border-radius: 10px;
+  padding: 10px 14px;
+}
+
+.portal-pax-nombre {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1a2e;
+  margin-bottom: 4px;
+}
+
+.portal-pax-datos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.portal-pax-datos span {
+  font-size: 11px;
+  color: #666;
+  background: #f4f2fa;
+  border-radius: 6px;
+  padding: 2px 8px;
+}
+
+/* ─── Escáner QR ─── */
+.portal-qr-wrap {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #000;
+}
+
+.portal-qr-video {
+  width: 100%;
+  display: block;
+  max-height: 280px;
+  object-fit: cover;
+}
+
+.portal-qr-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 160px;
+  height: 160px;
+  border: 3px solid rgba(123, 47, 190, .8);
+  border-radius: 12px;
+  pointer-events: none;
+  box-shadow: 0 0 0 3000px rgba(0,0,0,.3);
+}
+
+.portal-qr-cancel {
+  margin-top: 8px;
+  border-radius: 0 0 12px 12px;
+}
+
+.portal-qr-resultado { margin-top: 4px; }
+.portal-qr-resultado.ok  { border-color: #00c896; background: #e8fbf5; }
+.portal-qr-resultado.nok { border-color: #cf1322; background: #fff1f0; }
+.portal-qr-encontrado    { font-size: 13px; font-weight: 700; color: #00a07a; margin-bottom: 8px; }
+.portal-qr-noencontrado  { font-size: 13px; font-weight: 700; color: #cf1322; }
+.portal-qr-codigo        { font-size: 11px; color: #b0b0c8; font-family: monospace; margin-bottom: 8px; }
+
+/* ─── Avisos ─── */
+.portal-aviso-warning {
+  font-size: 12px;
+  color: #7a5200;
+  background: #fff8e6;
+  border: 1px solid #ffc53d;
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+
+.portal-aviso-row {
+  background: #fff;
+  border: 1px solid #e8e0f0;
+  border-radius: 10px;
+  padding: 10px 14px;
+  border-left: 3px solid #7b2fbe;
+}
+.portal-aviso-texto {
+  font-size: 13px;
+  color: #1a1a2e;
+  line-height: 1.5;
+}
+.portal-aviso-hora {
+  font-size: 11px;
+  color: #b0b0c8;
+  margin-top: 4px;
+}
+
+/* ─── Cargando / Error ─── */
+.portal-cargando {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: #b0b0c8;
+  font-size: 14px;
+  background: #f4f2fa;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+.portal-spinner {
+  width: 34px;
+  height: 34px;
+  border: 3px solid #e0d4f7;
+  border-top-color: #7b2fbe;
+  border-radius: 50%;
+  animation: portal-spin .7s linear infinite;
+}
+
+@keyframes portal-spin { to { transform: rotate(360deg); } }
+
+.portal-error-wrap {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f4f2fa;
+  padding: 24px;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+.portal-error-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 32px 24px;
+  text-align: center;
+  max-width: 340px;
+  width: 100%;
+  border: 1px solid #e8e0f0;
+}
+
+.portal-error-icon {
+  font-size: 38px;
+  display: block;
+  margin-bottom: 12px;
+}
+
+.portal-error-card h2 {
+  font-size: 18px;
+  font-weight: 800;
+  color: #1a1a2e;
+  margin: 0 0 8px;
+}
+
+.portal-error-card p {
+  font-size: 14px;
+  color: #555;
+  margin: 0 0 6px;
+  line-height: 1.5;
+}
+
+.portal-error-hint {
+  font-size: 12px !important;
+  color: #b0b0c8 !important;
+}
+
+.portal-empty {
+  padding: 24px 16px;
+  text-align: center;
+  font-size: 13px;
+  color: #b0b0c8;
+}

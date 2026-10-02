@@ -19,6 +19,8 @@ import bgImage from './assets/bg-surcante.jpg';
 
 // El panel admin se descarga solo al entrar a /admin (el cotizador público queda más liviano)
 const AdminApp = lazy(() => import('./admin/pages/AdminApp'));
+// Portal personal de pasajeros, conductores y coordinadores (/v/{token})
+const PortalViaje = lazy(() => import('./portal/PortalViaje'));
 
 const ACCESO_STORAGE_KEY = 'surcante_acceso_cliente';
 
@@ -268,26 +270,6 @@ function AccesoPrevio({ onConfirm }) {
   );
 }
 
-// Links personales de operativos de egresados (/v/{token}).
-// El portal de pasajero / conductor / coordinador se habilita en la próxima etapa.
-function PortalViaje() {
-  return (
-    <>
-      <BgOverlay />
-      <div className="app-shell">
-        <Topbar />
-        <div className="confirm-page">
-          <div className="confirm-icon">🚌</div>
-          <div className="confirm-title">Tu acceso personal está listo</div>
-          <div className="confirm-sub">
-            Guardá este link: desde acá vas a ver tu ómnibus, la ubicación en tiempo real, tus contactos y la agenda de cada día.
-            Lo estamos terminando de preparar para tu viaje.
-          </div>
-        </div>
-      </div>
-    </>
-  );
-}
 
 export default function App() {
   const pathname = window.location.pathname;
@@ -298,7 +280,11 @@ export default function App() {
       </Suspense>
     );
   }
-  if (pathname.startsWith('/v/')) return <PortalViaje />;
+  if (pathname.startsWith('/v/')) return (
+    <Suspense fallback={<div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f4f2fa', color: '#b0b0c8', fontSize: 14, flexDirection: 'column', gap: 12 }}><div style={{ width: 34, height: 34, border: '3px solid #e0d4f7', borderTopColor: '#7b2fbe', borderRadius: '50%', animation: 'spin .7s linear infinite' }} />Cargando portal…</div>}>
+      <PortalViaje />
+    </Suspense>
+  );
   const urlParams = new URLSearchParams(window.location.search);
   if (pathname === '/pago-exitoso') return <RetornoPago tipo="exitoso" urlParams={urlParams} />;
   if (pathname === '/pago-fallido') return <RetornoPago tipo="fallido" urlParams={urlParams} />;

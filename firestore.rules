@@ -14,6 +14,20 @@ service cloud.firestore {
         && exists(/databases/$(database)/documents/admins/$(request.auth.token.email));
     }
 
+    // Usuario del portal (pasajero / conductor / coordinador).
+    // El custom token tiene claims { rol, opId, refId } pero NO email.
+    function isPortalUser() {
+      return signedIn()
+        && 'opId' in request.auth.token
+        && 'rol' in request.auth.token
+        && request.auth.token.rol in ['pasajero', 'conductor', 'coordinador'];
+    }
+
+    // Portal user cuyo opId coincide con el operativo del path
+    function portalEnOp(opId) {
+      return isPortalUser() && request.auth.token.opId == opId;
+    }
+
     match /admins/{email} {
       // Cada usuario puede consultar SOLO su propio documento: así el login
       // distingue "no autorizado" de un error de conexión.
@@ -86,21 +100,70 @@ service cloud.firestore {
     }
 
     // ---------------- Módulo Egresados ----------------
-    // Fase 1: solo admin. Contienen datos personales de pasajeros (DNI, hotel,
-    // contactos de emergencia) — no abrir lectura pública.
-    // Fase 2 sumará acceso acotado para pasajeros, conductores y coordinadores
-    // a través de sus links personales.
+    // Acceso acotado para pasajeros, conductores y coordinadores vía links personales.
 
     match /agencias/{id} {
       allow read, write: if isAdmin();
     }
 
     match /operativos/{opId} {
-      allow read, write: if isAdmin();
+      allow read: if isAdmin() || portalEnOp(opId);
+      allow write: if isAdmin();
 
-      // buses, staff, pasajeros, itinerario, avisos, reportes, ubicaciones, checkins
-      match /{sub}/{docId} {
-        allow read, write: if isAdmin();
+      match /buses/{busId} {
+        allow read: if isAdmin() || portalEnOp(opId);
+        allow write: if isAdmin();
+      }
+
+      match /staff/{staffId} {
+        allow read: if isAdmin() || portalEnOp(opId);
+        allow write: if isAdmin();
+      }
+
+      match /itinerario/{dia} {
+        allow read: if isAdmin() || portalEnOp(opId);
+        allow write: if isAdmin();
+      }
+
+      match /avisos/{avisId} {
+        allow read: if isAdmin() || portalEnOp(opId);
+        allow write: if isAdmin();
+      }
+
+      match /pasajeros/{paxId} {
+        // Conductores y coordinadores ven todos; pasajero solo su propio doc
+        allow read: if isAdmin()
+          || (portalEnOp(opId) && request.auth.token.rol in ['conductor', 'coordinador'])
+          || (portalEnOp(opId) && request.auth.token.rol == 'pasajero' && request.auth.token.refId == paxId);
+        allow write: if isAdmin();
+      }
+
+      match /ubicaciones/{busId} {
+        // Cualquier usuario del portal puede leer (ver dónde está el bus)
+        allow read: if isAdmin() || portalEnOp(opId);
+        // Solo el conductor cuyo busId coincide puede escribir su posición
+        allow create, update: if isAdmin()
+          || (portalEnOp(opId)
+              && request.auth.token.rol == 'conductor'
+              && 'busId' in request.auth.token
+              && request.auth.token.busId == busId);
+        allow delete: if isAdmin();
+      }
+
+      match /checkins/{checkinId} {
+        allow read: if isAdmin()
+          || (portalEnOp(opId) && request.auth.token.rol in ['conductor', 'coordinador']);
+        // Solo coordinadores pueden crear check-ins
+        allow create: if isAdmin()
+          || (portalEnOp(opId) && request.auth.token.rol == 'coordinador');
+        allow update, delete: if isAdmin();
+      }
+
+      match /reportes/{repId} {
+        allow read: if isAdmin() || portalEnOp(opId);
+        allow create: if isAdmin()
+          || (portalEnOp(opId) && request.auth.token.rol == 'conductor');
+        allow update, delete: if isAdmin();
       }
     }
 
