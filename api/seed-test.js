@@ -37,10 +37,10 @@ export default async function handler(req, res) {
 
     // ── Operativo ──────────────────────────────────────────────────────────
     const opRef = await db.collection('operativos').add({
-      nombre: 'Viaje de Prueba — Colegio San Martín',
+      nombre: 'Prueba de funcionamiento',
       destino: 'Bariloche',
       desde: diaISO(0),
-      hasta: diaISO(3),
+      hasta: diaISO(6),
       estado: 'en_curso',
       creadoEn: now,
     });
@@ -52,83 +52,124 @@ export default async function handler(req, res) {
     const b1Id = b1.id; const b2Id = b2.id;
 
     // ── Staff ──────────────────────────────────────────────────────────────
-    const c1 = db.doc(`operativos/${opId}/staff/${db.collection('x').doc().id}`);
-    const c2 = db.doc(`operativos/${opId}/staff/${db.collection('x').doc().id}`);
+    const c1  = db.doc(`operativos/${opId}/staff/${db.collection('x').doc().id}`);
+    const c2  = db.doc(`operativos/${opId}/staff/${db.collection('x').doc().id}`);
     const co1 = db.doc(`operativos/${opId}/staff/${db.collection('x').doc().id}`);
     const co2 = db.doc(`operativos/${opId}/staff/${db.collection('x').doc().id}`);
 
     // ── Pasajeros ──────────────────────────────────────────────────────────
     const paxData = [
-      { nombre: 'Juan',      apellido: 'Pérez',     dni: '12345678', codigoAgencia: 'TEST-001', busId: b1Id, hotel: 'Hotel Nevada',   habitacion: '101', asiento: '1A' },
-      { nombre: 'Laura',     apellido: 'Gómez',     dni: '23456789', codigoAgencia: 'TEST-002', busId: b1Id, hotel: 'Hotel Nevada',   habitacion: '102', asiento: '2A' },
-      { nombre: 'Diego',     apellido: 'Fernández', dni: '34567890', codigoAgencia: 'TEST-003', busId: b1Id, hotel: 'Hotel Nevada',   habitacion: '103', asiento: '3A' },
-      { nombre: 'Sofía',     apellido: 'Martínez',  dni: '45678901', codigoAgencia: 'TEST-004', busId: b2Id, hotel: 'Hotel Bariloche',habitacion: '201', asiento: '1B' },
-      { nombre: 'Lucas',     apellido: 'Torres',    dni: '56789012', codigoAgencia: 'TEST-005', busId: b2Id, hotel: 'Hotel Bariloche',habitacion: '202', asiento: '2B' },
-      { nombre: 'Valentina', apellido: 'Sánchez',   dni: '67890123', codigoAgencia: 'TEST-006', busId: b2Id, hotel: 'Hotel Bariloche',habitacion: '203', asiento: '3B' },
+      { nombre: 'Martín',   apellido: 'Rodríguez', dni: '30111222', codigoAgencia: 'PF-001', busId: b1Id, hotel: 'Hotel Panamericano', habitacion: '301', asiento: '1A' },
+      { nombre: 'Camila',   apellido: 'Vargas',    dni: '31222333', codigoAgencia: 'PF-002', busId: b1Id, hotel: 'Hotel Panamericano', habitacion: '302', asiento: '2A' },
+      { nombre: 'Nicolás',  apellido: 'Blanco',    dni: '32333444', codigoAgencia: 'PF-003', busId: b1Id, hotel: 'Hotel Panamericano', habitacion: '303', asiento: '3A' },
+      { nombre: 'Valentina',apellido: 'Cruz',      dni: '33444555', codigoAgencia: 'PF-004', busId: b2Id, hotel: 'Hotel Bellevue',     habitacion: '201', asiento: '1B' },
+      { nombre: 'Sebastián',apellido: 'Morales',   dni: '34555666', codigoAgencia: 'PF-005', busId: b2Id, hotel: 'Hotel Bellevue',     habitacion: '202', asiento: '2B' },
     ];
     const paxRefs = paxData.map(() => db.doc(`operativos/${opId}/pasajeros/${db.collection('x').doc().id}`));
 
     // ── Commit en lotes ────────────────────────────────────────────────────
     const b = db.batch();
 
-    b.set(b1, { codigo: 'Bus 1', nombre: 'Bus 1 — Violeta', color: 'violeta', capacidad: 50, interno: '301', creadoEn: now });
-    b.set(b2, { codigo: 'Bus 2', nombre: 'Bus 2 — Azul',    color: 'azul',    capacidad: 50, interno: '302', creadoEn: now });
+    b.set(b1, { codigo: 'Bus 1', nombre: 'Bus 1 — Rojo', color: 'rojo', capacidad: 48, interno: '105', creadoEn: now });
+    b.set(b2, { codigo: 'Bus 2', nombre: 'Bus 2 — Azul', color: 'azul', capacidad: 48, interno: '210', creadoEn: now });
 
-    b.set(c1,  { nombre: 'Carlos',    apellido: 'García',    telefono: '1112345678', rol: 'conductor',   busId: b1Id, creadoEn: now });
-    b.set(c2,  { nombre: 'Pablo',     apellido: 'Rodríguez', telefono: '1123456789', rol: 'conductor',   busId: b2Id, creadoEn: now });
-    b.set(co1, { nombre: 'María',     apellido: 'González',  telefono: '1198765432', rol: 'coordinador', busId: b1Id, creadoEn: now });
-    b.set(co2, { nombre: 'Ana',       apellido: 'López',     telefono: '1187654321', rol: 'coordinador', busId: b2Id, creadoEn: now });
+    b.set(c1,  { nombre: 'Roberto', apellido: 'Ríos',    telefono: '1134567890', rol: 'conductor',   busId: b1Id, creadoEn: now });
+    b.set(c2,  { nombre: 'Héctor',  apellido: 'Núñez',   telefono: '1145678901', rol: 'conductor',   busId: b2Id, creadoEn: now });
+    b.set(co1, { nombre: 'Florencia',apellido: 'Soto',   telefono: '1156789012', rol: 'coordinador', busId: b1Id, creadoEn: now });
+    b.set(co2, { nombre: 'Diego',   apellido: 'Herrera', telefono: '1167890123', rol: 'coordinador', busId: b2Id, creadoEn: now });
 
     paxData.forEach((p, i) => b.set(paxRefs[i], { ...p, creadoEn: now }));
 
-    // Itinerario
-    [
+    // ── Itinerario — 7 días ────────────────────────────────────────────────
+    const dias = [
       {
         id: diaISO(0),
         actividades: [
-          { hora: '07:00', titulo: 'Salida desde el colegio', nota: 'Punto de encuentro: portón principal. Documentos en mano.', notaConductor: 'Cargar nafta antes de salir — YPF autopista norte', notaCoord: 'Pasar lista completa antes de arrancar' },
-          { hora: '14:00', titulo: 'Llegada a Bariloche', nota: 'Check-in en el hotel. Guardar valijas y salir a conocer.' },
-          { hora: '16:30', titulo: 'Excursión Cerro Catedral', nota: 'Ski y snow en la nieve. Llevar ropa abrigada y protector solar.' },
-          { hora: '20:30', titulo: 'Cena en el hotel', nota: 'Menú incluido. Reunión post-cena para repasar el día siguiente.' },
+          { hora: '06:00', titulo: 'Concentración y salida', nota: 'Punto de encuentro frente al colegio. Documentos obligatorios.', notaConductor: 'Cargar nafta antes de salir — estación YPF autopista', notaCoord: 'Pasar lista completa antes de arrancar. Verificar equipaje.' },
+          { hora: '12:00', titulo: 'Parada técnica en Neuquén', nota: 'Almuerzo libre, 1 hora de descanso.' },
+          { hora: '18:30', titulo: 'Llegada a Bariloche', nota: 'Check-in hotel. Tiempo libre en el centro.' },
+          { hora: '21:00', titulo: 'Cena de bienvenida', nota: 'Restaurante del hotel — menú incluido.', notaCoord: 'Reunión post-cena para repasar el día siguiente.' },
         ],
-        notaGeneral: '🏔️ ¡Primer día! Recordar: documentos y pase de ski.',
+        notaGeneral: '🚌 ¡Arrancamos! Documentos y pase de ski listos.',
       },
       {
         id: diaISO(1),
         actividades: [
-          { hora: '08:00', titulo: 'Desayuno', nota: 'Bufet en el hotel' },
-          { hora: '10:00', titulo: 'Circuito Chico', nota: 'Lago Nahuel Huapi, Cerro Campanario y Villa La Angostura.', notaConductor: 'Estacionar frente al mirador — 1h máx.' },
-          { hora: '13:30', titulo: 'Almuerzo libre en el centro', nota: 'Reunirse en Plaza Perito Moreno a las 15:00.' },
-          { hora: '15:00', titulo: 'Laguna de los Cántaros', nota: 'Caminata 2 hs — calzado cómodo obligatorio.' },
-          { hora: '21:00', titulo: 'Cena y noche libre', nota: 'Retorno al hotel: máximo 00:30 hs.' },
+          { hora: '08:00', titulo: 'Desayuno', nota: 'Bufet incluido en el hotel.' },
+          { hora: '09:30', titulo: 'Cerro Catedral', nota: 'Ski y snow en pistas de Catedral. Llevar ropa abrigada y lentes de sol.', notaConductor: 'Dejar en la terminal de ómnibus base cerro — recoger 17:30 mismo lugar.' },
+          { hora: '17:30', titulo: 'Regreso al hotel', nota: 'Ducha y descanso. Cena a las 21:00.' },
+          { hora: '21:00', titulo: 'Cena', nota: 'Menú incluido.' },
         ],
       },
       {
         id: diaISO(2),
         actividades: [
-          { hora: '08:00', titulo: 'Desayuno y check-out', nota: 'Dejar habitaciones antes de las 10:00.' },
-          { hora: '10:30', titulo: 'Compras en el centro', nota: 'Chocolate artesanal, licores y souvenirs.' },
-          { hora: '13:00', titulo: 'Almuerzo de despedida', nota: 'Restaurante El Patacón — asado patagónico incluido.', notaCoord: 'Contar que todos estén antes de salir' },
-          { hora: '15:00', titulo: 'Regreso a Buenos Aires', nota: 'Arribo estimado: 03:00 hs del día siguiente.', notaConductor: 'Parada técnica en Junín de los Andes ~18:00 hs' },
+          { hora: '08:00', titulo: 'Desayuno', nota: 'Bufet incluido.' },
+          { hora: '10:00', titulo: 'Circuito Chico', nota: 'Lago Nahuel Huapi, Cerro Campanario y Villa La Angostura. Impresionante vista panorámica.', notaConductor: 'Estacionar en el mirador del Campanario — máx 1h. Luego plaza Angostura.' },
+          { hora: '13:30', titulo: 'Almuerzo libre en Villa La Angostura', nota: 'Reunirse en la plaza a las 15:30.' },
+          { hora: '15:30', titulo: 'Lago Espejo y Correntoso', nota: 'Parada para fotos. Uno de los lagos más transparentes del mundo.' },
+          { hora: '21:00', titulo: 'Cena', nota: 'Menú incluido.' },
         ],
-        notaGeneral: '🎒 ¡Último día! Revisá que no olvides nada en la habitación.',
       },
-    ].forEach(({ id, ...data }) => {
+      {
+        id: diaISO(3),
+        actividades: [
+          { hora: '08:00', titulo: 'Desayuno', nota: 'Bufet incluido.' },
+          { hora: '09:00', titulo: 'Trekking Cerro Llao Llao', nota: 'Caminata de 2 hs. Calzado cómodo, agua y protector solar obligatorio.', notaCoord: 'Grupos de máx 15 personas. Guía certificado en el punto de encuentro.' },
+          { hora: '12:30', titulo: 'Almuerzo en el Hotel Llao Llao', nota: 'Uno de los hoteles más famosos de la Patagonia.' },
+          { hora: '15:00', titulo: 'Tiempo libre en Bariloche', nota: 'Compras, chocolate, cerveza artesanal. Reunirse en plaza Perito Moreno a las 19:00.' },
+          { hora: '21:00', titulo: 'Cena', nota: 'Menú incluido.' },
+        ],
+      },
+      {
+        id: diaISO(4),
+        actividades: [
+          { hora: '08:00', titulo: 'Desayuno', nota: 'Bufet incluido.' },
+          { hora: '09:30', titulo: 'Isla Victoria y Bosque de Arrayanes', nota: 'Excursión en barco. Paisaje único de árboles centenarios.', notaConductor: 'Dejar en el muelle Puerto Pañuelo. Recoger 17:00 mismo muelle.' },
+          { hora: '17:00', titulo: 'Regreso al hotel', nota: 'Tarde libre.' },
+          { hora: '21:00', titulo: 'Noche de egresados', nota: 'Cena especial + actividades. El momento más esperado. 🎉', notaCoord: 'Coordinar con el hotel la música y la sorpresa.' },
+        ],
+        notaGeneral: '🎉 ¡Noche de egresados!',
+      },
+      {
+        id: diaISO(5),
+        actividades: [
+          { hora: '09:00', titulo: 'Desayuno (sin horario fijo)', nota: 'Servicio extendido hasta las 11:00. Día de descanso.' },
+          { hora: '12:00', titulo: 'Tiempo libre', nota: 'Playa del lago, paseos, compras finales.' },
+          { hora: '14:00', titulo: 'Almuerzo libre', nota: 'Última comida en Bariloche. Recordá los souvenirs.' },
+          { hora: '16:00', titulo: 'Preparación del regreso', nota: 'Armar valijas. Check-out del hotel antes de las 18:00.', notaCoord: 'Verificar que todos tengan sus pertenencias.' },
+          { hora: '18:30', titulo: 'Salida de regreso', nota: 'Inicio del viaje de vuelta a Buenos Aires.', notaConductor: 'Parada técnica en Zapala ~22:00. Cargar combustible en Ruta 22.' },
+        ],
+      },
+      {
+        id: diaISO(6),
+        actividades: [
+          { hora: '05:00', titulo: 'Llegada a Buenos Aires', nota: 'Arribo estimado según tráfico. Avisar a familias con anticipación.', notaConductor: 'Dejar en el colegio — portón principal.', notaCoord: 'Entregar a cada pasajero su equipaje. Pasar lista final.' },
+        ],
+        notaGeneral: '🏠 ¡Bienvenidos de vuelta! Gracias por este viaje increíble.',
+      },
+    ];
+
+    dias.forEach(({ id, ...data }) => {
       b.set(db.doc(`operativos/${opId}/itinerario/${id}`), { ...data, creadoEn: now });
     });
 
-    // Aviso
+    // ── Avisos iniciales ───────────────────────────────────────────────────
     b.set(db.collection(`operativos/${opId}/avisos`).doc(), {
-      texto: '📢 Mañana la excursión sale 30 minutos antes. ¡Estar listos en el lobby a las 09:30!',
+      texto: '👋 ¡Bienvenidos al viaje de egresados! Este portal es tu guía durante todo el viaje. Podés ver el itinerario, la info de tu bus y hotel, y contactar a tu coordinador.',
+      creadoEn: now,
+    });
+    b.set(db.collection(`operativos/${opId}/avisos`).doc(), {
+      texto: '📋 Recordatorio: llevar DNI, pase de ski, ropa abrigada y protector solar para el día 2.',
       creadoEn: now,
     });
 
-    // Accesos
+    // ── Accesos ────────────────────────────────────────────────────────────
     const personas = [
-      { rol: 'conductor',   refId: c1.id,  nombre: 'Carlos García',    busId: b1Id },
-      { rol: 'conductor',   refId: c2.id,  nombre: 'Pablo Rodríguez',  busId: b2Id },
-      { rol: 'coordinador', refId: co1.id, nombre: 'María González',   busId: b1Id },
-      { rol: 'coordinador', refId: co2.id, nombre: 'Ana López',        busId: b2Id },
+      { rol: 'conductor',   refId: c1.id,  nombre: 'Roberto Ríos',      busId: b1Id },
+      { rol: 'conductor',   refId: c2.id,  nombre: 'Héctor Núñez',      busId: b2Id },
+      { rol: 'coordinador', refId: co1.id, nombre: 'Florencia Soto',    busId: b1Id },
+      { rol: 'coordinador', refId: co2.id, nombre: 'Diego Herrera',     busId: b2Id },
       ...paxData.map((p, i) => ({ rol: 'pasajero', refId: paxRefs[i].id, nombre: `${p.nombre} ${p.apellido}` })),
     ];
 
@@ -137,7 +178,9 @@ export default async function handler(req, res) {
       const tk = genToken();
       links[p.nombre] = { token: tk, link: `${base}/v/${tk}`, rol: p.rol };
       b.set(db.doc(`accesos/${tk}`), {
-        opId, rol: p.rol, refId: p.refId, nombre: p.nombre, activo: true, creadoEn: now,
+        opId, rol: p.rol, refId: p.refId, nombre: p.nombre,
+        ...(p.busId ? { busId: p.busId } : {}),
+        activo: true, creadoEn: now,
       });
     });
 
@@ -145,15 +188,16 @@ export default async function handler(req, res) {
 
     return res.status(200).json({
       ok: true,
-      mensaje: 'Operativo de prueba creado correctamente.',
+      mensaje: 'Operativo "Prueba de funcionamiento" creado correctamente.',
       opId,
       links,
-      qrParaEscanear: paxData.map(p => ({
+      qrParaEscanear: paxData.map((p, i) => ({
         nombre: `${p.nombre} ${p.apellido}`,
-        codigo: p.codigoAgencia,
+        codigoQR: p.codigoAgencia,
         hotel: p.hotel,
         habitacion: p.habitacion,
-        bus: p.busId === b1Id ? 'Bus 1' : 'Bus 2',
+        bus: p.busId === b1Id ? 'Bus 1 — Rojo' : 'Bus 2 — Azul',
+        linkPortal: links[`${p.nombre} ${p.apellido}`]?.link,
       })),
     });
   } catch (e) {
