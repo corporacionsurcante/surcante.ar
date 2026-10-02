@@ -99,9 +99,9 @@ export default function PortalPasajero({ sesion }) {
       </nav>
 
       <main className="portal-main">
-        {tab === 'hoy'    && <TabHoy dia={diaHoy} avisos={avisos} fecha={hoy} rol="pasajero" />}
+        {tab === 'hoy'    && <TabHoy dia={diaHoy} avisos={avisos} fecha={hoy} rol="pasajero" busId={busId} />}
         {tab === 'bus'    && <TabBus bus={bus} conductor={conductor} coordinador={coordinador} busColor={busColor} />}
-        {tab === 'agenda' && <TabAgenda itinerario={itinerario} hoy={hoy} abiertos={abiertos} setAbiertos={setAbiertos} />}
+        {tab === 'agenda' && <TabAgenda itinerario={itinerario} hoy={hoy} abiertos={abiertos} setAbiertos={setAbiertos} busId={busId} />}
         {tab === 'yo'     && <TabYo pax={pax} />}
       </main>
     </div>
@@ -109,8 +109,11 @@ export default function PortalPasajero({ sesion }) {
 }
 
 /* ── Hoy ── */
-function TabHoy({ dia, avisos, fecha, rol }) {
-  const actividades = (dia?.actividades || []).filter(a => rol !== 'pasajero' || !a.soloStaff);
+function TabHoy({ dia, avisos, fecha, rol, busId }) {
+  const actividades = (dia?.actividades || []).filter(a =>
+    (rol !== 'pasajero' || !a.soloStaff) &&
+    (!busId || !a.buses?.length || a.buses.includes(busId))
+  );
   return (
     <div className="portal-section">
       <div className="portal-card-label">{labelFecha(fecha, { largo: true })}</div>
@@ -226,7 +229,7 @@ function ContactCard({ titulo, persona }) {
 }
 
 /* ── Agenda ── */
-function TabAgenda({ itinerario, hoy, abiertos, setAbiertos }) {
+function TabAgenda({ itinerario, hoy, abiertos, setAbiertos, busId }) {
   const toggle = id => setAbiertos(prev => ({ ...prev, [id]: !prev[id] }));
 
   if (itinerario.length === 0) return (
@@ -242,7 +245,9 @@ function TabAgenda({ itinerario, hoy, abiertos, setAbiertos }) {
       {itinerario.map(dia => {
         const esHoy = dia.id === hoy;
         const abierto = abiertos[dia.id];
-        const actividades = (dia.actividades || []).filter(a => !a.soloStaff);
+        const actividades = (dia.actividades || []).filter(a =>
+          !a.soloStaff && (!busId || !a.buses?.length || a.buses.includes(busId))
+        );
         return (
           <div key={dia.id} className={`portal-dia-card${esHoy ? ' hoy' : ''}`}>
             <button className="portal-dia-header" onClick={() => toggle(dia.id)}>
