@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   suscribirAgencias, suscribirTodosOperativos, eliminarAgencia,
+  suscribirAgenciaUsers, crearAgenciaUser, actualizarAgenciaUser, eliminarAgenciaUser,
 } from '../../firebase/egresadosService';
 import AgenciaForm from '../egresados/AgenciaForm';
 import OperativoForm from '../egresados/OperativoForm';
@@ -176,6 +177,7 @@ function AgenciasLista({ agencias, operativos, onAbrir }) {
 function AgenciaDetalle({ agencia, operativos, onVolver, onAbrirOperativo }) {
   const [editar, setEditar] = useState(false);
   const [nuevoOp, setNuevoOp] = useState(false);
+  const [tab, setTab] = useState('operativos');
   const [error, setError] = useState('');
 
   const ordenados = [...operativos].sort((a, b) => String(b.fechaInicio || '').localeCompare(String(a.fechaInicio || '')));
@@ -221,30 +223,53 @@ function AgenciaDetalle({ agencia, operativos, onVolver, onAbrirOperativo }) {
         </div>
       </div>
 
-      <div className="eg-section-title" style={{ fontSize: 15, marginTop: 8 }}>Operativos ({operativos.length})</div>
-      {ordenados.length === 0 ? (
-        <div className="eg-section">
-          <Vacio icono="🚌">
-            Esta agencia no tiene operativos todavía.<br />
-            <button className="eg-btn eg-btn-primary" style={{ marginTop: 14 }} onClick={() => setNuevoOp(true)}>+ Crear operativo</button>
-          </Vacio>
-        </div>
-      ) : (
-        <div className="eg-grid">
-          {ordenados.map(o => (
-            <div key={o.id} className="eg-card eg-card-click" onClick={() => onAbrirOperativo(o.id)}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'flex-start' }}>
-                <div className="eg-card-title">{o.nombre}</div>
-                <EstadoBadge estado={o.estado} />
-              </div>
-              <div className="eg-card-meta">
-                {o.destino && <>📍 {o.destino}<br /></>}
-                📅 {fechaCorta(o.fechaInicio)} → {fechaCorta(o.fechaFin)}
-                {o.salida?.lugar && <><br />🚏 Sale de {o.salida.lugar}{o.salida.hora ? ` · ${o.salida.hora} h` : ''}</>}
-              </div>
+      {/* Tabs: Operativos / Usuarios */}
+      <div className="eg-tabs" style={{ marginBottom: 16 }}>
+        {[
+          { id: 'operativos', label: `🚌 Operativos (${operativos.length})` },
+          { id: 'usuarios', label: '👥 Usuarios del portal' },
+        ].map(t => (
+          <button
+            key={t.id}
+            className={`eg-tab${tab === t.id ? ' eg-tab-active' : ''}`}
+            onClick={() => setTab(t.id)}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'operativos' && (
+        <>
+          {ordenados.length === 0 ? (
+            <div className="eg-section">
+              <Vacio icono="🚌">
+                Esta agencia no tiene operativos todavía.<br />
+                <button className="eg-btn eg-btn-primary" style={{ marginTop: 14 }} onClick={() => setNuevoOp(true)}>+ Crear operativo</button>
+              </Vacio>
             </div>
-          ))}
-        </div>
+          ) : (
+            <div className="eg-grid">
+              {ordenados.map(o => (
+                <div key={o.id} className="eg-card eg-card-click" onClick={() => onAbrirOperativo(o.id)}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'flex-start' }}>
+                    <div className="eg-card-title">{o.nombre}</div>
+                    <EstadoBadge estado={o.estado} />
+                  </div>
+                  <div className="eg-card-meta">
+                    {o.destino && <>📍 {o.destino}<br /></>}
+                    📅 {fechaCorta(o.fechaInicio)} → {fechaCorta(o.fechaFin)}
+                    {o.salida?.lugar && <><br />🚏 Sale de {o.salida.lugar}{o.salida.hora ? ` · ${o.salida.hora} h` : ''}</>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+
+      {tab === 'usuarios' && (
+        <AgenciaUsuarios agenciaId={agencia.id} />
       )}
 
       <div style={{ marginTop: 28, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
@@ -255,5 +280,157 @@ function AgenciaDetalle({ agencia, operativos, onVolver, onAbrirOperativo }) {
       {editar && <AgenciaForm agencia={agencia} onClose={() => setEditar(false)} />}
       {nuevoOp && <OperativoForm agencia={agencia} onClose={() => setNuevoOp(false)} onCreado={onAbrirOperativo} />}
     </>
+  );
+}
+
+// ---------------- Gestión de usuarios de agencia ----------------
+function AgenciaUsuarios({ agenciaId }) {
+  const [usuarios, setUsuarios] = useState([]);
+  const [cargando, setCargando] = useState(true);
+  const [mostrarForm, setMostrarForm] = useState(false);
+  const [nuevoEmail, setNuevoEmail] = useState('');
+  const [nuevoNombre, setNuevoNombre] = useState('');
+  const [guardando, setGuardando] = useState(false);
+  const [error, setError] = useState('');
+  const [ok, setOk] = useState('');
+
+  useEffect(() => {
+    const unsub = suscribirAgenciaUsers(
+      agenciaId,
+      lista => { setUsuarios(lista); setCargando(false); },
+      err => { console.error(err); setCargando(false); },
+    );
+    return unsub;
+  }, [agenciaId]);
+
+  async function agregarUsuario(e) {
+    e.preventDefault();
+    const email = nuevoEmail.trim().toLowerCase();
+    const nombre = nuevoNombre.trim();
+    if (!email.includes('@')) { setError('Email inválido.'); return; }
+    if (nombre.length < 3) { setError('Ingresá un nombre.'); return; }
+    setError('');
+    setGuardando(true);
+    try {
+      await crearAgenciaUser(email, agenciaId, nombre);
+      setOk(`✅ ${email} agregado.`);
+      setNuevoEmail('');
+      setNuevoNombre('');
+      setMostrarForm(false);
+      setTimeout(() => setOk(''), 4000);
+    } catch (err) {
+      setError(err.message || 'No se pudo agregar el usuario.');
+    } finally {
+      setGuardando(false);
+    }
+  }
+
+  async function toggleActivo(u) {
+    try {
+      await actualizarAgenciaUser(u.id, { activa: !u.activa });
+    } catch (err) {
+      setError(err.message || 'No se pudo actualizar.');
+    }
+  }
+
+  async function borrarUsuario(u) {
+    if (!window.confirm(`¿Eliminar el acceso de ${u.id}?`)) return;
+    try {
+      await eliminarAgenciaUser(u.id);
+    } catch (err) {
+      setError(err.message || 'No se pudo eliminar.');
+    }
+  }
+
+  if (cargando) return <div style={{ color: '#9090B0', fontSize: 13 }}>Cargando usuarios...</div>;
+
+  return (
+    <div className="eg-section">
+      <div className="eg-section-title">
+        Usuarios del portal de agencia
+        <button className="eg-btn eg-btn-primary eg-btn-sm" onClick={() => { setMostrarForm(v => !v); setError(''); }}>
+          {mostrarForm ? 'Cancelar' : '+ Agregar usuario'}
+        </button>
+      </div>
+
+      <div style={{ fontSize: 12, color: '#9090B0', marginBottom: 14, lineHeight: 1.55 }}>
+        Los usuarios aquí listados pueden ingresar a <strong>surcante.ar/agencia</strong> con su cuenta de Google para ver los operativos de esta agencia.
+      </div>
+
+      {ok && <div className="eg-alert eg-alert-ok" style={{ background: '#E6FBF5', color: '#007A5A', border: '1px solid #B7EBD9', borderRadius: 8, padding: '8px 12px', fontSize: 13, marginBottom: 10 }}>{ok}</div>}
+      {error && <div className="eg-alert eg-alert-error">{error}</div>}
+
+      {mostrarForm && (
+        <form onSubmit={agregarUsuario} style={{ background: '#F8F6FE', borderRadius: 10, padding: 14, marginBottom: 14 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
+            <div>
+              <div className="eg-label">Email de Google</div>
+              <input
+                className="eg-input"
+                type="email"
+                placeholder="nombre@ejemplo.com"
+                value={nuevoEmail}
+                onChange={e => setNuevoEmail(e.target.value)}
+                required
+              />
+            </div>
+            <div>
+              <div className="eg-label">Nombre y apellido</div>
+              <input
+                className="eg-input"
+                type="text"
+                placeholder="ej: María López"
+                value={nuevoNombre}
+                onChange={e => setNuevoNombre(e.target.value)}
+                required
+              />
+            </div>
+          </div>
+          <button type="submit" className="eg-btn eg-btn-primary" disabled={guardando}>
+            {guardando ? 'Guardando...' : 'Agregar usuario'}
+          </button>
+        </form>
+      )}
+
+      {usuarios.length === 0 ? (
+        <div style={{ color: '#9090B0', fontSize: 13, textAlign: 'center', padding: '12px 0' }}>
+          No hay usuarios configurados. Agregá uno para que la agencia pueda ver sus operativos.
+        </div>
+      ) : (
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+          <thead>
+            <tr>
+              <th style={{ textAlign: 'left', fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.06em', color: '#9090B0', padding: '0 6px 8px 0' }}>Email</th>
+              <th style={{ textAlign: 'left', fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.06em', color: '#9090B0', padding: '0 6px 8px' }}>Nombre</th>
+              <th style={{ textAlign: 'left', fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.06em', color: '#9090B0', padding: '0 6px 8px' }}>Estado</th>
+              <th />
+            </tr>
+          </thead>
+          <tbody>
+            {usuarios.map(u => (
+              <tr key={u.id} style={{ borderTop: '1px solid #F4F2FA' }}>
+                <td style={{ padding: '8px 6px 8px 0', fontFamily: 'monospace', fontSize: 12 }}>{u.id}</td>
+                <td style={{ padding: '8px 6px' }}>{u.nombre || '—'}</td>
+                <td style={{ padding: '8px 6px' }}>
+                  <span className={`eg-chip ${u.activa ? 'eg-chip-green' : 'eg-chip-red'}`}>
+                    {u.activa ? 'Activo' : 'Desactivado'}
+                  </span>
+                </td>
+                <td style={{ padding: '8px 0', display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+                  <button
+                    className="eg-btn eg-btn-ghost eg-btn-sm"
+                    onClick={() => toggleActivo(u)}
+                    title={u.activa ? 'Desactivar acceso' : 'Reactivar acceso'}
+                  >
+                    {u.activa ? '🔒 Desactivar' : '🔓 Reactivar'}
+                  </button>
+                  <button className="eg-btn eg-btn-danger eg-btn-sm" onClick={() => borrarUsuario(u)}>✕</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
   );
 }
