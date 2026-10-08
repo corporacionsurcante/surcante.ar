@@ -81,9 +81,15 @@ export default function TabPasajeros({ opId, op, buses, staff, pasajeros, acceso
   }
 
   async function borrarMasivo() {
-    await eliminarPasajerosMasivo(opId, [...sel], accesos);
-    mostrar(`🗑️ ${sel.size} pasajeros eliminados`);
-    setSel(new Set());
+    const cantidad = sel.size;
+    try {
+      await eliminarPasajerosMasivo(opId, [...sel], accesos);
+      mostrar(`🗑️ ${cantidad} pasajeros eliminados`);
+      setSel(new Set());
+    } catch (e) {
+      console.error(e);
+      mostrar('No se pudieron eliminar los pasajeros');
+    }
   }
 
   function exportar() {

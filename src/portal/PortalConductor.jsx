@@ -1,15 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { doc, getDoc, getDocs, setDoc, collection, onSnapshot, query, where, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase/config';
-import { colorBus, labelFecha, hoyISO } from '../admin/egresados/utils';
-
-function diaActivoDeItinerario(itinerario, hoy) {
-  if (!itinerario.length) return null;
-  const actual = itinerario.find(d => d.id === hoy);
-  if (actual) return actual;
-  const futuros = itinerario.filter(d => d.id > hoy);
-  return futuros.length ? futuros[0] : itinerario[itinerario.length - 1];
-}
+import { colorBus, labelFecha, hoyISO, diaActivoDeItinerario } from '../admin/egresados/utils';
 
 export default function PortalConductor({ sesion }) {
   const { opId, refId, busId } = sesion;
