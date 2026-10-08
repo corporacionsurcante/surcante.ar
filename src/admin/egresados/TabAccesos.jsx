@@ -155,7 +155,12 @@ export default function TabAccesos({ opId, op, buses, staff, pasajeros, accesos 
   }
 
   async function generarUno(p) {
-    await generarAccesos(opId, [{ rol: p.rol, refId: p.refId, nombre: nombreCompleto(p) }]);
+    try {
+      await generarAccesos(opId, [{ rol: p.rol, refId: p.refId, nombre: nombreCompleto(p) }]);
+    } catch (e) {
+      console.error(e);
+      mostrar('No se pudo generar el link');
+    }
   }
 
   async function copiar(p) {

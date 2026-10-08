@@ -1,16 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { doc, getDoc, getDocs, collection, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase/config';
-import { colorBus, labelFecha, hoyISO, nombreCompleto, linkWhatsApp } from '../admin/egresados/utils';
-
-// Devuelve el día del itinerario más relevante: hoy si existe, el próximo día del viaje, o el último.
-function diaActivoDeItinerario(itinerario, hoy) {
-  if (!itinerario.length) return null;
-  const actual = itinerario.find(d => d.id === hoy);
-  if (actual) return actual;
-  const futuros = itinerario.filter(d => d.id > hoy);
-  return futuros.length ? futuros[0] : itinerario[itinerario.length - 1];
-}
+import { colorBus, labelFecha, hoyISO, nombreCompleto, linkWhatsApp, diaActivoDeItinerario } from '../admin/egresados/utils';
 
 const QR_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
 
