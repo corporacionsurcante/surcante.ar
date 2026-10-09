@@ -296,3 +296,31 @@ export async function importarMaestro(opId, datos, { buses: busesExistentes = []
     await guardarEnSub(opId, 'itinerario', fecha, { actividades: acts, resumen, notasConductores, notasCoordinadores });
   }
 }
+
+// ---------------- USUARIOS DE AGENCIA ----------------
+// agencia_users/{email}: { agenciaId, nombre, activa, creadoEn }
+
+export function suscribirAgenciaUsers(agenciaId, cb, onError) {
+  return onSnapshot(
+    query(collection(db, 'agencia_users'), where('agenciaId', '==', agenciaId), orderBy('creadoEn', 'desc')),
+    snap => cb(mapDocs(snap)),
+    onError,
+  );
+}
+
+export function crearAgenciaUser(email, agenciaId, nombre) {
+  return setDoc(doc(db, 'agencia_users', email.trim().toLowerCase()), {
+    agenciaId,
+    nombre: nombre.trim(),
+    activa: true,
+    creadoEn: serverTimestamp(),
+  });
+}
+
+export function actualizarAgenciaUser(email, data) {
+  return updateDoc(doc(db, 'agencia_users', email.trim().toLowerCase()), { ...data, actualizadoEn: serverTimestamp() });
+}
+
+export function eliminarAgenciaUser(email) {
+  return deleteDoc(doc(db, 'agencia_users', email.trim().toLowerCase()));
+}
