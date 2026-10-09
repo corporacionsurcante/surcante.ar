@@ -354,7 +354,7 @@ function AgenciaUsuarios({ agenciaId }) {
       </div>
 
       <div style={{ fontSize: 12, color: '#9090B0', marginBottom: 14, lineHeight: 1.55 }}>
-        Los usuarios aquí listados pueden ingresar a <strong>surcante.ar/agencia</strong> con su cuenta de Google para ver los operativos de esta agencia.
+        Los usuarios aquí listados pueden ingresar a <strong>surcante.com/agencia</strong> con su cuenta de Google para ver los operativos de esta agencia.
       </div>
 
       {ok && <div className="eg-alert eg-alert-ok" style={{ background: '#E6FBF5', color: '#007A5A', border: '1px solid #B7EBD9', borderRadius: 8, padding: '8px 12px', fontSize: 13, marginBottom: 10 }}>{ok}</div>}

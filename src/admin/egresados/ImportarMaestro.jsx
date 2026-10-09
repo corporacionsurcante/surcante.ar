@@ -251,6 +251,10 @@ export default function ImportarMaestro({ opId, buses, staff, pasajeros, onClose
 
   async function abrirArchivo(file) {
     if (!file) return;
+    if (file.size > 10 * 1024 * 1024) {
+      setError('El archivo supera 10 MB. Reducí el tamaño antes de importar.');
+      return;
+    }
     setCargando(true);
     setError('');
     try {

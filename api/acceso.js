@@ -15,9 +15,9 @@ function initAdmin() {
 
 export default async function handler(req, res) {
   const origin = req.headers.origin || '';
-  const allowed = /^https?:\/\/(localhost|surcante\.ar)(:\d+)?$/.test(origin)
+  const allowed = /^https?:\/\/(localhost|surcante\.com)(:\d+)?$/.test(origin)
     ? origin
-    : 'https://surcante.ar';
+    : 'https://surcante.com';
   res.setHeader('Access-Control-Allow-Origin', allowed);
   res.setHeader('Vary', 'Origin');
   if (req.method === 'OPTIONS') {
@@ -29,9 +29,14 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Método no permitido' });
   }
 
-  const body = typeof req.body === 'string'
-    ? JSON.parse(req.body || '{}')
-    : (req.body || {});
+  let body;
+  try {
+    body = typeof req.body === 'string'
+      ? JSON.parse(req.body || '{}')
+      : (req.body || {});
+  } catch (_) {
+    return res.status(400).json({ error: 'Body inválido' });
+  }
   const token = body.token;
 
   if (!token || typeof token !== 'string' || token.length < 10 || token.length > 64) {

@@ -1,91 +1,121 @@
-/* Portal de viaje — pasajeros, conductores y coordinadores (mobile-first) */
+/* Portal de viaje — diseño iOS (mobile-first) */
+
+:root {
+  --p-accent:     #7B2FBE;
+  --p-accent-rgb: 123, 47, 190;
+  --p-bg:         #F2F2F7;
+  --p-card:       #FFFFFF;
+  --p-text:       #000000;
+  --p-text-2:     rgba(60, 60, 67, 0.72);
+  --p-text-3:     rgba(60, 60, 67, 0.48);
+  --p-sep:        rgba(60, 60, 67, 0.12);
+  --p-tab-h:      49px;
+  --p-green:      #34C759;
+  --p-red:        #FF3B30;
+}
 
 .portal-wrap {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: #f4f2fa;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background: var(--p-bg);
+  font-family: -apple-system, 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* ─── Header ─── */
+/* ─── Nav Bar ─── */
 .portal-header {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 14px 16px;
-  background: linear-gradient(135deg, #1a1a2e, #7b2fbe);
-  color: #fff;
+  padding: 10px 16px;
+  padding-top: calc(10px + env(safe-area-inset-top));
+  background: rgba(249, 249, 249, 0.92);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border-bottom: 0.5px solid rgba(60, 60, 67, 0.22);
   position: sticky;
   top: 0;
-  z-index: 10;
+  z-index: 100;
 }
 
 .portal-header-logo {
-  font-size: 26px;
+  font-size: 28px;
   line-height: 1;
   flex-shrink: 0;
 }
 
 .portal-header-title {
-  font-size: 15px;
-  font-weight: 800;
+  font-size: 17px;
+  font-weight: 600;
   line-height: 1.2;
+  color: var(--p-text);
+  letter-spacing: -0.01em;
 }
 
 .portal-header-sub {
-  font-size: 11px;
-  opacity: 0.7;
+  font-size: 12px;
+  color: var(--p-text-3);
   margin-top: 2px;
 }
 
 .portal-bus-badge {
   margin-left: auto;
-  padding: 4px 10px;
-  border-radius: 20px;
+  padding: 4px 13px;
+  border-radius: 100px;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   color: #fff;
   flex-shrink: 0;
 }
 
-/* ─── Tabs ─── */
+/* ─── Tab Bar (iOS bottom) ─── */
 .portal-tabs {
   display: flex;
-  background: #fff;
-  border-bottom: 1.5px solid #e8e0f0;
-  overflow-x: auto;
-  scrollbar-width: none;
-  position: sticky;
-  top: 58px;
-  z-index: 9;
+  background: rgba(249, 249, 249, 0.94);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border-top: 0.5px solid rgba(60, 60, 67, 0.2);
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  padding-bottom: env(safe-area-inset-bottom);
 }
 .portal-tabs::-webkit-scrollbar { display: none; }
 
 .portal-tab {
   flex: 1;
-  min-width: 72px;
-  padding: 10px 6px;
+  min-height: var(--p-tab-h);
+  padding: 6px 4px;
   font-size: 10px;
-  font-weight: 600;
-  color: #7070a0;
+  font-weight: 500;
+  color: var(--p-text-3);
   background: none;
   border: none;
-  border-bottom: 2px solid transparent;
   cursor: pointer;
   white-space: nowrap;
-  transition: color .12s, border-color .12s;
   font-family: inherit;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 3px;
+  transition: color 0.12s;
+  -webkit-tap-highlight-color: transparent;
+  letter-spacing: 0;
 }
 .portal-tab.activo {
-  color: #7b2fbe;
-  border-bottom-color: #7b2fbe;
+  color: var(--p-accent);
+  font-weight: 600;
 }
 
 /* ─── Main ─── */
 .portal-main {
   flex: 1;
-  padding: 12px 14px 40px;
+  padding: 16px 16px calc(var(--p-tab-h) + env(safe-area-inset-bottom) + 20px);
   max-width: 580px;
   width: 100%;
   margin: 0 auto;
@@ -95,147 +125,149 @@
 .portal-section {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
 
 /* ─── Cards ─── */
 .portal-card {
-  background: #fff;
-  border-radius: 12px;
-  padding: 14px;
-  border: 1px solid #e8e0f0;
+  background: var(--p-card);
+  border-radius: 13px;
+  padding: 16px;
+  box-shadow: 0 1px 0 rgba(60, 60, 67, 0.1), 0 2px 10px rgba(0, 0, 0, 0.05);
 }
 
 .portal-card-header {
   font-size: 12px;
   font-weight: 700;
-  color: #7b2fbe;
+  color: var(--p-accent);
   text-transform: uppercase;
-  letter-spacing: .07em;
-  padding: 2px 0 10px;
+  letter-spacing: 0.06em;
+  padding: 0 0 10px;
 }
 
 .portal-card-label {
-  font-size: 10px;
-  font-weight: 700;
-  color: #9090b0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--p-text-3);
   text-transform: uppercase;
-  letter-spacing: .08em;
+  letter-spacing: 0.07em;
   margin-bottom: 8px;
+  padding-left: 2px;
 }
 
 /* ─── Actividades ─── */
 .portal-actividad {
   display: flex;
-  gap: 12px;
-  padding: 10px 14px;
-  background: #fff;
-  border-radius: 10px;
-  border: 1px solid #e8e0f0;
+  gap: 14px;
+  padding: 12px 16px;
+  background: var(--p-card);
+  border-radius: 13px;
   align-items: flex-start;
+  box-shadow: 0 1px 0 rgba(60, 60, 67, 0.1), 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .portal-act-hora {
-  font-size: 11px;
-  font-weight: 800;
-  color: #7b2fbe;
-  min-width: 40px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--p-accent);
+  min-width: 44px;
   padding-top: 2px;
   flex-shrink: 0;
 }
 
 .portal-act-titulo {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
-  color: #1a1a2e;
+  color: var(--p-text);
+  letter-spacing: -0.01em;
 }
 
 .portal-act-nota {
-  font-size: 12px;
-  color: #555;
+  font-size: 13px;
+  color: var(--p-text-2);
   margin-top: 4px;
-  line-height: 1.55;
+  line-height: 1.5;
 }
 
-.nota-conductor { color: #1565c0; }
-.nota-coord { color: #00796b; }
+.nota-conductor { color: #1255B0; }
+.nota-coord { color: #007A5A; }
 
 /* ─── Bus info ─── */
 .portal-bus-nombre {
-  font-size: 20px;
-  font-weight: 800;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--p-text);
   margin-bottom: 4px;
+  letter-spacing: -0.02em;
 }
 
 .portal-bus-meta {
-  font-size: 12px;
-  color: #888;
+  font-size: 13px;
+  color: var(--p-text-3);
+  margin-top: 3px;
 }
 
 .portal-chip {
   display: inline-flex;
   align-items: center;
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 700;
+  padding: 5px 14px;
+  border-radius: 100px;
+  font-size: 13px;
+  font-weight: 600;
   border: 1.5px solid;
-  width: fit-content;
 }
 
 /* ─── Contacto ─── */
 .portal-contact-nombre {
-  font-size: 15px;
-  font-weight: 700;
-  color: #1a1a2e;
-  margin-bottom: 6px;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--p-text);
+  margin-bottom: 8px;
+  letter-spacing: -0.01em;
 }
 
 .portal-contact-tel {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  font-size: 13px;
-  color: #25d366;
+  gap: 6px;
+  font-size: 15px;
+  color: #25D366;
   text-decoration: none;
-  font-weight: 600;
+  font-weight: 500;
 }
 
-/* ─── Info personal (pasajero) ─── */
+/* ─── Info personal ─── */
 .portal-dato-fila {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  padding: 7px 0;
-  border-bottom: 1px solid #f0ecf8;
-  gap: 12px;
+  align-items: baseline;
+  padding: 11px 0;
+  border-bottom: 0.5px solid var(--p-sep);
+  gap: 16px;
 }
 .portal-dato-fila:last-child { border-bottom: none; }
 
 .portal-dato-label {
-  font-size: 10px;
-  font-weight: 700;
-  color: #9090b0;
-  text-transform: uppercase;
-  letter-spacing: .04em;
+  font-size: 15px;
+  font-weight: 400;
+  color: var(--p-text);
   flex-shrink: 0;
-  min-width: 110px;
 }
 
 .portal-dato-valor {
-  font-size: 13px;
-  font-weight: 600;
-  color: #1a1a2e;
+  font-size: 15px;
+  font-weight: 400;
+  color: var(--p-text-3);
   text-align: right;
 }
 
 .portal-info-general {
-  background: #f9f6ff;
-  border-color: #e0d4f7;
+  background: rgba(var(--p-accent-rgb), 0.06);
+  box-shadow: none;
 }
 .portal-info-general p {
-  font-size: 13px;
-  color: #444;
+  font-size: 14px;
+  color: var(--p-text-2);
   line-height: 1.6;
   margin: 0;
   white-space: pre-wrap;
@@ -243,164 +275,184 @@
 
 /* ─── Agenda días ─── */
 .portal-dia-card {
-  background: #fff;
-  border-radius: 12px;
-  border: 1px solid #e8e0f0;
+  background: var(--p-card);
+  border-radius: 13px;
   overflow: hidden;
+  box-shadow: 0 1px 0 rgba(60, 60, 67, 0.1), 0 2px 10px rgba(0, 0, 0, 0.05);
 }
-.portal-dia-card.hoy { border-color: #7b2fbe; }
+.portal-dia-card.hoy {
+  box-shadow: 0 0 0 2px var(--p-accent), 0 4px 16px rgba(var(--p-accent-rgb), 0.18);
+}
 
 .portal-dia-header {
   width: 100%;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 14px;
-  font-size: 13px;
+  padding: 14px 16px;
+  font-size: 15px;
   font-weight: 600;
-  color: #1a1a2e;
+  color: var(--p-text);
   background: none;
   border: none;
   cursor: pointer;
   text-align: left;
   font-family: inherit;
+  -webkit-tap-highlight-color: transparent;
+  letter-spacing: -0.01em;
 }
-.portal-dia-card.hoy .portal-dia-header { color: #7b2fbe; }
+.portal-dia-card.hoy .portal-dia-header { color: var(--p-accent); }
 
 .portal-dia-toggle {
-  font-size: 9px;
-  color: #b0b0c8;
+  font-size: 11px;
+  color: var(--p-text-3);
+  font-weight: 400;
 }
 
 .portal-dia-body {
-  border-top: 1px solid #f0ecf8;
-  padding: 8px 14px 12px;
+  border-top: 0.5px solid var(--p-sep);
+  padding: 10px 16px 14px;
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
 .portal-empty-sm {
-  font-size: 12px;
-  color: #b0b0c8;
-  padding: 6px 0;
+  font-size: 13px;
+  color: var(--p-text-3);
+  padding: 8px 0;
 }
 
-/* ─── Servicio GPS (conductor) ─── */
+/* ─── Servicio GPS ─── */
 .portal-servicio-estado {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #9090b0;
-  margin-bottom: 12px;
+  gap: 10px;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--p-text-3);
+  margin-bottom: 14px;
+  transition: color 0.3s;
 }
-.portal-servicio-estado.activo { color: #00a07a; }
+.portal-servicio-estado.activo { color: var(--p-green); }
 
 .portal-servicio-dot {
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: #ccc;
+  background: var(--p-text-3);
   flex-shrink: 0;
+  transition: background 0.3s, box-shadow 0.3s;
 }
 .portal-servicio-estado.activo .portal-servicio-dot {
-  background: #00c896;
-  box-shadow: 0 0 0 4px #00c89635;
-  animation: portal-pulse 1.8s ease-in-out infinite;
+  background: var(--p-green);
+  box-shadow: 0 0 0 5px rgba(52, 199, 89, 0.2);
+  animation: portal-pulse 2s ease-in-out infinite;
 }
 
 @keyframes portal-pulse {
-  0%, 100% { box-shadow: 0 0 0 4px #00c89635; }
-  50% { box-shadow: 0 0 0 8px #00c89620; }
+  0%, 100% { box-shadow: 0 0 0 5px rgba(52, 199, 89, 0.2); }
+  50%       { box-shadow: 0 0 0 9px rgba(52, 199, 89, 0.08); }
 }
 
 .portal-gps-info {
-  font-size: 11px;
-  color: #b0b0c8;
-  font-family: monospace;
-  margin-bottom: 10px;
+  font-size: 12px;
+  color: var(--p-text-3);
+  font-family: 'Menlo', 'SF Mono', monospace;
+  margin-bottom: 12px;
 }
 
 .portal-info-text {
-  font-size: 12px;
-  color: #a0a0c0;
-  line-height: 1.5;
-  padding: 0 2px;
+  font-size: 13px;
+  color: var(--p-text-3);
+  line-height: 1.55;
 }
 
 /* ─── Botones ─── */
 .portal-btn-primary {
   width: 100%;
-  padding: 15px;
-  background: #7b2fbe;
+  padding: 16px;
+  background: var(--p-accent);
   color: #fff;
   border: none;
-  border-radius: 12px;
-  font-size: 15px;
-  font-weight: 700;
+  border-radius: 14px;
+  font-size: 17px;
+  font-weight: 600;
   cursor: pointer;
   font-family: inherit;
-  transition: opacity .12s;
+  letter-spacing: -0.01em;
+  transition: transform 0.1s ease, opacity 0.1s ease;
+  -webkit-tap-highlight-color: transparent;
 }
-.portal-btn-primary:disabled { opacity: .4; cursor: not-allowed; }
-.portal-btn-primary:not(:disabled):active { opacity: .85; }
+.portal-btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+.portal-btn-primary:not(:disabled):active { transform: scale(0.97); opacity: 0.88; }
 
-.portal-btn-iniciar { background: #00a07a; }
+.portal-btn-iniciar { background: var(--p-green); }
+.portal-btn-iniciar:active { background: #28A745; }
 
 .portal-btn-danger {
   width: 100%;
-  padding: 14px;
-  background: #cf1322;
+  padding: 16px;
+  background: var(--p-red);
   color: #fff;
   border: none;
-  border-radius: 12px;
-  font-size: 15px;
-  font-weight: 700;
+  border-radius: 14px;
+  font-size: 17px;
+  font-weight: 600;
   cursor: pointer;
   font-family: inherit;
+  letter-spacing: -0.01em;
+  transition: transform 0.1s ease;
+  -webkit-tap-highlight-color: transparent;
 }
+.portal-btn-danger:active { transform: scale(0.97); }
 
 .portal-btn-secondary {
   width: 100%;
-  padding: 12px;
-  background: #f4f2fa;
-  color: #7b2fbe;
-  border: 1.5px solid #d0c0ee;
-  border-radius: 12px;
-  font-size: 14px;
-  font-weight: 700;
+  padding: 14px;
+  background: rgba(var(--p-accent-rgb), 0.08);
+  color: var(--p-accent);
+  border: none;
+  border-radius: 14px;
+  font-size: 15px;
+  font-weight: 600;
   cursor: pointer;
   font-family: inherit;
+  transition: background 0.15s;
+  -webkit-tap-highlight-color: transparent;
 }
+.portal-btn-secondary:active { background: rgba(var(--p-accent-rgb), 0.14); }
 
-/* ─── Lista de pasajeros ─── */
+/* ─── Búsqueda ─── */
 .portal-busqueda {
   width: 100%;
-  border: 1.5px solid #e0d4f7;
-  border-radius: 10px;
-  padding: 10px 14px;
-  font-size: 14px;
+  border: none;
+  border-radius: 12px;
+  padding: 11px 16px;
+  font-size: 15px;
   font-family: inherit;
   outline: none;
-  background: #fff;
+  background: rgba(118, 118, 128, 0.12);
+  color: var(--p-text);
   box-sizing: border-box;
 }
-.portal-busqueda:focus { border-color: #7b2fbe; }
+.portal-busqueda::placeholder { color: var(--p-text-3); }
+.portal-busqueda:focus { background: rgba(118, 118, 128, 0.16); }
 
+/* ─── Lista pasajeros ─── */
 .portal-pax-row {
-  background: #fff;
-  border: 1px solid #e8e0f0;
-  border-radius: 10px;
-  padding: 10px 14px;
+  background: var(--p-card);
+  border-radius: 13px;
+  padding: 12px 16px;
+  box-shadow: 0 1px 0 rgba(60, 60, 67, 0.1);
 }
 
 .portal-pax-nombre {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
-  color: #1a1a2e;
+  color: var(--p-text);
   margin-bottom: 4px;
+  letter-spacing: -0.01em;
 }
 
 .portal-pax-datos {
@@ -409,9 +461,9 @@
   gap: 5px;
 }
 .portal-pax-datos span {
-  font-size: 11px;
-  color: #666;
-  background: #f4f2fa;
+  font-size: 12px;
+  color: var(--p-text-3);
+  background: rgba(118, 118, 128, 0.1);
   border-radius: 6px;
   padding: 2px 8px;
 }
@@ -419,7 +471,7 @@
 /* ─── Escáner QR ─── */
 .portal-qr-wrap {
   position: relative;
-  border-radius: 12px;
+  border-radius: 16px;
   overflow: hidden;
   background: #000;
 }
@@ -427,7 +479,7 @@
 .portal-qr-video {
   width: 100%;
   display: block;
-  max-height: 280px;
+  max-height: 300px;
   object-fit: cover;
 }
 
@@ -436,51 +488,47 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 160px;
-  height: 160px;
-  border: 3px solid rgba(123, 47, 190, .8);
-  border-radius: 12px;
+  width: 170px;
+  height: 170px;
+  border: 3px solid rgba(255, 255, 255, 0.9);
+  border-radius: 16px;
   pointer-events: none;
-  box-shadow: 0 0 0 3000px rgba(0,0,0,.3);
+  box-shadow: 0 0 0 3000px rgba(0, 0, 0, 0.5);
 }
 
-.portal-qr-cancel {
-  margin-top: 8px;
-  border-radius: 0 0 12px 12px;
-}
-
+.portal-qr-cancel { margin-top: 8px; }
 .portal-qr-resultado { margin-top: 4px; }
-.portal-qr-resultado.ok  { border-color: #00c896; background: #e8fbf5; }
-.portal-qr-resultado.nok { border-color: #cf1322; background: #fff1f0; }
-.portal-qr-encontrado    { font-size: 13px; font-weight: 700; color: #00a07a; margin-bottom: 8px; }
-.portal-qr-noencontrado  { font-size: 13px; font-weight: 700; color: #cf1322; }
-.portal-qr-codigo        { font-size: 11px; color: #b0b0c8; font-family: monospace; margin-bottom: 8px; }
+.portal-qr-resultado.ok  { box-shadow: 0 0 0 2px var(--p-green), 0 4px 14px rgba(52, 199, 89, 0.14); }
+.portal-qr-resultado.nok { box-shadow: 0 0 0 2px var(--p-red),   0 4px 14px rgba(255, 59, 48, 0.14); }
+.portal-qr-encontrado    { font-size: 15px; font-weight: 600; color: var(--p-green); margin-bottom: 8px; }
+.portal-qr-noencontrado  { font-size: 15px; font-weight: 600; color: var(--p-red); }
+.portal-qr-codigo        { font-size: 12px; color: var(--p-text-3); font-family: monospace; margin-bottom: 8px; }
 
 /* ─── Avisos ─── */
 .portal-aviso-warning {
-  font-size: 12px;
-  color: #7a5200;
-  background: #fff8e6;
-  border: 1px solid #ffc53d;
-  border-radius: 8px;
-  padding: 8px 12px;
+  font-size: 13px;
+  color: #7A5200;
+  background: rgba(255, 196, 61, 0.12);
+  border: 1px solid rgba(255, 196, 61, 0.4);
+  border-radius: 10px;
+  padding: 10px 14px;
 }
 
 .portal-aviso-row {
-  background: #fff;
-  border: 1px solid #e8e0f0;
-  border-radius: 10px;
-  padding: 10px 14px;
-  border-left: 3px solid #7b2fbe;
+  background: var(--p-card);
+  border-radius: 13px;
+  padding: 12px 16px;
+  border-left: 3px solid var(--p-accent);
+  box-shadow: 0 1px 0 rgba(60, 60, 67, 0.1);
 }
 .portal-aviso-texto {
-  font-size: 13px;
-  color: #1a1a2e;
+  font-size: 15px;
+  color: var(--p-text);
   line-height: 1.5;
 }
 .portal-aviso-hora {
-  font-size: 11px;
-  color: #b0b0c8;
+  font-size: 12px;
+  color: var(--p-text-3);
   margin-top: 4px;
 }
 
@@ -491,20 +539,21 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  color: #b0b0c8;
-  font-size: 14px;
-  background: #f4f2fa;
-  font-family: 'Inter', system-ui, sans-serif;
+  gap: 14px;
+  color: var(--p-text-3);
+  font-size: 15px;
+  background: var(--p-bg);
+  font-family: -apple-system, 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
 .portal-spinner {
-  width: 34px;
-  height: 34px;
-  border: 3px solid #e0d4f7;
-  border-top-color: #7b2fbe;
+  width: 36px;
+  height: 36px;
+  border: 3px solid rgba(var(--p-accent-rgb), 0.15);
+  border-top-color: var(--p-accent);
   border-radius: 50%;
-  animation: portal-spin .7s linear infinite;
+  animation: portal-spin 0.65s linear infinite;
 }
 
 @keyframes portal-spin { to { transform: rotate(360deg); } }
@@ -514,49 +563,51 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #f4f2fa;
+  background: var(--p-bg);
   padding: 24px;
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: -apple-system, 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
 .portal-error-card {
-  background: #fff;
-  border-radius: 16px;
-  padding: 32px 24px;
+  background: var(--p-card);
+  border-radius: 22px;
+  padding: 40px 28px;
   text-align: center;
   max-width: 340px;
   width: 100%;
-  border: 1px solid #e8e0f0;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
 }
 
 .portal-error-icon {
-  font-size: 38px;
+  font-size: 48px;
   display: block;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
 }
 
 .portal-error-card h2 {
-  font-size: 18px;
-  font-weight: 800;
-  color: #1a1a2e;
-  margin: 0 0 8px;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--p-text);
+  margin: 0 0 10px;
+  letter-spacing: -0.02em;
 }
 
 .portal-error-card p {
-  font-size: 14px;
-  color: #555;
-  margin: 0 0 6px;
-  line-height: 1.5;
+  font-size: 15px;
+  color: var(--p-text-2);
+  margin: 0 0 8px;
+  line-height: 1.55;
 }
 
 .portal-error-hint {
-  font-size: 12px !important;
-  color: #b0b0c8 !important;
+  font-size: 13px !important;
+  color: var(--p-text-3) !important;
 }
 
 .portal-empty {
-  padding: 24px 16px;
+  padding: 40px 16px;
   text-align: center;
-  font-size: 13px;
-  color: #b0b0c8;
+  font-size: 15px;
+  color: var(--p-text-3);
 }

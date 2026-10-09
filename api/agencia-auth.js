@@ -11,8 +11,8 @@ function initAdmin() {
 
 export default async function handler(req, res) {
   const origin = req.headers.origin || '';
-  const allowed = /^https?:\/\/(localhost|surcante\.ar)(:\d+)?$/.test(origin)
-    ? origin : 'https://surcante.ar';
+  const allowed = /^https?:\/\/(localhost|surcante\.com)(:\d+)?$/.test(origin)
+    ? origin : 'https://surcante.com';
   res.setHeader('Access-Control-Allow-Origin', allowed);
   res.setHeader('Vary', 'Origin');
   if (req.method === 'OPTIONS') {
@@ -22,7 +22,12 @@ export default async function handler(req, res) {
   }
   if (req.method !== 'POST') return res.status(405).json({ error: 'Método no permitido' });
 
-  const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
+  let body;
+  try {
+    body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
+  } catch (_) {
+    return res.status(400).json({ error: 'Body inválido' });
+  }
   const { idToken } = body;
 
   if (!idToken || typeof idToken !== 'string') {
@@ -50,15 +55,22 @@ export default async function handler(req, res) {
     const { agenciaId, nombre = '' } = userData;
     if (!agenciaId) return res.status(400).json({ error: 'Configuración incorrecta.' });
 
+    let agenciaNombre = '';
+    try {
+      const agenciaSnap = await db.doc(`agencias/${agenciaId}`).get();
+      if (agenciaSnap.exists) agenciaNombre = agenciaSnap.data().nombre || '';
+    } catch (_) { /* continuar sin nombre de agencia */ }
+
     const claims = { rol: 'agencia', agenciaId };
     if (nombre) claims.nombre = nombre;
+    if (agenciaNombre) claims.agenciaNombre = agenciaNombre;
 
     const uid = `agencia_${email.toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
     const customToken = await admin.auth().createCustomToken(uid, claims);
 
     snap.ref.update({ ultimoAcceso: admin.firestore.FieldValue.serverTimestamp() }).catch(() => {});
 
-    return res.status(200).json({ customToken, agenciaId, nombre });
+    return res.status(200).json({ customToken, agenciaId, nombre, agenciaNombre });
   } catch (err) {
     console.error('[api/agencia-auth]', err.message);
     if (err.code === 'auth/argument-error' || err.code === 'auth/id-token-expired') {
