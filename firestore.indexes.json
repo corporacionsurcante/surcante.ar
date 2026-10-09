@@ -1,4 +1,21 @@
 {
-  "indexes": [],
+  "indexes": [
+    {
+      "collectionGroup": "agencia_users",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "agenciaId", "order": "ASCENDING" },
+        { "fieldPath": "creadoEn", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "operativos",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "agenciaId", "order": "ASCENDING" },
+        { "fieldPath": "fechaInicio", "order": "DESCENDING" }
+      ]
+    }
+  ],
   "fieldOverrides": []
 }

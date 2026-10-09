@@ -445,7 +445,7 @@ function TabItinerario({ itinerario }) {
             <div style={{ fontSize: 13, fontWeight: 800 }}>{formatFechaDia(dia.id)}</div>
             {dia.id === hoy && <span className="ag-chip ag-chip-green">Hoy</span>}
           </div>
-          {dia.descripcion && <div style={{ fontSize: 13, color: '#3A3A5A', lineHeight: 1.6 }}>{dia.descripcion}</div>}
+          {dia.resumen && <div style={{ fontSize: 13, color: '#3A3A5A', lineHeight: 1.6 }}>{dia.resumen}</div>}
           {dia.actividades?.length > 0 && (
             <ul style={{ margin: '8px 0 0 14px', fontSize: 12.5, color: '#5A5A7A', lineHeight: 1.7 }}>
               {dia.actividades.map((a, i) => <li key={i}>{a.hora ? `${a.hora} — ` : ''}{a.texto}</li>)}

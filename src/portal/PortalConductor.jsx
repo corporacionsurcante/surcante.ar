@@ -18,15 +18,17 @@ export default function PortalConductor({ sesion }) {
 
   useEffect(() => {
     getDoc(doc(db, 'operativos', opId))
-      .then(s => s.exists() && setOp({ id: s.id, ...s.data() }));
+      .then(s => s.exists() && setOp({ id: s.id, ...s.data() }))
+      .catch(e => setErrorFirestore(e.code || e.message));
     if (busId) {
       getDoc(doc(db, 'operativos', opId, 'buses', busId))
-        .then(s => s.exists() && setBus({ id: s.id, ...s.data() }));
+        .then(s => s.exists() && setBus({ id: s.id, ...s.data() }))
+        .catch(e => setErrorFirestore(e.code || e.message));
       const q = query(collection(db, 'operativos', opId, 'pasajeros'), where('busId', '==', busId));
       getDocs(q).then(snap =>
         setPasajeros(snap.docs.map(d => ({ id: d.id, ...d.data() }))
           .sort((a, b) => `${a.apellido} ${a.nombre}`.localeCompare(`${b.apellido} ${b.nombre}`, 'es')))
-      );
+      ).catch(e => setErrorFirestore(e.code || e.message));
     }
     const unsubs = [
       onSnapshot(

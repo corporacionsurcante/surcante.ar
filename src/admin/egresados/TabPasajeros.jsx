@@ -74,10 +74,15 @@ export default function TabPasajeros({ opId, op, buses, staff, pasajeros, acceso
   async function asignarMasivo(campo, valor) {
     if (!sel.size) return;
     setTrabajando(true);
-    await actualizarPasajerosMasivo(opId, [...sel].map(id => ({ id, data: { [campo]: valor || null } })));
-    setTrabajando(false);
-    mostrar(`✓ ${sel.size} pasajero${sel.size === 1 ? '' : 's'} actualizado${sel.size === 1 ? '' : 's'}`);
-    setSel(new Set());
+    try {
+      await actualizarPasajerosMasivo(opId, [...sel].map(id => ({ id, data: { [campo]: valor || null } })));
+      mostrar(`✓ ${sel.size} pasajero${sel.size === 1 ? '' : 's'} actualizado${sel.size === 1 ? '' : 's'}`);
+      setSel(new Set());
+    } catch (e) {
+      mostrar(`Error: ${e.message || 'No se pudo actualizar'}`);
+    } finally {
+      setTrabajando(false);
+    }
   }
 
   async function borrarMasivo() {
