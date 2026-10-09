@@ -11,8 +11,8 @@ function initAdmin() {
 
 export default async function handler(req, res) {
   const origin = req.headers.origin || '';
-  const allowed = /^https?:\/\/(localhost|surcante\.ar)(:\d+)?$/.test(origin)
-    ? origin : 'https://surcante.ar';
+  const allowed = /^https?:\/\/(localhost|surcante\.com)(:\d+)?$/.test(origin)
+    ? origin : 'https://surcante.com';
   res.setHeader('Access-Control-Allow-Origin', allowed);
   res.setHeader('Vary', 'Origin');
   if (req.method === 'OPTIONS') {

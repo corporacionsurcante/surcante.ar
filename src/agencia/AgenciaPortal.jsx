@@ -44,7 +44,7 @@ function LoginScreen({ onLoginOk, cargando, error }) {
           }
         </button>
         <div style={{ marginTop: 18, fontSize: 11, color: '#B0B0C8' }}>
-          surcante.ar — Sistema de gestión de egresados
+          surcante.com — Sistema de gestión de egresados
         </div>
       </div>
     </div>
