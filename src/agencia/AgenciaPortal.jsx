@@ -140,9 +140,7 @@ function Dashboard({ sesion, onLogout }) {
           <>
             {activos.length > 0 && (
               <>
-                <div className="ag-section-title" style={{ fontSize: 13, fontWeight: 800, marginBottom: 10, color: '#5A5A7A' }}>
-                  Activos y próximos
-                </div>
+                <div className="ag-group-label">Activos y próximos</div>
                 <div className="ag-grid" style={{ marginBottom: 24 }}>
                   {activos.map(o => (
                     <OperativoCard key={o.id} op={o} hoy={hoy} onClick={() => setVista(o)} />
@@ -152,9 +150,7 @@ function Dashboard({ sesion, onLogout }) {
             )}
             {pasados.length > 0 && (
               <>
-                <div className="ag-section-title" style={{ fontSize: 13, fontWeight: 800, marginBottom: 10, color: '#9090B0' }}>
-                  Finalizados / cancelados
-                </div>
+                <div className="ag-group-label">Finalizados / cancelados</div>
                 <div className="ag-grid">
                   {pasados.map(o => (
                     <OperativoCard key={o.id} op={o} hoy={hoy} onClick={() => setVista(o)} pasado />
@@ -259,7 +255,7 @@ function DetalleOperativo({ operativo: op, agenciaId, onVolver }) {
         </div>
 
         {/* Tabs */}
-        <div style={{ display: 'flex', gap: 6, marginBottom: 16, borderBottom: '1px solid #EDE8F8', paddingBottom: 6 }}>
+        <div className="ag-tabs-wrap">
           {[
             { id: 'buses', label: `🚌 Buses (${buses.length})` },
             { id: 'personal', label: `👤 Personal (${staff.length})` },
@@ -269,18 +265,7 @@ function DetalleOperativo({ operativo: op, agenciaId, onVolver }) {
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
-              style={{
-                background: tab === t.id ? '#EDE9FB' : 'transparent',
-                color: tab === t.id ? '#4A0FA8' : '#7A7A96',
-                border: 'none',
-                borderRadius: 8,
-                padding: '7px 12px',
-                fontWeight: 700,
-                fontSize: 12.5,
-                cursor: 'pointer',
-                fontFamily: 'inherit',
-                whiteSpace: 'nowrap',
-              }}
+              className={`ag-tab${tab === t.id ? ' ag-tab-active' : ''}`}
             >
               {t.label}
             </button>
@@ -316,11 +301,11 @@ function TabBuses({ buses, staff, pasajeros }) {
         const coordinador = staff.find(s => s.rol === 'coordinador' && s.busId === bus.id);
         return (
           <div key={bus.id} className="ag-section">
-            <div className="ag-section-title" style={{ marginBottom: 8 }}>
+            <div className="ag-section-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               🚌 {bus.nombre || `Bus ${bus.numero}`}
-              {bus.patente && <span className="ag-chip" style={{ fontWeight: 600 }}>{bus.patente}</span>}
+              {bus.patente && <span className="ag-chip">{bus.patente}</span>}
             </div>
-            <div style={{ fontSize: 12.5, color: '#5A5A7A', lineHeight: 1.7 }}>
+            <div style={{ fontSize: 14, color: 'var(--ag-text-2)', lineHeight: 1.7 }}>
               {bus.capacidad && <div>💺 {paxCount} / {bus.capacidad} pasajeros</div>}
               {!bus.capacidad && paxCount > 0 && <div>🎒 {paxCount} pasajeros</div>}
               {conductor && <div>🧑‍✈️ Conductor: {conductor.apellido} {conductor.nombre}</div>}
@@ -439,7 +424,7 @@ function TabItinerario({ itinerario }) {
         <div
           key={dia.id}
           className="ag-section"
-          style={dia.id === hoy ? { borderColor: '#7B2FBE', boxShadow: '0 0 0 2px #EDE9FB' } : {}}
+          style={dia.id === hoy ? { boxShadow: '0 0 0 2px var(--ag-accent), var(--ag-shadow-card)' } : {}}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
             <div style={{ fontSize: 13, fontWeight: 800 }}>{formatFechaDia(dia.id)}</div>
