@@ -108,8 +108,8 @@ export default function Dashboard() {
                   <td>
                     <span style={{
                       fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 20, marginRight: 6,
-                      background: r.tipo === 'receptivo' ? '#EDE9FB' : r.tipo === 'disposicion' ? '#FFF8E6' : r.tipo === 'movimientos-caba-gba' ? '#E6FBF5' : '#F4F2FA',
-                      color: r.tipo === 'receptivo' ? '#8B5CF6' : r.tipo === 'disposicion' ? '#7A5200' : r.tipo === 'movimientos-caba-gba' ? '#2DD4BF' : 'rgba(240,238,255,0.55)',
+                      background: r.tipo === 'receptivo' ? 'rgba(139,92,246,0.15)' : r.tipo === 'disposicion' ? 'rgba(245,158,11,0.15)' : r.tipo === 'movimientos-caba-gba' ? 'rgba(45,212,191,0.12)' : 'rgba(139,92,246,0.08)',
+                      color: r.tipo === 'receptivo' ? '#8B5CF6' : r.tipo === 'disposicion' ? '#F59E0B' : r.tipo === 'movimientos-caba-gba' ? '#2DD4BF' : 'rgba(240,238,255,0.65)',
                     }}>
                       {r.tipo === 'receptivo' ? '🏛️ Receptivo' : r.tipo === 'disposicion' ? '⏱️ Disposición' : r.tipo === 'movimientos-caba-gba' ? '🚐 Mov. CABA/GBA' : '🚌 Charter'}
                     </span>

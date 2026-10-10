@@ -84,15 +84,15 @@ export default function Cotizaciones() {
           placeholder="🔍 Buscar por cliente, N°, WhatsApp, destino..."
           value={busqueda}
           onChange={e => setBusqueda(e.target.value)}
-          style={{ flex: '1 1 220px', border: '1.5px solid rgba(139,92,246,0.20)', borderRadius: 10, padding: '9px 12px', fontSize: 13, fontFamily: 'Inter, sans-serif', outline: 'none' }}
+          style={{ flex: '1 1 220px', border: '1.5px solid rgba(139,92,246,0.20)', borderRadius: 10, padding: '9px 12px', fontSize: 13, fontFamily: 'Inter, sans-serif', outline: 'none', background: '#131324', color: '#F0EEFF' }}
         />
         {['todas', 'charter', 'receptivo', 'disposicion', 'movimientos-caba-gba'].map(t => (
           <button key={t} onClick={() => setFiltroTipo(t)}
             style={{
-              padding: '6px 14px', borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: 'pointer',
+              padding: '6px 14px', borderRadius: 20, fontSize: 14, fontWeight: 600, cursor: 'pointer',
               border: '1.5px solid', borderColor: filtroTipo === t ? '#8B5CF6' : 'rgba(139,92,246,0.20)',
-              background: filtroTipo === t ? '#8B5CF6' : '#fff',
-              color: filtroTipo === t ? '#fff' : 'rgba(240,238,255,0.55)', fontFamily: 'Inter, sans-serif',
+              background: filtroTipo === t ? '#8B5CF6' : 'rgba(139,92,246,0.08)',
+              color: filtroTipo === t ? '#fff' : 'rgba(240,238,255,0.65)', fontFamily: 'Inter, sans-serif',
             }}>
             {t === 'todas' ? 'Todas' : (TIPO_LABELS[t] || t)}
           </button>

@@ -128,7 +128,7 @@ export default function PasoFlota({ onNext }) {
       )}
 
       {errorDisponibilidad && fechas.fechaInicio && (
-        <div style={{ background: '#FFF8E6', border: '1px solid #FFD166', borderRadius: 10, padding: '8px 12px', marginBottom: 10, fontSize: 12, color: '#7A5200', fontWeight: 600 }}>
+        <div style={{ background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.30)', borderRadius: 10, padding: '8px 12px', marginBottom: 10, fontSize: 12, color: '#F59E0B', fontWeight: 600 }}>
           ⚠️ No pudimos verificar la disponibilidad en este momento. Podés cotizar igual: la confirmamos por WhatsApp.
         </div>
       )}

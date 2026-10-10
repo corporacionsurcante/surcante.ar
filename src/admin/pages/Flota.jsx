@@ -152,7 +152,7 @@ export default function Flota() {
                   </td>
                   <td>
                     <span style={{
-                      background: u.activa !== false ? '#E6FBF5' : '#FFF1F0',
+                      background: u.activa !== false ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.10)',
                       color: u.activa !== false ? '#2DD4BF' : '#EF4444',
                       padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700,
                     }}>
@@ -161,7 +161,7 @@ export default function Flota() {
                   </td>
                   <td>
                     <button onClick={() => abrirEditar(u)}
-                      style={{ background: '#F3EDFB', color: '#8B5CF6', border: 'none', borderRadius: 8, padding: '6px 12px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+                      style={{ background: '#F3EDFB', color: '#8B5CF6', border: 'none', borderRadius: 8, padding: '6px 12px', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>
                       Editar
                     </button>
                   </td>
@@ -201,7 +201,7 @@ export default function Flota() {
                   placeholder={placeholder}
                   value={form[field]}
                   onChange={e => setForm(f => ({ ...f, [field]: e.target.value }))}
-                  style={{ width: '100%', border: '1.5px solid rgba(139,92,246,0.20)', borderRadius: 8, padding: '9px 12px', fontSize: 14, fontFamily: 'Inter, sans-serif', outline: 'none', background: '#131324', color: '#F0EEFF' }}
+                  style={{ width: '100%', border: '1.5px solid rgba(139,92,246,0.20)', borderRadius: 8, padding: '9px 12px', fontSize: 16, fontFamily: 'Inter, sans-serif', outline: 'none', background: '#131324', color: '#F0EEFF' }}
                 />
               </div>
             ))}
@@ -209,7 +209,7 @@ export default function Flota() {
             <div style={{ marginBottom: 12 }}>
               <label style={{ fontSize: 10, fontWeight: 700, color: 'rgba(240,238,255,0.45)', letterSpacing: '.08em', textTransform: 'uppercase', display: 'block', marginBottom: 5 }}>Tipo de unidad</label>
               <select value={form.tipo} onChange={e => setForm(f => ({ ...f, tipo: e.target.value }))}
-                style={{ width: '100%', border: '1.5px solid rgba(139,92,246,0.20)', borderRadius: 8, padding: '9px 12px', fontSize: 14, fontFamily: 'Inter, sans-serif', outline: 'none', background: '#131324' }}>
+                style={{ width: '100%', border: '1.5px solid rgba(139,92,246,0.20)', borderRadius: 8, padding: '9px 12px', fontSize: 16, fontFamily: 'Inter, sans-serif', outline: 'none', background: '#131324' }}>
                 {TIPOS.map(t => <option key={t} value={t}>{t}</option>)}
               </select>
             </div>
@@ -237,8 +237,8 @@ export default function Flota() {
             )}
             <button onClick={handleGuardar} disabled={saving || !form.interno || !form.patente}
               style={{
-                width: '100%', padding: 13, background: '#8B5CF6', color: '#fff',
-                border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700,
+                width: '100%', padding: 15, background: '#8B5CF6', color: '#fff',
+                border: 'none', borderRadius: 10, fontSize: 16, fontWeight: 700,
                 cursor: saving ? 'default' : 'pointer', opacity: saving ? .7 : 1,
                 fontFamily: 'Inter, sans-serif', marginBottom: 8,
               }}>
