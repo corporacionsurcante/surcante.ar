@@ -178,9 +178,9 @@ function RetornoPago({ tipo, urlParams }) {
           <div className="confirm-title">{cfg.title}</div>
           <div className="confirm-sub">{cfg.sub}</div>
           {paymentId && (
-            <div style={{ background: '#F4F2FA', borderRadius: 10, padding: '8px 14px', marginBottom: 16, textAlign: 'center' }}>
-              <div style={{ fontSize: 11, color: '#9090B0', fontWeight: 600, letterSpacing: '.08em', textTransform: 'uppercase' }}>ID de pago</div>
-              <div style={{ fontSize: 16, fontWeight: 700, color: '#7B2FBE' }}>{paymentId}</div>
+            <div style={{ background: 'rgba(139,92,246,0.10)', borderRadius: 10, padding: '8px 14px', marginBottom: 16, textAlign: 'center' }}>
+              <div style={{ fontSize: 11, color: 'rgba(240,238,255,0.45)', fontWeight: 600, letterSpacing: '.08em', textTransform: 'uppercase' }}>ID de pago</div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: '#8B5CF6' }}>{paymentId}</div>
             </div>
           )}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 20 }}>
@@ -238,7 +238,7 @@ function AccesoPrevio({ onConfirm }) {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 14, padding: 16 }}>
+      <form onSubmit={handleSubmit} style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 14, padding: 16 }}>
         <div style={{ marginBottom: 12 }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-3)', letterSpacing: '.06em', textTransform: 'uppercase', marginBottom: 5 }}>Nombre y apellido</div>
           <input
@@ -283,12 +283,12 @@ export default function App() {
     );
   }
   if (pathname.startsWith('/v/')) return (
-    <Suspense fallback={<div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f4f2fa', color: '#b0b0c8', fontSize: 14, flexDirection: 'column', gap: 12 }}><div style={{ width: 34, height: 34, border: '3px solid #e0d4f7', borderTopColor: '#7b2fbe', borderRadius: '50%', animation: 'spin .7s linear infinite' }} />Cargando portal…</div>}>
+    <Suspense fallback={<div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0D0D1A', color: 'rgba(240,238,255,0.40)', fontSize: 14, flexDirection: 'column', gap: 12 }}><div style={{ width: 34, height: 34, border: '3px solid rgba(139,92,246,0.20)', borderTopColor: '#8B5CF6', borderRadius: '50%', animation: 'spin .7s linear infinite' }} />Cargando portal…</div>}>
       <PortalViaje />
     </Suspense>
   );
   if (pathname.startsWith('/agencia')) return (
-    <Suspense fallback={<div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F4F2FA', color: '#9090B0', fontSize: 14, flexDirection: 'column', gap: 12 }}><div style={{ width: 34, height: 34, border: '3px solid #EDE9FB', borderTopColor: '#7B2FBE', borderRadius: '50%', animation: 'spin .7s linear infinite' }} />Cargando portal de agencias…</div>}>
+    <Suspense fallback={<div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0D0D1A', color: 'rgba(240,238,255,0.40)', fontSize: 14, flexDirection: 'column', gap: 12 }}><div style={{ width: 34, height: 34, border: '3px solid rgba(139,92,246,0.20)', borderTopColor: '#8B5CF6', borderRadius: '50%', animation: 'spin .7s linear infinite' }} />Cargando portal de agencias…</div>}>
       <AgenciaPortal />
     </Suspense>
   );

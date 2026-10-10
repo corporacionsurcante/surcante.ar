@@ -18,14 +18,14 @@ export default function ReservaConfirmada({ datos, onNueva }) {
         </div>
       </div>
 
-      <div style={{ background: '#F4F2FA', borderRadius: 10, padding: '10px 16px', margin: '14px 0', textAlign: 'center' }}>
-        <div style={{ fontSize: 11, color: '#9090B0', fontWeight: 600, letterSpacing: '.08em', textTransform: 'uppercase' }}>Número de cotización</div>
-        <div style={{ fontSize: 20, fontWeight: 800, color: '#7B2FBE', letterSpacing: '.05em' }}>{datos.nroCotizacion}</div>
-        <div style={{ fontSize: 11, color: '#9090B0', marginTop: 3 }}>Guardá este número para consultas</div>
+      <div style={{ background: 'rgba(139,92,246,0.08)', borderRadius: 10, padding: '10px 16px', margin: '14px 0', textAlign: 'center' }}>
+        <div style={{ fontSize: 11, color: 'rgba(240,238,255,0.45)', fontWeight: 600, letterSpacing: '.08em', textTransform: 'uppercase' }}>Número de cotización</div>
+        <div style={{ fontSize: 20, fontWeight: 800, color: '#8B5CF6', letterSpacing: '.05em' }}>{datos.nroCotizacion}</div>
+        <div style={{ fontSize: 11, color: 'rgba(240,238,255,0.45)', marginTop: 3 }}>Guardá este número para consultas</div>
       </div>
 
       {datos.errorGuardado && (
-        <div style={{ background: '#FFF1F0', color: '#A8071A', borderRadius: 10, padding: '10px 12px', fontSize: 12.5, fontWeight: 600, marginBottom: 12, lineHeight: 1.45 }}>
+        <div style={{ background: 'rgba(239,68,68,0.10)', color: '#EF4444', borderRadius: 10, padding: '10px 12px', fontSize: 12.5, fontWeight: 600, marginBottom: 12, lineHeight: 1.45 }}>
           ⚠️ No pudimos registrar la cotización automáticamente. Mandanos el número {datos.nroCotizacion} por WhatsApp y la cargamos nosotros.
         </div>
       )}
@@ -60,7 +60,7 @@ export default function ReservaConfirmada({ datos, onNueva }) {
 
       <button
         className="btn-primary"
-        style={{ background: '#7B2FBE', marginTop: 0 }}
+        style={{ background: '#8B5CF6', marginTop: 0 }}
         onClick={() => descargarPdfCotizacion(datos)}>
         📄 Descargar presupuesto en PDF
       </button>

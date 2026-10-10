@@ -84,7 +84,7 @@ function Seccion({ rol, lista, buses, pasajeros, fin, onNuevo, onEditar }) {
                     </td>
                     <td><BusChip bus={bus} /></td>
                     {rol === 'conductor'
-                      ? <><td className="muted">{p.licencia || '—'}</td><td style={{ color: vencida ? '#CF1322' : undefined, fontWeight: vencida ? 800 : 500 }}>{p.vencLicencia ? fechaCorta(p.vencLicencia) : '—'}</td></>
+                      ? <><td className="muted">{p.licencia || '—'}</td><td style={{ color: vencida ? '#EF4444' : undefined, fontWeight: vencida ? 800 : 500 }}>{p.vencLicencia ? fechaCorta(p.vencLicencia) : '—'}</td></>
                       : <><td className="muted">{p.grupo || '—'}</td><td>{aCargo}</td></>}
                     <td><button className="eg-btn eg-btn-ghost eg-btn-sm" onClick={() => onEditar(p)}>✏️</button></td>
                   </tr>

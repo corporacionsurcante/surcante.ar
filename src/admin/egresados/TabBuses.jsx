@@ -45,9 +45,9 @@ export default function TabBuses({ opId, op, buses, staff, pasajeros, unidades }
                 <div className="eg-card-meta" style={{ marginTop: 10 }}>
                   🚍 {unidad
                     ? <>Interno <b>{unidad.interno}</b> · {unidad.patente} · {unidad.tipo}</>
-                    : [b.empresa, b.interno && `Int. ${b.interno}`, b.patente, b.tipo].filter(Boolean).join(' · ') || <span style={{ color: '#CF1322' }}>Sin unidad asignada</span>}
+                    : [b.empresa, b.interno && `Int. ${b.interno}`, b.patente, b.tipo].filter(Boolean).join(' · ') || <span style={{ color: '#EF4444' }}>Sin unidad asignada</span>}
                   {unidad?.venceTecnica && <><br />🔧 Técnica vence {fechaCorta(unidad.venceTecnica)}</>}
-                  {usoUnidad[b.unidadId] > 1 && <><br /><span style={{ color: '#CF1322', fontWeight: 700 }}>⚠️ Esta unidad está asignada a otro ómnibus del operativo</span></>}
+                  {usoUnidad[b.unidadId] > 1 && <><br /><span style={{ color: '#EF4444', fontWeight: 700 }}>⚠️ Esta unidad está asignada a otro ómnibus del operativo</span></>}
                   <br />🧑‍✈️ {conds.map(nombreCompleto).join(', ') || <span style={{ color: '#B07A00' }}>Sin conductor</span>}
                   <br />📋 {coords.map(nombreCompleto).join(', ') || <span style={{ color: '#B07A00' }}>Sin coordinador</span>}
                   {(b.puntoSalida || b.presentacion) && <><br />🚏 {[b.puntoSalida, b.presentacion && `presentación ${b.presentacion} h`].filter(Boolean).join(' · ')}</>}
@@ -55,7 +55,7 @@ export default function TabBuses({ opId, op, buses, staff, pasajeros, unidades }
                 <div style={{ marginTop: 12 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11.5, fontWeight: 700, marginBottom: 4 }}>
                     <span>{pax} pasajeros + {coords.length} coord.</span>
-                    <span style={{ color: ocupados > cap ? '#CF1322' : '#4A4A6A' }}>{ocupados} / {cap}</span>
+                    <span style={{ color: ocupados > cap ? '#EF4444' : 'rgba(240,238,255,0.55)' }}>{ocupados} / {cap}</span>
                   </div>
                   <BarraOcupacion usados={ocupados} total={cap} />
                 </div>

@@ -62,14 +62,14 @@ function ModalQR({ persona, onClose }) {
       onClick={onClose}
     >
       <div
-        style={{ background: '#fff', borderRadius: 16, padding: 28, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, maxWidth: 320, width: '100%', boxShadow: '0 8px 40px rgba(0,0,0,.25)' }}
+        style={{ background: '#0D0D1A', borderRadius: 16, padding: 28, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, maxWidth: 320, width: '100%', boxShadow: '0 8px 40px rgba(0,0,0,.6)', border: '1px solid rgba(139,92,246,0.20)' }}
         onClick={e => e.stopPropagation()}
       >
         <div style={{ fontWeight: 800, fontSize: 15, color: '#1a1a2e', textAlign: 'center' }}>{apellidoNombre(persona)}</div>
         <div style={{ background: '#fff', border: '1px solid #e0d4f7', borderRadius: 10, padding: 10 }} ref={canvasRef}>
           <QRCanvas value={codigo} size={200} />
         </div>
-        <div style={{ fontSize: 18, fontWeight: 800, color: '#7b2fbe', letterSpacing: '.04em' }}>{codigo}</div>
+        <div style={{ fontSize: 18, fontWeight: 800, color: '#8B5CF6', letterSpacing: '.04em' }}>{codigo}</div>
         {persona.hotel && (
           <div style={{ fontSize: 13, color: '#666', textAlign: 'center', lineHeight: 1.5 }}>
             {persona.hotel}{persona.habitacion ? ` · Hab. ${persona.habitacion}` : ''}<br/>
@@ -78,13 +78,13 @@ function ModalQR({ persona, onClose }) {
         )}
         <div style={{ display: 'flex', gap: 8, width: '100%' }}>
           <button
-            style={{ flex: 1, background: '#7b2fbe', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 0', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}
+            style={{ flex: 1, background: '#8B5CF6', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 0', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}
             onClick={descargar}
           >
             ⬇ Descargar PNG
           </button>
           <button
-            style={{ background: '#f4f2fa', color: '#7b2fbe', border: 'none', borderRadius: 8, padding: '10px 14px', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}
+            style={{ background: 'rgba(139,92,246,0.12)', color: '#8B5CF6', border: 'none', borderRadius: 8, padding: '10px 14px', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}
             onClick={onClose}
           >
             ✕

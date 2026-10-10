@@ -70,7 +70,7 @@ export default function ConfigModulos() {
       <div className="section-header">
         <div className="section-title">Módulos activos</div>
       </div>
-      <div style={{ fontSize: 13, color: '#9090B0', marginBottom: 20, fontWeight: 500 }}>
+      <div style={{ fontSize: 13, color: 'var(--ad-text-2)', marginBottom: 20, fontWeight: 500 }}>
         Los módulos desactivados no aparecen en el cotizador para los clientes.
       </div>
 
@@ -79,21 +79,21 @@ export default function ConfigModulos() {
           const activo = modulos[m.id] !== false;
           return (
             <div key={m.id} style={{
-              background: '#fff', border: `1.5px solid ${activo ? '#7B2FBE' : '#EDE8F8'}`,
+              background: 'var(--ad-card)', border: `1.5px solid ${activo ? '#8B5CF6' : 'rgba(139,92,246,0.15)'}`,
               borderRadius: 14, padding: '16px 20px',
               display: 'flex', alignItems: 'center', gap: 16,
               transition: 'all .15s',
             }}>
               <span style={{ fontSize: 28 }}>{m.icon}</span>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 15, fontWeight: 700, color: activo ? '#0A0A0F' : '#9090B0' }}>{m.label}</div>
-                <div style={{ fontSize: 12, color: '#9090B0', marginTop: 3 }}>{m.desc}</div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: activo ? 'var(--ad-text)' : 'var(--ad-text-2)' }}>{m.label}</div>
+                <div style={{ fontSize: 12, color: 'var(--ad-text-3)', marginTop: 3 }}>{m.desc}</div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <span style={{
                   fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20,
-                  background: activo ? '#E6FBF5' : '#FFF1F0',
-                  color: activo ? '#007A5A' : '#CF1322',
+                  background: activo ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)',
+                  color: activo ? '#10B981' : '#EF4444',
                 }}>
                   {activo ? '✅ Activo' : '❌ Inactivo'}
                 </span>
@@ -107,7 +107,7 @@ export default function ConfigModulos() {
         })}
       </div>
 
-      {error && <div style={{ color: '#CF1322', fontSize: 13, fontWeight: 600, marginBottom: 12 }}>{error}</div>}
+      {error && <div style={{ color: '#EF4444', fontSize: 13, fontWeight: 600, marginBottom: 12 }}>{error}</div>}
       <button
         className={`precios-save ${saved ? 'saved' : ''}`}
         onClick={handleSave}

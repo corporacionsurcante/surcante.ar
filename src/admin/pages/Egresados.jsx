@@ -342,7 +342,7 @@ function AgenciaUsuarios({ agenciaId }) {
     }
   }
 
-  if (cargando) return <div style={{ color: '#9090B0', fontSize: 13 }}>Cargando usuarios...</div>;
+  if (cargando) return <div style={{ color: 'rgba(240,238,255,0.45)', fontSize: 13 }}>Cargando usuarios...</div>;
 
   return (
     <div className="eg-section">
@@ -353,15 +353,15 @@ function AgenciaUsuarios({ agenciaId }) {
         </button>
       </div>
 
-      <div style={{ fontSize: 12, color: '#9090B0', marginBottom: 14, lineHeight: 1.55 }}>
+      <div style={{ fontSize: 12, color: 'rgba(240,238,255,0.45)', marginBottom: 14, lineHeight: 1.55 }}>
         Los usuarios aquí listados pueden ingresar a <strong>surcante.com/agencia</strong> con su cuenta de Google para ver los operativos de esta agencia.
       </div>
 
-      {ok && <div className="eg-alert eg-alert-ok" style={{ background: '#E6FBF5', color: '#007A5A', border: '1px solid #B7EBD9', borderRadius: 8, padding: '8px 12px', fontSize: 13, marginBottom: 10 }}>{ok}</div>}
+      {ok && <div className="eg-alert eg-alert-ok" style={{ background: 'rgba(16,185,129,0.12)', color: '#10B981', border: '1px solid rgba(16,185,129,0.25)', borderRadius: 8, padding: '8px 12px', fontSize: 13, marginBottom: 10 }}>{ok}</div>}
       {error && <div className="eg-alert eg-alert-error">{error}</div>}
 
       {mostrarForm && (
-        <form onSubmit={agregarUsuario} style={{ background: '#F8F6FE', borderRadius: 10, padding: 14, marginBottom: 14 }}>
+        <form onSubmit={agregarUsuario} style={{ background: 'rgba(139,92,246,0.08)', borderRadius: 10, padding: 14, marginBottom: 14 }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
             <div>
               <div className="eg-label">Email de Google</div>
@@ -393,22 +393,22 @@ function AgenciaUsuarios({ agenciaId }) {
       )}
 
       {usuarios.length === 0 ? (
-        <div style={{ color: '#9090B0', fontSize: 13, textAlign: 'center', padding: '12px 0' }}>
+        <div style={{ color: 'rgba(240,238,255,0.45)', fontSize: 13, textAlign: 'center', padding: '12px 0' }}>
           No hay usuarios configurados. Agregá uno para que la agencia pueda ver sus operativos.
         </div>
       ) : (
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
           <thead>
             <tr>
-              <th style={{ textAlign: 'left', fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.06em', color: '#9090B0', padding: '0 6px 8px 0' }}>Email</th>
-              <th style={{ textAlign: 'left', fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.06em', color: '#9090B0', padding: '0 6px 8px' }}>Nombre</th>
-              <th style={{ textAlign: 'left', fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.06em', color: '#9090B0', padding: '0 6px 8px' }}>Estado</th>
+              <th style={{ textAlign: 'left', fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.06em', color: 'rgba(240,238,255,0.45)', padding: '0 6px 8px 0' }}>Email</th>
+              <th style={{ textAlign: 'left', fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.06em', color: 'rgba(240,238,255,0.45)', padding: '0 6px 8px' }}>Nombre</th>
+              <th style={{ textAlign: 'left', fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.06em', color: 'rgba(240,238,255,0.45)', padding: '0 6px 8px' }}>Estado</th>
               <th />
             </tr>
           </thead>
           <tbody>
             {usuarios.map(u => (
-              <tr key={u.id} style={{ borderTop: '1px solid #F4F2FA' }}>
+              <tr key={u.id} style={{ borderTop: '1px solid rgba(139,92,246,0.12)' }}>
                 <td style={{ padding: '8px 6px 8px 0', fontFamily: 'monospace', fontSize: 12 }}>{u.id}</td>
                 <td style={{ padding: '8px 6px' }}>{u.nombre || '—'}</td>
                 <td style={{ padding: '8px 6px' }}>

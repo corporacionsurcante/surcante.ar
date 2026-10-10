@@ -6,7 +6,7 @@ import { mapaCeldas, validarViaje, superposiciones } from '../../utils/ocupacion
 
 const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 const COLORES = ['#00BCD4','#FF9800','#E91E63','#4CAF50','#9C27B0','#F44336','#2196F3','#FF5722','#009688','#FFC107','#3F51B5','#8BC34A'];
-const TIPO_COLOR = { 'MIX 60': '#4A0FA8', 'Comun 45': '#1565C0', 'Minibus 24': '#00796B', 'Minibus 19': '#558B2F' };
+const TIPO_COLOR = { 'MIX 60': '#7C3AED', 'Comun 45': '#2563EB', 'Minibus 24': '#0D9488', 'Minibus 19': '#65A30D' };
 
 function diasEnMes(mes, anio) {
   return new Date(anio, mes + 1, 0).getDate();
@@ -21,7 +21,7 @@ function getUserLabel(email) {
 
 function getUserColor(email) {
   if (!email) return '#999';
-  if (email.includes('traveldance') || email.includes('bournissen') || email.toLowerCase().includes('jose')) return '#7B2FBE';
+  if (email.includes('traveldance') || email.includes('bournissen') || email.toLowerCase().includes('jose')) return '#8B5CF6';
   if (email.includes('machado') || email.includes('sebastian')) return '#1565C0';
   return '#555';
 }
@@ -38,8 +38,8 @@ function mensajeError(e) {
     : 'No se pudo conectar con la base de datos. Revisá la conexión y recargá.';
 }
 
-const lbl = { fontSize: 10, fontWeight: 700, color: '#9090B0', letterSpacing: '.08em', textTransform: 'uppercase', display: 'block', marginBottom: 5 };
-const inp = { width: '100%', border: '1.5px solid #EDE8F8', borderRadius: 8, padding: '9px 12px', fontSize: 14, fontFamily: 'Inter, sans-serif', outline: 'none', background: '#fff' };
+const lbl = { fontSize: 10, fontWeight: 700, color: 'rgba(240,238,255,0.45)', letterSpacing: '.08em', textTransform: 'uppercase', display: 'block', marginBottom: 5 };
+const inp = { width: '100%', border: '1.5px solid rgba(139,92,246,0.20)', borderRadius: 8, padding: '9px 12px', fontSize: 14, fontFamily: 'Inter, sans-serif', outline: 'none', background: '#131324', color: '#F0EEFF' };
 
 export default function Gantt() {
   const hoy = new Date();
@@ -178,23 +178,23 @@ export default function Gantt() {
     <div className="admin-empty">
       <div className="admin-empty-icon">🚌</div>
       {errorCarga
-        ? <div style={{ color: '#CF1322', marginBottom: 16 }}>{errorCarga}</div>
+        ? <div style={{ color: '#EF4444', marginBottom: 16 }}>{errorCarga}</div>
         : <div style={{ marginBottom: 16 }}>No hay unidades cargadas.</div>}
       {!errorCarga && <button className="section-action" onClick={inicializarUnidades}>Inicializar unidades Surcante</button>}
     </div>
   );
 
-  const navBtn = { width: 32, height: 32, borderRadius: '50%', border: '1px solid #EDE8F8', background: '#fff', cursor: 'pointer', fontSize: 18, color: '#333' };
+  const navBtn = { width: 32, height: 32, borderRadius: '50%', border: '1px solid rgba(139,92,246,0.25)', background: '#131324', cursor: 'pointer', fontSize: 18, color: '#F0EEFF' };
 
   return (
     <div ref={containerRef} style={{
-      background: '#fff',
+      background: '#0D0D1A',
       padding: fullscreen ? 16 : 0,
       height: fullscreen ? '100vh' : 'auto',
       display: 'flex', flexDirection: 'column',
     }}>
       {errorCarga && (
-        <div style={{ background: '#FFF1F0', color: '#A8071A', borderRadius: 10, padding: '10px 12px', fontSize: 12.5, fontWeight: 600, marginBottom: 12 }}>
+        <div style={{ background: 'rgba(239,68,68,0.10)', color: '#EF4444', borderRadius: 10, padding: '10px 12px', fontSize: 12.5, fontWeight: 600, marginBottom: 12 }}>
           ⛔ {errorCarga}
         </div>
       )}
@@ -203,7 +203,7 @@ export default function Gantt() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <button onClick={mesAnterior} style={navBtn} aria-label="Mes anterior">‹</button>
-          <span style={{ fontSize: 18, fontWeight: 800, color: '#0A0A0F', minWidth: 200, textAlign: 'center' }}>
+          <span style={{ fontSize: 18, fontWeight: 800, color: '#F0EEFF', minWidth: 200, textAlign: 'center' }}>
             {MESES[mesActual]} {anio}
           </span>
           <button onClick={mesSiguiente} style={navBtn} aria-label="Mes siguiente">›</button>
@@ -216,9 +216,9 @@ export default function Gantt() {
               style={{
                 padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600,
                 cursor: 'pointer', border: '1px solid',
-                borderColor: mesActual === i ? '#7B2FBE' : '#EDE8F8',
-                background: mesActual === i ? '#7B2FBE' : 'transparent',
-                color: mesActual === i ? '#fff' : '#4A4A6A',
+                borderColor: mesActual === i ? '#8B5CF6' : '#EDE8F8',
+                background: mesActual === i ? '#8B5CF6' : 'transparent',
+                color: mesActual === i ? '#fff' : 'rgba(240,238,255,0.55)',
                 fontFamily: 'Inter, sans-serif',
               }}>{m.slice(0, 3)}</button>
           ))}
@@ -226,9 +226,9 @@ export default function Gantt() {
           <button onClick={toggleFullscreen}
             style={{
               padding: '4px 12px', borderRadius: 20, fontSize: 11, fontWeight: 700,
-              cursor: 'pointer', border: '1px solid #7B2FBE',
-              background: fullscreen ? '#7B2FBE' : 'transparent',
-              color: fullscreen ? '#fff' : '#7B2FBE',
+              cursor: 'pointer', border: '1px solid #8B5CF6',
+              background: fullscreen ? '#8B5CF6' : 'transparent',
+              color: fullscreen ? '#fff' : '#8B5CF6',
               fontFamily: 'Inter, sans-serif', marginLeft: 4,
             }}>
             {fullscreen ? '✕ Salir' : '⛶ Pantalla completa'}
@@ -239,7 +239,7 @@ export default function Gantt() {
       {/* Leyenda usuarios */}
       <div style={{ display: 'flex', gap: 12, marginBottom: 8, flexWrap: 'wrap' }}>
         {[...new Set(viajes.map(v => v.cargadoPor).filter(Boolean))].map(email => (
-          <div key={email} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: '#555' }}>
+          <div key={email} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: 'rgba(240,238,255,0.55)' }}>
             <span style={{ width: 20, height: 20, borderRadius: '50%', background: getUserColor(email), color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 800 }}>
               {getUserLabel(email)}
             </span>
@@ -249,7 +249,7 @@ export default function Gantt() {
       </div>
 
       {/* Tabla Gantt */}
-      <div style={{ overflowX: 'auto', flex: 1, borderRadius: 10, border: '1px solid #EDE8F8' }}>
+      <div style={{ overflowX: 'auto', flex: 1, borderRadius: 10, border: '1px solid rgba(139,92,246,0.15)' }}>
         <table style={{ borderCollapse: 'collapse', width: '100%', fontSize: 11 }}>
           <thead>
             <tr>
@@ -257,7 +257,7 @@ export default function Gantt() {
                 padding: '8px 12px', background: '#0A0A0F', color: '#fff',
                 fontWeight: 700, fontSize: 11, letterSpacing: '.05em', textTransform: 'uppercase',
                 minWidth: 150, position: 'sticky', left: 0, zIndex: 3,
-                borderRight: '2px solid #7B2FBE',
+                borderRight: '2px solid #8B5CF6',
               }}>Unidad</th>
               {Array.from({ length: diasMes }, (_, i) => {
                 const dow = new Date(anio, mesActual, i + 1).getDay();
@@ -275,30 +275,30 @@ export default function Gantt() {
             <tr>
               {Array.from({ length: diasMes }, (_, i) => (
                 <React.Fragment key={i}>
-                  <th style={{ padding: '2px 0', textAlign: 'center', fontSize: 9, fontWeight: 600, background: '#141420', color: '#555', width: 14, borderRight: '1px solid #1E1E2E' }}>M</th>
-                  <th style={{ padding: '2px 0', textAlign: 'center', fontSize: 9, fontWeight: 600, background: '#141420', color: '#555', width: 14, borderRight: '1px solid #2A2A3E' }}>T</th>
+                  <th style={{ padding: '2px 0', textAlign: 'center', fontSize: 9, fontWeight: 600, background: '#141420', color: 'rgba(240,238,255,0.40)', width: 14, borderRight: '1px solid #1E1E2E' }}>M</th>
+                  <th style={{ padding: '2px 0', textAlign: 'center', fontSize: 9, fontWeight: 600, background: '#141420', color: 'rgba(240,238,255,0.40)', width: 14, borderRight: '1px solid #2A2A3E' }}>T</th>
                 </React.Fragment>
               ))}
             </tr>
           </thead>
           <tbody>
             {unidades.map((u, uidx) => (
-              <tr key={u.id} style={{ background: uidx % 2 === 0 ? '#fff' : '#FAF8FF', opacity: u.activa === false ? 0.55 : 1 }}>
+              <tr key={u.id} style={{ background: uidx % 2 === 0 ? '#0D0D1A' : '#131324', opacity: u.activa === false ? 0.55 : 1 }}>
                 <td style={{
                   padding: '6px 12px', fontWeight: 600, fontSize: 11,
-                  background: uidx % 2 === 0 ? '#fff' : '#FAF8FF',
+                  background: uidx % 2 === 0 ? '#0D0D1A' : '#131324',
                   position: 'sticky', left: 0, zIndex: 2,
-                  borderRight: '2px solid #7B2FBE', borderBottom: '1px solid #F0EDF8',
+                  borderRight: '2px solid #8B5CF6', borderBottom: '1px solid rgba(139,92,246,0.12)',
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                     <span style={{
                       width: 28, height: 28, borderRadius: 6, fontSize: 11, fontWeight: 800,
-                      background: TIPO_COLOR[u.tipo] || '#4A0FA8', color: '#fff',
+                      background: TIPO_COLOR[u.tipo] || '#7C3AED', color: '#fff',
                       display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
                     }}>{u.interno}</span>
                     <div>
-                      <div style={{ color: '#0A0A0F', fontWeight: 700 }}>{u.patente}</div>
-                      <div style={{ color: '#9090B0', fontSize: 10 }}>{u.tipo}{u.activa === false ? ' · inactiva' : ''}</div>
+                      <div style={{ color: '#F0EEFF', fontWeight: 700 }}>{u.patente}</div>
+                      <div style={{ color: 'rgba(240,238,255,0.45)', fontSize: 10 }}>{u.tipo}{u.activa === false ? ' · inactiva' : ''}</div>
                     </div>
                   </div>
                 </td>
@@ -317,8 +317,8 @@ export default function Gantt() {
                         style={{
                           width: 14, height: 32, padding: 0, cursor: 'pointer',
                           background: viaje ? viaje.color : 'transparent',
-                          borderRight: turno === 'T' ? '1px solid #F0EDF8' : '1px solid #F8F6FF',
-                          borderBottom: '1px solid #F0EDF8',
+                          borderRight: turno === 'T' ? '1px solid rgba(139,92,246,0.10)' : '1px solid rgba(139,92,246,0.06)',
+                          borderBottom: '1px solid rgba(139,92,246,0.10)',
                           position: 'relative',
                         }}
                         title={viaje ? `${viaje.destino} · ${fechaCorta(viaje.desde)} → ${fechaCorta(viaje.hasta)} · Cargado por: ${viaje.cargadoPor || 'desconocido'}` : `${fechaCorta(fecha)} ${turno === 'M' ? 'mañana' : 'tarde'}`}>
@@ -347,12 +347,12 @@ export default function Gantt() {
       {/* Leyenda tipos */}
       <div style={{ display: 'flex', gap: 16, marginTop: 10, flexWrap: 'wrap', alignItems: 'center' }}>
         {Object.entries(TIPO_COLOR).map(([tipo, color]) => (
-          <div key={tipo} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: '#4A4A6A', fontWeight: 500 }}>
+          <div key={tipo} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: 'rgba(240,238,255,0.55)', fontWeight: 500 }}>
             <span style={{ width: 14, height: 14, borderRadius: 3, background: color, display: 'inline-block' }} />
             {tipo}
           </div>
         ))}
-        <div style={{ fontSize: 11, color: '#9090B0', marginLeft: 'auto' }}>
+        <div style={{ fontSize: 11, color: 'rgba(240,238,255,0.40)', marginLeft: 'auto' }}>
           Click en celda vacía para asignar · Click en viaje para editar · Lo que cargues acá bloquea la unidad en el cotizador
         </div>
       </div>
@@ -364,29 +364,29 @@ export default function Gantt() {
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           zIndex: 9999, padding: 20,
         }} onClick={e => e.target === e.currentTarget && setModal(null)}>
-          <div style={{ background: '#fff', borderRadius: 16, padding: 24, width: '100%', maxWidth: 420, maxHeight: '85vh', overflowY: 'auto' }}>
+          <div style={{ background: '#0D0D1A', borderRadius: 16, padding: 24, width: '100%', maxWidth: 420, maxHeight: '85vh', overflowY: 'auto', border: '1px solid rgba(139,92,246,0.20)' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-              <div style={{ fontSize: 17, fontWeight: 800, color: '#0A0A0F' }}>
+              <div style={{ fontSize: 17, fontWeight: 800, color: '#F0EEFF' }}>
                 {modal.tipo === 'nuevo' ? '+ Nuevo viaje' : '✏️ Editar viaje'}
               </div>
-              <button onClick={() => setModal(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, color: '#9090B0' }}>✕</button>
+              <button onClick={() => setModal(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, color: 'rgba(240,238,255,0.45)' }}>✕</button>
             </div>
 
             {(() => {
               const u = unidades.find(x => x.id === (modal.tipo === 'nuevo' ? modal.unidadId : modal.viaje.unidadId));
               return u ? (
-                <div style={{ fontSize: 12, color: '#4A4A6A', fontWeight: 600, marginBottom: 12 }}>
+                <div style={{ fontSize: 12, color: 'rgba(240,238,255,0.55)', fontWeight: 600, marginBottom: 12 }}>
                   🚌 Interno {u.interno} · {u.patente} · {u.tipo}
                 </div>
               ) : null;
             })()}
 
             {modal.tipo === 'editar' && modal.viaje.cargadoPor && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, padding: '6px 10px', background: '#F4F2FA', borderRadius: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, padding: '6px 10px', background: 'rgba(139,92,246,0.10)', borderRadius: 8 }}>
                 <span style={{ width: 22, height: 22, borderRadius: '50%', background: getUserColor(modal.viaje.cargadoPor), color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 800, flexShrink: 0 }}>
                   {getUserLabel(modal.viaje.cargadoPor)}
                 </span>
-                <span style={{ fontSize: 12, color: '#555', fontWeight: 500 }}>Cargado por {modal.viaje.cargadoPor}</span>
+                <span style={{ fontSize: 12, color: 'rgba(240,238,255,0.70)', fontWeight: 500 }}>Cargado por {modal.viaje.cargadoPor}</span>
               </div>
             )}
 
@@ -431,7 +431,7 @@ export default function Gantt() {
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 {COLORES.map(col => (
                   <div key={col} onClick={() => setForm(f => ({ ...f, color: col }))}
-                    style={{ width: 28, height: 28, borderRadius: 6, background: col, cursor: 'pointer', border: form.color === col ? '3px solid #0A0A0F' : '2px solid transparent', transition: 'border .1s' }} />
+                    style={{ width: 28, height: 28, borderRadius: 6, background: col, cursor: 'pointer', border: form.color === col ? '3px solid #F0EEFF' : '2px solid transparent', transition: 'border .1s' }} />
                 ))}
               </div>
             </div>
@@ -443,25 +443,25 @@ export default function Gantt() {
             </div>
 
             {errorForm && (
-              <div style={{ background: '#FFF1F0', color: '#A8071A', borderRadius: 8, padding: '8px 10px', fontSize: 12, fontWeight: 600, marginBottom: 12, lineHeight: 1.45 }}>
+              <div style={{ background: 'rgba(239,68,68,0.10)', color: '#EF4444', borderRadius: 8, padding: '8px 10px', fontSize: 12, fontWeight: 600, marginBottom: 12, lineHeight: 1.45 }}>
                 {errorForm}
               </div>
             )}
 
             <div style={{ display: 'flex', gap: 8 }}>
               <button onClick={handleGuardar} disabled={saving || !form.destino.trim()}
-                style={{ flex: 1, padding: 12, background: '#7B2FBE', color: '#fff', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: saving ? 'default' : 'pointer', opacity: saving ? .7 : 1, fontFamily: 'Inter, sans-serif' }}>
+                style={{ flex: 1, padding: 12, background: '#8B5CF6', color: '#fff', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: saving ? 'default' : 'pointer', opacity: saving ? .7 : 1, fontFamily: 'Inter, sans-serif' }}>
                 {saving ? 'Guardando...' : modal.tipo === 'nuevo' ? '✓ Agregar viaje' : '✓ Guardar cambios'}
               </button>
               {modal.tipo === 'editar' && (
                 confirmarBorrar ? (
                   <button onClick={handleEliminar} disabled={saving}
-                    style={{ padding: '12px 14px', background: '#CF1322', color: '#fff', border: 'none', borderRadius: 10, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
+                    style={{ padding: '12px 14px', background: '#EF4444', color: '#fff', border: 'none', borderRadius: 10, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
                     ¿Borrar?
                   </button>
                 ) : (
                   <button onClick={() => setConfirmarBorrar(true)} disabled={saving} title="Eliminar viaje"
-                    style={{ padding: '12px 16px', background: '#FFF1F0', color: '#CF1322', border: '1px solid #FFCCC7', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
+                    style={{ padding: '12px 16px', background: 'rgba(239,68,68,0.12)', color: '#EF4444', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
                     🗑️
                   </button>
                 )

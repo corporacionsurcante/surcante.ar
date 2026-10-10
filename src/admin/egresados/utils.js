@@ -40,7 +40,7 @@ export function apellidoNombre(p) {
 
 // ---------------- Colores de identificación de buses ----------------
 export const COLORES_BUS = [
-  { id: 'violeta', label: 'Violeta', hex: '#7B2FBE' },
+  { id: 'violeta', label: 'Violeta', hex: '#8B5CF6' },
   { id: 'azul', label: 'Azul', hex: '#1565C0' },
   { id: 'verde', label: 'Verde', hex: '#00A07A' },
   { id: 'naranja', label: 'Naranja', hex: '#F57C00' },
@@ -53,7 +53,7 @@ export const COLORES_BUS = [
 ];
 
 export function colorBus(bus) {
-  return COLORES_BUS.find(c => c.id === bus?.color)?.hex || '#7B2FBE';
+  return COLORES_BUS.find(c => c.id === bus?.color)?.hex || '#8B5CF6';
 }
 
 export function ordenarBuses(buses) {
@@ -488,9 +488,9 @@ export function diaActivoDeItinerario(itinerario, hoy) {
 
 // ---------------- Estados ----------------
 export const ESTADOS_OPERATIVO = {
-  planificacion: { label: 'Planificación', bg: '#FFF8E6', color: '#7A5200' },
-  confirmado: { label: 'Confirmado', bg: '#E8F1FF', color: '#1554B0' },
-  en_curso: { label: 'En curso', bg: '#E6FBF5', color: '#007A5A' },
-  finalizado: { label: 'Finalizado', bg: '#F0F0F4', color: '#55556A' },
-  cancelado: { label: 'Cancelado', bg: '#FFF1F0', color: '#CF1322' },
+  planificacion: { label: 'Planificación', bg: 'rgba(245,158,11,0.12)', color: '#F59E0B' },
+  confirmado: { label: 'Confirmado', bg: 'rgba(37,99,235,0.12)', color: '#60A5FA' },
+  en_curso: { label: 'En curso', bg: 'rgba(16,185,129,0.12)', color: '#10B981' },
+  finalizado: { label: 'Finalizado', bg: 'rgba(240,238,255,0.08)', color: 'rgba(240,238,255,0.55)' },
+  cancelado: { label: 'Cancelado', bg: 'rgba(239,68,68,0.12)', color: '#EF4444' },
 };

@@ -166,7 +166,7 @@ export default function PasoPresupuesto({ reserva, onBack, onConfirm, isAdmin, i
             Pagás el <strong>{fmtPorc(porcentaje)}</strong> ({formatARS(montoAhora)}) ahora con MercadoPago. El saldo lo coordinamos antes del viaje.
           </div>
           {errorMP && (
-            <div style={{ fontSize: 12, color: '#CF1322', background: '#FFF1F0', borderRadius: 8, padding: '8px 12px', marginBottom: 10 }}>
+            <div style={{ fontSize: 12, color: '#EF4444', background: 'rgba(239,68,68,0.10)', borderRadius: 8, padding: '8px 12px', marginBottom: 10 }}>
               {errorMP}
             </div>
           )}
@@ -191,7 +191,7 @@ export default function PasoPresupuesto({ reserva, onBack, onConfirm, isAdmin, i
             Pagás el <strong>{fmtPorc(porcentaje)}</strong> ({formatARS(montoAhora)}) con tarjeta a través de MercadoPago.
           </div>
           {errorMP && (
-            <div style={{ fontSize: 12, color: '#CF1322', background: '#FFF1F0', borderRadius: 8, padding: '8px 12px', marginBottom: 10 }}>
+            <div style={{ fontSize: 12, color: '#EF4444', background: 'rgba(239,68,68,0.10)', borderRadius: 8, padding: '8px 12px', marginBottom: 10 }}>
               {errorMP}
             </div>
           )}
@@ -278,10 +278,10 @@ export default function PasoPresupuesto({ reserva, onBack, onConfirm, isAdmin, i
       {/* Panel desglose interno — solo visible para admins */}
       {isAdmin && !loading && detalles.length > 0 && (
         <div style={{
-          background: '#0A0A0F', border: '1px solid rgba(123,47,190,.3)',
+          background: '#0A0A0F', border: '1px solid rgba(139,92,246,.3)',
           borderRadius: 14, padding: 16, marginBottom: 16,
         }}>
-          <div style={{ fontSize: 11, fontWeight: 800, color: '#7B2FBE', letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 12 }}>
+          <div style={{ fontSize: 11, fontWeight: 800, color: '#8B5CF6', letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 12 }}>
             🔍 Desglose interno (solo admin)
           </div>
           {detalles.map((d, idx) => (
@@ -312,7 +312,7 @@ export default function PasoPresupuesto({ reserva, onBack, onConfirm, isAdmin, i
           ))}
           <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid rgba(255,255,255,.1)', display: 'flex', justifyContent: 'space-between' }}>
             <span style={{ fontSize: 11, color: 'rgba(255,255,255,.4)', fontWeight: 600 }}>TOTAL GENERAL</span>
-            <span style={{ fontSize: 14, color: '#7B2FBE', fontWeight: 800 }}>{formatARS(grandTotal)}</span>
+            <span style={{ fontSize: 14, color: '#8B5CF6', fontWeight: 800 }}>{formatARS(grandTotal)}</span>
           </div>
           <div style={{ marginTop: 6, fontSize: 10, color: 'rgba(255,255,255,.25)', textAlign: 'right' }}>
             Dólar BNA: ${dolar?.toLocaleString('es-AR')} · {new Date().toLocaleDateString('es-AR')}

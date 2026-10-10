@@ -153,8 +153,8 @@ function Metrica({ label, val, sub }) {
 
 function Dato({ k, v }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '6px 0', borderBottom: '1px solid #F4F2FA', fontSize: 13 }}>
-      <span style={{ color: '#9090B0', fontWeight: 600 }}>{k}</span>
+    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '6px 0', borderBottom: '1px solid rgba(139,92,246,0.12)', fontSize: 13 }}>
+      <span style={{ color: 'rgba(240,238,255,0.45)', fontWeight: 600 }}>{k}</span>
       <span style={{ fontWeight: 700, textAlign: 'right' }}>{v || '—'}</span>
     </div>
   );

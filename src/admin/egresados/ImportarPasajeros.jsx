@@ -147,7 +147,7 @@ export default function ImportarPasajeros({ opId, buses, staff, pasajeros, onClo
             <input ref={inputRef} type="file" accept=".xlsx,.xls,.csv,.txt,.tsv,.ods" style={{ display: 'none' }}
               onChange={e => { abrirArchivo(e.target.files?.[0]); e.target.value = ''; }} />
           </div>
-          <div style={{ textAlign: 'center', margin: '14px 0', fontSize: 12, color: '#9090B0', fontWeight: 700 }}>— o —</div>
+          <div style={{ textAlign: 'center', margin: '14px 0', fontSize: 12, color: 'rgba(240,238,255,0.45)', fontWeight: 700 }}>— o —</div>
           <div className="eg-field">
             <label>Pegá las celdas copiadas del Excel (con la fila de títulos)</label>
             <textarea rows={6} value={texto} onChange={e => setTexto(e.target.value)} placeholder={'Apellido\tNombre\tDNI\tColegio\tHotel\nPérez\tJuan\t45123456\tEsc. N°53\tHotel Sol'} />

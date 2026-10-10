@@ -172,7 +172,7 @@ export default function TabPasajeros({ opId, op, buses, staff, pasajeros, acceso
                         <div style={{ fontWeight: 700 }}>{apellidoNombre(p)}</div>
                         {p.observaciones && <div className="muted" style={{ fontSize: 11 }} title={p.observaciones}>📝 {p.observaciones.slice(0, 40)}{p.observaciones.length > 40 ? '…' : ''}</div>}
                       </td>
-                      <td>{p.dni ? <span style={{ color: dniRepetidos.has(p.dni) ? '#CF1322' : undefined, fontWeight: dniRepetidos.has(p.dni) ? 800 : 500 }}>{p.dni}{dniRepetidos.has(p.dni) ? ' ⚠️' : ''}</span> : <span className="eg-chip eg-chip-amber">Falta</span>}</td>
+                      <td>{p.dni ? <span style={{ color: dniRepetidos.has(p.dni) ? '#EF4444' : undefined, fontWeight: dniRepetidos.has(p.dni) ? 800 : 500 }}>{p.dni}{dniRepetidos.has(p.dni) ? ' ⚠️' : ''}</span> : <span className="eg-chip eg-chip-amber">Falta</span>}</td>
                       <td className="muted">{p.colegio || '—'}</td>
                       <td className="muted">{[p.hotel, p.habitacion && `hab. ${p.habitacion}`].filter(Boolean).join(' · ') || '—'}</td>
                       <td><BusChip bus={bus} /></td>
