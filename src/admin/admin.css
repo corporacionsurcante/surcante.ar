@@ -85,7 +85,35 @@
 .login-btn img      { width: 20px; height: 20px; }
 .login-error        { margin-top: 16px; font-size: 13px; color: #F87171; font-weight: 500; }
 
-/* ---- Topbar admin ---- */
+.login-logo   { height: 40px; margin-bottom: 32px; }
+.login-title  { font-size: 24px; font-weight: 700; color: #fff; margin-bottom: 8px; letter-spacing: -0.03em; }
+.login-sub    { font-size: 14px; color: rgba(255,255,255,.45); margin-bottom: 36px; line-height: 1.5; }
+
+.login-btn {
+  width: 100%;
+  padding: 15px;
+  background: var(--ad-accent);
+  color: #fff;
+  border: none;
+  border-radius: 14px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-family: inherit;
+  box-shadow: 0 6px 20px rgba(var(--ad-accent-rgb), .45);
+  transition: opacity .15s, transform .1s;
+  -webkit-tap-highlight-color: transparent;
+}
+.login-btn:hover    { opacity: .9; }
+.login-btn:active   { transform: scale(0.97); }
+.login-btn img      { width: 20px; height: 20px; }
+.login-error        { margin-top: 16px; font-size: 13px; color: #FF6B6B; font-weight: 500; }
+
+/* ---- Topbar admin (dark) ---- */
 .admin-topbar {
   background: rgba(8,8,15,0.95);
   backdrop-filter: saturate(180%) blur(20px);
