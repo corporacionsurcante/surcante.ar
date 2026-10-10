@@ -76,6 +76,15 @@ export default function PortalViaje() {
       {sesion.rol === 'pasajero'     && <PortalPasajero    sesion={sesion} />}
       {sesion.rol === 'conductor'    && <PortalConductor   sesion={sesion} />}
       {sesion.rol === 'coordinador'  && <PortalCoordinador sesion={sesion} />}
+      {!['pasajero', 'conductor', 'coordinador'].includes(sesion.rol) && (
+        <div className="portal-error-wrap">
+          <div className="portal-error-card">
+            <span className="portal-error-icon">⚠️</span>
+            <h2>Rol desconocido</h2>
+            <p>Tu link de acceso tiene un tipo de usuario no reconocido. Contactá a tu agencia.</p>
+          </div>
+        </div>
+      )}
     </Suspense>
   );
 }

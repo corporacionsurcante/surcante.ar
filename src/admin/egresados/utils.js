@@ -477,6 +477,15 @@ export function distribuirPasajeros({ pasajeros, buses, staff, soloSinAsignar = 
   return { cambios, resumen, sinLugar };
 }
 
+// ---------------- Itinerario ----------------
+export function diaActivoDeItinerario(itinerario, hoy) {
+  if (!itinerario.length) return null;
+  const actual = itinerario.find(d => d.id === hoy);
+  if (actual) return actual;
+  const futuros = itinerario.filter(d => d.id > hoy);
+  return futuros.length ? futuros[0] : itinerario[itinerario.length - 1];
+}
+
 // ---------------- Estados ----------------
 export const ESTADOS_OPERATIVO = {
   planificacion: { label: 'Planificación', bg: '#FFF8E6', color: '#7A5200' },

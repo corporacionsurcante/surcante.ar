@@ -14,7 +14,7 @@ import {
   onSnapshot, query, where, orderBy, serverTimestamp, writeBatch,
 } from 'firebase/firestore';
 import { db } from './config';
-import { generarToken, limpiarDni } from '../admin/egresados/utils';
+import { generarToken, limpiarDni, normalizarTexto } from '../admin/egresados/utils';
 
 const SUBCOLECCIONES = ['buses', 'staff', 'pasajeros', 'itinerario', 'avisos', 'reportes', 'ubicaciones', 'checkins'];
 const LOTE = 400; // Firestore permite 500 operaciones por batch
@@ -212,4 +212,115 @@ export async function regenerarAcceso(opId, accesoViejo) {
   });
   await batch.commit();
   return token;
+}
+
+// ---------------- IMPORTACIÓN MAESTRO ----------------
+// Importa buses, conductores, coordinadores, pasajeros e itinerario desde el Excel Maestro.
+// buses y pasajeros existentes se pasan para detectar duplicados (por código / DNI).
+export async function importarMaestro(opId, datos, { buses: busesExistentes = [], pasajeros: paxExistentes = [] } = {}) {
+  const { buses: busesNuevos, conductores, coordinadores, pasajeros, itinerario } = datos;
+
+  // Mapa normalizado(código) → id, arrancando con los buses ya existentes
+  const mapaCodigoId = new Map(busesExistentes.map(b => [normalizarTexto(b.codigo), b.id]));
+
+  // 1. Crear buses nuevos (omitir los que ya existen por código)
+  for (const b of busesNuevos) {
+    const k = normalizarTexto(b.codigo);
+    if (!mapaCodigoId.has(k)) {
+      const ref = await addDoc(sub(opId, 'buses'), { ...b, creadoEn: serverTimestamp() });
+      mapaCodigoId.set(k, ref.id);
+    }
+  }
+
+  const resolverBus = texto => {
+    if (!texto) return null;
+    const n = normalizarTexto(texto);
+    if (mapaCodigoId.has(n)) return mapaCodigoId.get(n);
+    const num = n.replace(/\D/g, '');
+    if (num) {
+      for (const [k, id] of mapaCodigoId) {
+        if (k.replace(/\D/g, '') === num) return id;
+      }
+    }
+    return null;
+  };
+
+  // 2. Crear conductores en batch + actualizar padrón global
+  if (conductores.length) {
+    await commitEnLotes(conductores.map(c => {
+      const { _busTexto, ...data } = c;
+      data.busId = resolverBus(_busTexto);
+      return batch => batch.set(doc(sub(opId, 'staff')), { ...data, creadoEn: serverTimestamp() });
+    }));
+    for (const c of conductores) {
+      if (c.dni) await upsertConductor(c);
+    }
+  }
+
+  // 3. Crear coordinadores con addDoc para obtener sus IDs (necesarios para vincular pasajeros)
+  const mapaCoordId = new Map();
+  for (const c of coordinadores) {
+    const { _busTexto, ...data } = c;
+    data.busId = resolverBus(_busTexto);
+    const ref = await addDoc(sub(opId, 'staff'), { ...data, creadoEn: serverTimestamp() });
+    // Registrar por varias claves para máxima resolución desde el Excel
+    const n1 = normalizarTexto(`${c.nombre} ${c.apellido}`);
+    const n2 = normalizarTexto(`${c.apellido} ${c.nombre}`);
+    const ap = normalizarTexto(c.apellido);
+    mapaCoordId.set(n1, ref.id);
+    mapaCoordId.set(n2, ref.id);
+    if (ap.length > 2) mapaCoordId.set(ap, ref.id);
+    if (c.dni) mapaCoordId.set(c.dni, ref.id);
+  }
+
+  // 4. Crear/actualizar pasajeros
+  if (pasajeros.length) {
+    const porDni = new Map(paxExistentes.filter(p => p.dni).map(p => [p.dni, p.id]));
+    const lista = pasajeros.map(({ _busTexto, _coordTexto, ...p }) => {
+      const busId = resolverBus(_busTexto) || null;
+      const coordId = _coordTexto ? (mapaCoordId.get(normalizarTexto(_coordTexto)) || null) : null;
+      const id = p.dni ? porDni.get(p.dni) : undefined;
+      return { ...p, busId, coordinadorId: coordId, ...(id ? { id } : {}) };
+    });
+    await guardarPasajerosMasivo(opId, lista);
+  }
+
+  // 5. Guardar itinerario (un documento por fecha)
+  for (const { fecha, actividades, resumen, notasConductores, notasCoordinadores } of itinerario) {
+    const acts = actividades.map(({ _busesTexto, ...a }) => ({
+      ...a,
+      buses: _busesTexto
+        ? _busesTexto.split(',').map(t => resolverBus(t.trim())).filter(Boolean)
+        : [],
+    }));
+    await guardarEnSub(opId, 'itinerario', fecha, { actividades: acts, resumen, notasConductores, notasCoordinadores });
+  }
+}
+
+// ---------------- USUARIOS DE AGENCIA ----------------
+// agencia_users/{email}: { agenciaId, nombre, activa, creadoEn }
+
+export function suscribirAgenciaUsers(agenciaId, cb, onError) {
+  return onSnapshot(
+    query(collection(db, 'agencia_users'), where('agenciaId', '==', agenciaId), orderBy('creadoEn', 'desc')),
+    snap => cb(mapDocs(snap)),
+    onError,
+  );
+}
+
+export function crearAgenciaUser(email, agenciaId, nombre) {
+  return setDoc(doc(db, 'agencia_users', email.trim().toLowerCase()), {
+    agenciaId,
+    nombre: nombre.trim(),
+    activa: true,
+    creadoEn: serverTimestamp(),
+  });
+}
+
+export function actualizarAgenciaUser(email, data) {
+  return updateDoc(doc(db, 'agencia_users', email.trim().toLowerCase()), { ...data, actualizadoEn: serverTimestamp() });
+}
+
+export function eliminarAgenciaUser(email) {
+  return deleteDoc(doc(db, 'agencia_users', email.trim().toLowerCase()));
 }

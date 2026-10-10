@@ -21,6 +21,8 @@ import bgImage from './assets/bg-surcante.jpg';
 const AdminApp = lazy(() => import('./admin/pages/AdminApp'));
 // Portal personal de pasajeros, conductores y coordinadores (/v/{token})
 const PortalViaje = lazy(() => import('./portal/PortalViaje'));
+// Portal de agencias (/agencia)
+const AgenciaPortal = lazy(() => import('./agencia/AgenciaPortal'));
 
 const ACCESO_STORAGE_KEY = 'surcante_acceso_cliente';
 
@@ -283,6 +285,11 @@ export default function App() {
   if (pathname.startsWith('/v/')) return (
     <Suspense fallback={<div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f4f2fa', color: '#b0b0c8', fontSize: 14, flexDirection: 'column', gap: 12 }}><div style={{ width: 34, height: 34, border: '3px solid #e0d4f7', borderTopColor: '#7b2fbe', borderRadius: '50%', animation: 'spin .7s linear infinite' }} />Cargando portal…</div>}>
       <PortalViaje />
+    </Suspense>
+  );
+  if (pathname.startsWith('/agencia')) return (
+    <Suspense fallback={<div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F4F2FA', color: '#9090B0', fontSize: 14, flexDirection: 'column', gap: 12 }}><div style={{ width: 34, height: 34, border: '3px solid #EDE9FB', borderTopColor: '#7B2FBE', borderRadius: '50%', animation: 'spin .7s linear infinite' }} />Cargando portal de agencias…</div>}>
+      <AgenciaPortal />
     </Suspense>
   );
   const urlParams = new URLSearchParams(window.location.search);

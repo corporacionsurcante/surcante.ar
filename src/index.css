@@ -34,10 +34,10 @@
 
 html, body, #root {
   height: 100%;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: -apple-system, 'Inter', BlinkMacSystemFont, sans-serif;
   font-size: 15px;
   color: var(--text);
-  background: #EEEAF8;
+  background: #1C1C1E;
   -webkit-font-smoothing: antialiased;
 }
 

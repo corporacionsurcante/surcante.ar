@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { doc, getDoc, getDocs, setDoc, collection, onSnapshot, query, where, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase/config';
-import { colorBus, labelFecha, hoyISO } from '../admin/egresados/utils';
+import { colorBus, labelFecha, hoyISO, diaActivoDeItinerario } from '../admin/egresados/utils';
 
 export default function PortalConductor({ sesion }) {
   const { opId, refId, busId } = sesion;
@@ -13,28 +13,46 @@ export default function PortalConductor({ sesion }) {
   const [itinerario, setItinerario] = useState([]);
   const [avisos, setAvisos] = useState([]);
   const [busqueda, setBusqueda] = useState('');
+  const [abiertos, setAbiertos] = useState({});
+  const [errorFirestore, setErrorFirestore] = useState('');
 
   useEffect(() => {
     getDoc(doc(db, 'operativos', opId))
-      .then(s => s.exists() && setOp({ id: s.id, ...s.data() }));
+      .then(s => s.exists() && setOp({ id: s.id, ...s.data() }))
+      .catch(e => setErrorFirestore(e.code || e.message));
     if (busId) {
       getDoc(doc(db, 'operativos', opId, 'buses', busId))
-        .then(s => s.exists() && setBus({ id: s.id, ...s.data() }));
+        .then(s => s.exists() && setBus({ id: s.id, ...s.data() }))
+        .catch(e => setErrorFirestore(e.code || e.message));
       const q = query(collection(db, 'operativos', opId, 'pasajeros'), where('busId', '==', busId));
       getDocs(q).then(snap =>
         setPasajeros(snap.docs.map(d => ({ id: d.id, ...d.data() }))
           .sort((a, b) => `${a.apellido} ${a.nombre}`.localeCompare(`${b.apellido} ${b.nombre}`, 'es')))
-      );
+      ).catch(e => setErrorFirestore(e.code || e.message));
     }
-    getDocs(collection(db, 'operativos', opId, 'itinerario'))
-      .then(snap => setItinerario(snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => a.id.localeCompare(b.id))));
-    return onSnapshot(collection(db, 'operativos', opId, 'avisos'), snap =>
-      setAvisos(snap.docs.map(d => ({ id: d.id, ...d.data() }))
-        .sort((a, b) => (b.creadoEn?.seconds || 0) - (a.creadoEn?.seconds || 0)))
-    );
+    const unsubs = [
+      onSnapshot(
+        collection(db, 'operativos', opId, 'itinerario'),
+        snap => {
+          setItinerario(snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => a.id.localeCompare(b.id)));
+          setErrorFirestore('');
+        },
+        err => setErrorFirestore(err.code || err.message)
+      ),
+      onSnapshot(collection(db, 'operativos', opId, 'avisos'), snap =>
+        setAvisos(snap.docs.map(d => ({ id: d.id, ...d.data() }))
+          .sort((a, b) => (b.creadoEn?.seconds || 0) - (a.creadoEn?.seconds || 0)))
+      ),
+    ];
+    return () => unsubs.forEach(u => u());
   }, [opId, refId, busId]);
 
-  const diaHoy = itinerario.find(d => d.id === hoy);
+  const diaActivo = useMemo(() => diaActivoDeItinerario(itinerario, hoy), [itinerario, hoy]);
+
+  useEffect(() => {
+    if (diaActivo) setAbiertos(prev => ({ ...prev, [diaActivo.id]: true }));
+  }, [diaActivo?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const busColor = colorBus(bus);
 
   const paxFiltrados = pasajeros.filter(p => {
@@ -59,7 +77,7 @@ export default function PortalConductor({ sesion }) {
       </header>
 
       <nav className="portal-tabs">
-        {[['hoy', 'Hoy'], ['servicio', 'Servicio'], ['pasajeros', 'Pasajeros']].map(([id, label]) => (
+        {[['hoy', 'Hoy'], ['agenda', 'Agenda'], ['servicio', 'Servicio'], ['pasajeros', 'Pasajeros']].map(([id, label]) => (
           <button key={id} className={`portal-tab${tab === id ? ' activo' : ''}`} onClick={() => setTab(id)}>
             {label}
           </button>
@@ -67,7 +85,13 @@ export default function PortalConductor({ sesion }) {
       </nav>
 
       <main className="portal-main">
-        {tab === 'hoy'      && <TabHoyConductor dia={diaHoy} avisos={avisos} fecha={hoy} busId={busId} />}
+        {errorFirestore && (
+          <div className="portal-card" style={{ margin: '12px 0', background: '#2d1a1a', borderLeft: '3px solid #cf1322', fontSize: 13, color: '#ff6b6b' }}>
+            ⚠️ Error al cargar datos: <code>{errorFirestore}</code>. Si el problema persiste, contactá al administrador.
+          </div>
+        )}
+        {tab === 'hoy'      && <TabHoyConductor dia={diaActivo} avisos={avisos} fecha={hoy} busId={busId} />}
+        {tab === 'agenda'   && <TabAgendaConductor itinerario={itinerario} hoy={hoy} busId={busId} abiertos={abiertos} setAbiertos={setAbiertos} />}
         {tab === 'servicio' && <TabServicio opId={opId} busId={busId} refId={refId} bus={bus} busColor={busColor} />}
         {tab === 'pasajeros' && (
           <div className="portal-section">
@@ -91,12 +115,23 @@ export default function PortalConductor({ sesion }) {
 /* ── Hoy ── */
 function TabHoyConductor({ dia, avisos, fecha, busId }) {
   const actividades = (dia?.actividades || []).filter(a => !busId || !a.buses?.length || a.buses.includes(busId));
+  const esHoy = dia?.id === fecha;
+  const etiqueta = !dia ? labelFecha(fecha, { largo: true })
+    : esHoy ? labelFecha(fecha, { largo: true })
+    : dia.id > fecha
+      ? `Próximas actividades · ${labelFecha(dia.id, { largo: true })}`
+      : `Último día del viaje · ${labelFecha(dia.id, { largo: true })}`;
   return (
     <div className="portal-section">
-      <div className="portal-card-label">{labelFecha(fecha, { largo: true })}</div>
-      {actividades.length === 0 && (
+      <div className="portal-card-label">{etiqueta}</div>
+      {!dia && (
         <div className="portal-card">
-          <p style={{ fontSize: 13, color: '#b0b0c8', margin: 0 }}>Sin actividades para hoy.</p>
+          <p style={{ fontSize: 13, color: '#b0b0c8', margin: 0 }}>El itinerario del viaje todavía no está cargado.</p>
+        </div>
+      )}
+      {dia && actividades.length === 0 && (
+        <div className="portal-card">
+          <p style={{ fontSize: 13, color: '#b0b0c8', margin: 0 }}>Sin actividades para este día.</p>
         </div>
       )}
       {actividades.map((act, i) => (
@@ -222,6 +257,54 @@ function TabServicio({ opId, busId, refId, bus, busColor }) {
           : <button className="portal-btn-danger" onClick={detener}>Detener servicio</button>
         }
       </div>
+    </div>
+  );
+}
+
+/* ── Agenda ── */
+function TabAgendaConductor({ itinerario, hoy, busId, abiertos, setAbiertos }) {
+  const toggle = id => setAbiertos(prev => ({ ...prev, [id]: !prev[id] }));
+  if (itinerario.length === 0) return (
+    <div className="portal-section">
+      <div className="portal-card">
+        <p style={{ fontSize: 13, color: '#b0b0c8', margin: 0 }}>La agenda del viaje todavía no está cargada.</p>
+      </div>
+    </div>
+  );
+  return (
+    <div className="portal-section">
+      {itinerario.map(dia => {
+        const esHoy = dia.id === hoy;
+        const abierto = abiertos[dia.id];
+        const actividades = (dia.actividades || []).filter(a => !busId || !a.buses?.length || a.buses.includes(busId));
+        return (
+          <div key={dia.id} className={`portal-dia-card${esHoy ? ' hoy' : ''}`}>
+            <button className="portal-dia-header" onClick={() => toggle(dia.id)}>
+              <span>{labelFecha(dia.id, { largo: true })}{esHoy ? ' — hoy' : ''}</span>
+              <span className="portal-dia-toggle">{abierto ? '▲' : '▼'}</span>
+            </button>
+            {abierto && (
+              <div className="portal-dia-body">
+                {actividades.length === 0
+                  ? <div className="portal-empty-sm">Sin actividades</div>
+                  : actividades.map((act, i) => (
+                    <div key={i} className="portal-actividad" style={{ padding: '8px 0', borderBottom: i < actividades.length - 1 ? '1px solid #f0ecf8' : 'none', border: 'none', borderRadius: 0 }}>
+                      <div className="portal-act-hora">{act.hora || '—'}</div>
+                      <div>
+                        <div className="portal-act-titulo">{act.titulo}</div>
+                        {(act.paraPasajeros || act.nota) && <div className="portal-act-nota">{act.paraPasajeros || act.nota}</div>}
+                        {(act.paraConductores || act.notaConductor) && <div className="portal-act-nota nota-conductor">🧑‍✈️ {act.paraConductores || act.notaConductor}</div>}
+                      </div>
+                    </div>
+                  ))
+                }
+                {(dia.resumen || dia.notaGeneral) && <div className="portal-info-text">{dia.resumen || dia.notaGeneral}</div>}
+                {dia.notasConductores && <div className="portal-info-text">🧑‍✈️ {dia.notasConductores}</div>}
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
