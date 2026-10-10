@@ -101,8 +101,8 @@ export default function Reservas() {
               padding: '6px 14px', borderRadius: 20, fontSize: 12, fontWeight: 600,
               cursor: 'pointer', border: '1.5px solid',
               borderColor: filtro === f ? '#8B5CF6' : 'rgba(139,92,246,0.20)',
-              background: filtro === f ? '#8B5CF6' : '#fff',
-              color: filtro === f ? '#fff' : 'rgba(240,238,255,0.55)',
+              background: filtro === f ? '#8B5CF6' : 'rgba(139,92,246,0.08)',
+              color: filtro === f ? '#fff' : 'rgba(240,238,255,0.65)',
               fontFamily: 'Inter, sans-serif',
             }}>
             {FILTRO_LABEL[f]}

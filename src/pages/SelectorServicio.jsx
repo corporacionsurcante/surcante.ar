@@ -32,13 +32,13 @@ export default function SelectorServicio({ onSelect }) {
         </div>
       </div>
       <div style={{
-        background: '#FFF8E6',
-        border: '1px solid #FFD166',
+        background: 'rgba(245,158,11,0.12)',
+        border: '1px solid rgba(245,158,11,0.30)',
         borderRadius: 12,
         padding: '10px 12px',
         marginBottom: 16,
         fontSize: 12,
-        color: '#7A5200',
+        color: '#F59E0B',
         lineHeight: 1.5,
         fontWeight: 600,
       }}>
@@ -99,7 +99,7 @@ export default function SelectorServicio({ onSelect }) {
         </div>
         <div style={{ display: 'flex', gap: 6, marginTop: 10, flexWrap: 'wrap' }}>
           {['3 horas mín.', `6 horas · ${usd(dispo.p6h)}`, `12 horas · ${usd(dispo.p12h)}`, `24 horas · ${usd(dispo.p24h)}`].map(d => (
-            <span key={d} style={{ background: '#FFF8E6', border: '1px solid #FFD166', borderRadius: 20, padding: '3px 10px', fontSize: 11, color: '#7A5200', fontWeight: 500 }}>{d}</span>
+            <span key={d} style={{ background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.30)', borderRadius: 20, padding: '3px 10px', fontSize: 11, color: '#F59E0B', fontWeight: 500 }}>{d}</span>
           ))}
         </div>
       </div>}

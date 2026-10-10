@@ -445,12 +445,12 @@ export default function ReceptivoCotizador({ onBack, initialContacto }) {
                 style={{
                   border: `1.5px solid ${sel ? 'var(--sp)' : 'var(--spm)'}`,
                   borderRadius: 10, padding: '10px 12px', marginBottom: 6, cursor: 'pointer',
-                  background: sel ? 'var(--sp)' : '#fff',
+                  background: sel ? 'var(--sp)' : 'rgba(139,92,246,0.06)',
                   display: 'flex', alignItems: 'center', gap: 10,
                 }}>
                 <span style={{ fontSize: 18 }}>{t.emoji}</span>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: sel ? '#fff' : 'var(--spd)' }}>{t.nombre}</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: sel ? '#fff' : 'var(--text)' }}>{t.nombre}</div>
                   <div style={{ fontSize: 11, color: sel ? 'rgba(255,255,255,.7)' : 'var(--text-3)' }}>{t.descripcion}</div>
                 </div>
                 <div style={{ textAlign: 'right' }}>
@@ -475,12 +475,12 @@ export default function ReceptivoCotizador({ onBack, initialContacto }) {
                 style={{
                   border: `1.5px solid ${sel ? 'var(--sp)' : 'var(--spm)'}`,
                   borderRadius: 10, padding: '10px 12px', marginBottom: 8, cursor: 'pointer',
-                  background: sel ? 'var(--sp)' : '#fff',
+                  background: sel ? 'var(--sp)' : 'rgba(139,92,246,0.06)',
                   display: 'flex', alignItems: 'center', gap: 10,
                 }}>
                 <span style={{ fontSize: 20 }}>🏛️</span>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: sel ? '#fff' : 'var(--spd)' }}>City Tour CABA</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: sel ? '#fff' : 'var(--text)' }}>City Tour CABA</div>
                   <div style={{ fontSize: 11, color: sel ? 'rgba(255,255,255,.7)' : 'var(--sp)' }}>
                     {formatARS((preciosCityTour[unidadSel?.tipo] || 0) * (dolar || 0))} + IVA
                   </div>
@@ -502,12 +502,12 @@ export default function ReceptivoCotizador({ onBack, initialContacto }) {
                 style={{
                   border: `1.5px solid ${sel ? 'var(--sp)' : 'var(--spm)'}`,
                   borderRadius: 10, padding: '10px 12px', marginBottom: 6, cursor: 'pointer',
-                  background: sel ? 'var(--sp)' : '#fff',
+                  background: sel ? 'var(--sp)' : 'rgba(139,92,246,0.06)',
                   display: 'flex', alignItems: 'center', gap: 10,
                 }}>
                 <span style={{ fontSize: 18 }}>{c.emoji}</span>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: sel ? '#fff' : 'var(--spd)' }}>{c.nombre}</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: sel ? '#fff' : 'var(--text)' }}>{c.nombre}</div>
                   <div style={{ fontSize: 11, color: sel ? 'rgba(255,255,255,.7)' : 'var(--text-3)' }}>{c.descripcion}</div>
                 </div>
                 <div style={{ textAlign: 'right' }}>
