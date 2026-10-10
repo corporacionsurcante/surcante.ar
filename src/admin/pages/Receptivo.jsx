@@ -177,7 +177,7 @@ export default function Receptivo() {
   return (
     <div>
       {/* Sub-tabs */}
-      <div style={{ display: 'flex', gap: 6, marginBottom: 20, borderBottom: '1px solid #EDE8F8', paddingBottom: 0 }}>
+      <div style={{ display: 'flex', gap: 6, marginBottom: 20, borderBottom: '1px solid rgba(139,92,246,0.15)', paddingBottom: 0 }}>
         {[
           { id: 'citytour', label: '🏛️ City Tour CABA' },
           { id: 'circuitos', label: '🎡 Circuitos' },
@@ -187,9 +187,9 @@ export default function Receptivo() {
         ].map(t => (
           <button key={t.id} onClick={() => setTab(t.id)}
             style={{
-              padding: '8px 16px', border: 'none', borderBottom: `2px solid ${tab === t.id ? '#7B2FBE' : 'transparent'}`,
+              padding: '8px 16px', border: 'none', borderBottom: `2px solid ${tab === t.id ? '#8B5CF6' : 'transparent'}`,
               background: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
-              fontSize: 13, fontWeight: 600, color: tab === t.id ? '#7B2FBE' : '#9090B0',
+              fontSize: 13, fontWeight: 600, color: tab === t.id ? '#8B5CF6' : 'var(--ad-text-2)',
               transition: 'all .15s',
             }}>
             {t.label}
@@ -198,7 +198,7 @@ export default function Receptivo() {
       </div>
 
       {errorGuardar && (
-        <div style={{ background: '#FFF1F0', color: '#A8071A', borderRadius: 10, padding: '10px 12px', fontSize: 13, fontWeight: 600, marginBottom: 14 }}>
+        <div style={{ background: 'rgba(239,68,68,0.10)', color: '#EF4444', borderRadius: 10, padding: '10px 12px', fontSize: 13, fontWeight: 600, marginBottom: 14 }}>
           ⛔ {errorGuardar}
         </div>
       )}
@@ -218,7 +218,7 @@ export default function Receptivo() {
             <div className="section-title">Receptivo a disposición — precios (USD, sin IVA)</div>
           </div>
           <div className="precios-card">
-            <div style={{ fontSize: 12, color: '#9090B0', marginBottom: 12 }}>
+            <div style={{ fontSize: 12, color: 'rgba(240,238,255,0.45)', marginBottom: 12 }}>
               3 hs = 3 × precio por hora · 4 a 6 hs = pack 6 hs · 7 a 12 hs = pack 12 hs · 13 a 15 hs = pack 12 hs + horas extra · 16 a 24 hs = pack 24 hs.
             </div>
             {[
@@ -250,7 +250,7 @@ export default function Receptivo() {
             <div className="section-title">Precios City Tour CABA (USD/día)</div>
           </div>
           <div className="precios-card">
-            <div style={{ fontSize: 12, color: '#9090B0', marginBottom: 16, fontWeight: 500 }}>
+            <div style={{ fontSize: 12, color: 'rgba(240,238,255,0.45)', marginBottom: 16, fontWeight: 500 }}>
               Se convierten automáticamente a pesos usando el dólar BNA al momento de cotizar.
             </div>
             <div className="precios-grid">
@@ -258,7 +258,7 @@ export default function Receptivo() {
                 <div key={tipo} className="precio-field">
                   <label>{TIPO_LABELS[tipo]}</label>
                   <div style={{ position: 'relative' }}>
-                    <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 13, color: '#9090B0', fontWeight: 600 }}>USD</span>
+                    <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 13, color: 'rgba(240,238,255,0.45)', fontWeight: 600 }}>USD</span>
                     <input type="number" step="0.01" min="0"
                       value={cityTour[tipo] || ''}
                       onChange={e => setCityTour(prev => ({ ...prev, [tipo]: parseFloat(e.target.value) || 0 }))}
@@ -307,18 +307,18 @@ export default function Receptivo() {
                   {circuitos.map(c => (
                     <tr key={c.id}>
                       <td><span style={{ fontSize: 16 }}>{c.emoji}</span> <strong>{c.nombre}</strong></td>
-                      <td style={{ color: '#9090B0', fontSize: 12 }}>{c.descripcion}</td>
+                      <td style={{ color: 'rgba(240,238,255,0.45)', fontSize: 12 }}>{c.descripcion}</td>
                       <td>USD {c.precioUSD?.['MIX 60']?.toFixed(2)}</td>
                       <td>USD {c.precioUSD?.['Comun 45']?.toFixed(2)}</td>
                       <td>USD {c.precioUSD?.['Minibus 24']?.toFixed(2)}</td>
                       <td>
-                        <span style={{ background: c.activo !== false ? '#E6FBF5' : '#FFF1F0', color: c.activo !== false ? '#007A5A' : '#CF1322', padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700 }}>
+                        <span style={{ background: c.activo !== false ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.10)', color: c.activo !== false ? '#2DD4BF' : '#EF4444', padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700 }}>
                           {c.activo !== false ? '✅ Activo' : '❌ Inactivo'}
                         </span>
                       </td>
                       <td>
                         <button onClick={() => abrirEditarCircuito(c)}
-                          style={{ background: '#F3EDFB', color: '#7B2FBE', border: 'none', borderRadius: 8, padding: '6px 12px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+                          style={{ background: '#F3EDFB', color: '#8B5CF6', border: 'none', borderRadius: 8, padding: '6px 12px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
                           Editar
                         </button>
                       </td>
@@ -339,8 +339,8 @@ export default function Receptivo() {
           </div>
 
           <div className="precios-card" style={{ marginBottom: 16 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: '#0A0A0F', marginBottom: 4 }}>Precio fijo por día completo</div>
-            <div style={{ fontSize: 12, color: '#9090B0', marginBottom: 12 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#F0EEFF', marginBottom: 4 }}>Precio fijo por día completo</div>
+            <div style={{ fontSize: 12, color: 'rgba(240,238,255,0.45)', marginBottom: 12 }}>
               Para servicios que ocupan la unidad todo el día.
             </div>
             <div className="precio-field">
@@ -357,8 +357,8 @@ export default function Receptivo() {
           </div>
 
           <div className="precios-card">
-            <div style={{ fontSize: 13, fontWeight: 700, color: '#0A0A0F', marginBottom: 4 }}>Precios por horas y paquetes</div>
-            <div style={{ fontSize: 12, color: '#9090B0', marginBottom: 12 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#F0EEFF', marginBottom: 4 }}>Precios por horas y paquetes</div>
+            <div style={{ fontSize: 12, color: 'rgba(240,238,255,0.45)', marginBottom: 12 }}>
               Para servicios contratados por tiempo específico.
             </div>
             {[
@@ -410,21 +410,21 @@ export default function Receptivo() {
       {modal !== null && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200, padding: 20 }}
           onClick={e => e.target === e.currentTarget && setModal(null)}>
-          <div style={{ background: '#fff', borderRadius: 16, padding: 24, width: '100%', maxWidth: 480, maxHeight: '90vh', overflowY: 'auto' }}>
+          <div style={{ background: '#0D0D1A', borderRadius: 16, padding: 24, width: '100%', maxWidth: 480, maxHeight: '90vh', overflowY: 'auto' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-              <div style={{ fontSize: 17, fontWeight: 800, color: '#0A0A0F' }}>
+              <div style={{ fontSize: 17, fontWeight: 800, color: '#F0EEFF' }}>
                 {modal === 'nuevo' ? '+ Nuevo circuito' : `✏️ Editar: ${form.nombre}`}
               </div>
-              <button onClick={() => setModal(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, color: '#9090B0' }}>✕</button>
+              <button onClick={() => setModal(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, color: 'rgba(240,238,255,0.45)' }}>✕</button>
             </div>
 
             {/* Emoji selector */}
             <div style={{ marginBottom: 14 }}>
-              <label style={{ fontSize: 10, fontWeight: 700, color: '#9090B0', letterSpacing: '.08em', textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>Emoji</label>
+              <label style={{ fontSize: 10, fontWeight: 700, color: 'rgba(240,238,255,0.45)', letterSpacing: '.08em', textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>Emoji</label>
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                 {EMOJIS.map(e => (
                   <div key={e} onClick={() => setForm(f => ({ ...f, emoji: e }))}
-                    style={{ width: 34, height: 34, borderRadius: 8, border: `2px solid ${form.emoji === e ? '#7B2FBE' : '#EDE8F8'}`, background: form.emoji === e ? '#EDE9FB' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, cursor: 'pointer' }}>
+                    style={{ width: 34, height: 34, borderRadius: 8, border: `2px solid ${form.emoji === e ? '#8B5CF6' : 'rgba(139,92,246,0.20)'}`, background: form.emoji === e ? 'rgba(139,92,246,0.15)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, cursor: 'pointer' }}>
                     {e}
                   </div>
                 ))}
@@ -436,33 +436,33 @@ export default function Receptivo() {
               { label: 'Descripción', field: 'descripcion', placeholder: 'ej: Basílica de Luján' },
             ].map(({ label, field, placeholder }) => (
               <div key={field} style={{ marginBottom: 12 }}>
-                <label style={{ fontSize: 10, fontWeight: 700, color: '#9090B0', letterSpacing: '.08em', textTransform: 'uppercase', display: 'block', marginBottom: 5 }}>{label}</label>
+                <label style={{ fontSize: 10, fontWeight: 700, color: 'rgba(240,238,255,0.45)', letterSpacing: '.08em', textTransform: 'uppercase', display: 'block', marginBottom: 5 }}>{label}</label>
                 <input placeholder={placeholder} value={form[field]} onChange={e => setForm(f => ({ ...f, [field]: e.target.value }))}
-                  style={{ width: '100%', border: '1.5px solid #EDE8F8', borderRadius: 8, padding: '9px 12px', fontSize: 14, fontFamily: 'Inter, sans-serif', outline: 'none' }} />
+                  style={{ width: '100%', border: '1.5px solid rgba(139,92,246,0.20)', borderRadius: 8, padding: '9px 12px', fontSize: 14, fontFamily: 'Inter, sans-serif', outline: 'none', background: '#131324', color: '#F0EEFF' }} />
               </div>
             ))}
 
             <div style={{ marginBottom: 14 }}>
-              <label style={{ fontSize: 10, fontWeight: 700, color: '#9090B0', letterSpacing: '.08em', textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>Precios por tipo de unidad (USD/día)</label>
+              <label style={{ fontSize: 10, fontWeight: 700, color: 'rgba(240,238,255,0.45)', letterSpacing: '.08em', textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>Precios por tipo de unidad (USD/día)</label>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                 {TIPOS_UNIDAD.map(tipo => (
                   <div key={tipo}>
-                    <label style={{ fontSize: 10, color: '#9090B0', fontWeight: 600, display: 'block', marginBottom: 4 }}>{TIPO_LABELS[tipo]}</label>
+                    <label style={{ fontSize: 10, color: 'rgba(240,238,255,0.45)', fontWeight: 600, display: 'block', marginBottom: 4 }}>{TIPO_LABELS[tipo]}</label>
                     <input type="number" step="0.01" min="0" placeholder="USD"
                       value={form.precioUSD[tipo] || ''}
                       onChange={e => setForm(f => ({ ...f, precioUSD: { ...f.precioUSD, [tipo]: e.target.value } }))}
-                      style={{ width: '100%', border: '1.5px solid #EDE8F8', borderRadius: 8, padding: '8px 10px', fontSize: 13, fontFamily: 'Inter, sans-serif', outline: 'none' }} />
+                      style={{ width: '100%', border: '1.5px solid rgba(139,92,246,0.20)', borderRadius: 8, padding: '8px 10px', fontSize: 13, fontFamily: 'Inter, sans-serif', outline: 'none', background: '#131324', color: '#F0EEFF' }} />
                   </div>
                 ))}
               </div>
             </div>
 
             <div style={{ marginBottom: 20 }}>
-              <label style={{ fontSize: 10, fontWeight: 700, color: '#9090B0', letterSpacing: '.08em', textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>Estado</label>
+              <label style={{ fontSize: 10, fontWeight: 700, color: 'rgba(240,238,255,0.45)', letterSpacing: '.08em', textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>Estado</label>
               <div style={{ display: 'flex', gap: 8 }}>
                 {[{ val: true, label: '✅ Activo' }, { val: false, label: '❌ Inactivo' }].map(opt => (
                   <div key={String(opt.val)} onClick={() => setForm(f => ({ ...f, activo: opt.val }))}
-                    style={{ flex: 1, padding: 10, textAlign: 'center', borderRadius: 8, cursor: 'pointer', border: `1.5px solid ${form.activo === opt.val ? '#7B2FBE' : '#EDE8F8'}`, background: form.activo === opt.val ? '#EDE9FB' : '#fff', color: form.activo === opt.val ? '#4A0FA8' : '#4A4A6A', fontWeight: 600, fontSize: 13 }}>
+                    style={{ flex: 1, padding: 10, textAlign: 'center', borderRadius: 8, cursor: 'pointer', border: `1.5px solid ${form.activo === opt.val ? '#8B5CF6' : 'rgba(139,92,246,0.20)'}`, background: form.activo === opt.val ? 'rgba(139,92,246,0.15)' : 'transparent', color: form.activo === opt.val ? '#8B5CF6' : 'rgba(240,238,255,0.55)', fontWeight: 600, fontSize: 13 }}>
                     {opt.label}
                   </div>
                 ))}
@@ -470,22 +470,22 @@ export default function Receptivo() {
             </div>
 
             <button onClick={handleGuardarCircuito} disabled={saving || !form.nombre.trim()}
-              style={{ width: '100%', padding: 13, background: '#7B2FBE', color: '#fff', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: saving ? 'default' : 'pointer', opacity: saving ? .7 : 1, fontFamily: 'Inter, sans-serif', marginBottom: 8 }}>
+              style={{ width: '100%', padding: 13, background: '#8B5CF6', color: '#fff', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: saving ? 'default' : 'pointer', opacity: saving ? .7 : 1, fontFamily: 'Inter, sans-serif', marginBottom: 8 }}>
               {saving ? 'Guardando...' : modal === 'nuevo' ? '✓ Agregar circuito' : '✓ Guardar cambios'}
             </button>
 
             {modal !== 'nuevo' && (
               !confirmEliminar ? (
                 <button onClick={() => setConfirmEliminar(true)}
-                  style={{ width: '100%', padding: 11, background: '#FFF1F0', color: '#CF1322', border: '1px solid #FFCCC7', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
+                  style={{ width: '100%', padding: 11, background: 'rgba(239,68,68,0.10)', color: '#EF4444', border: '1px solid rgba(239,68,68,0.30)', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
                   🗑️ Eliminar circuito
                 </button>
               ) : (
-                <div style={{ background: '#FFF1F0', border: '1px solid #FFCCC7', borderRadius: 10, padding: 12, textAlign: 'center' }}>
-                  <div style={{ fontSize: 13, color: '#CF1322', fontWeight: 600, marginBottom: 10 }}>¿Confirmás eliminar {form.nombre}?</div>
+                <div style={{ background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.30)', borderRadius: 10, padding: 12, textAlign: 'center' }}>
+                  <div style={{ fontSize: 13, color: '#EF4444', fontWeight: 600, marginBottom: 10 }}>¿Confirmás eliminar {form.nombre}?</div>
                   <div style={{ display: 'flex', gap: 8 }}>
-                    <button onClick={() => setConfirmEliminar(false)} style={{ flex: 1, padding: 9, background: '#fff', border: '1px solid #ddd', borderRadius: 8, cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontWeight: 600 }}>Cancelar</button>
-                    <button onClick={handleEliminarCircuito} disabled={saving} style={{ flex: 1, padding: 9, background: '#CF1322', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontWeight: 700 }}>Sí, eliminar</button>
+                    <button onClick={() => setConfirmEliminar(false)} style={{ flex: 1, padding: 9, background: '#131324', border: '1px solid rgba(139,92,246,0.20)', borderRadius: 8, cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontWeight: 600 }}>Cancelar</button>
+                    <button onClick={handleEliminarCircuito} disabled={saving} style={{ flex: 1, padding: 9, background: '#EF4444', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontWeight: 700 }}>Sí, eliminar</button>
                   </div>
                 </div>
               )

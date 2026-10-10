@@ -26,24 +26,24 @@ export default function Confirmacion({ reserva, pago, onNueva }) {
   return (
     <div className="confirm-page">
       <div className="confirm-icon">✅</div>
-      <div style={{ background: '#F4F2FA', borderRadius: 10, padding: '10px 16px', marginBottom: 12, textAlign: 'center' }}>
-        <div style={{ fontSize: 11, color: '#9090B0', fontWeight: 600, letterSpacing: '.08em', textTransform: 'uppercase' }}>Número de reserva</div>
-        <div style={{ fontSize: 20, fontWeight: 800, color: '#7B2FBE', letterSpacing: '.05em' }}>{nroCotizacion}</div>
-        <div style={{ fontSize: 11, color: '#9090B0', marginTop: 3 }}>Guardá este número para consultas</div>
+      <div style={{ background: 'rgba(139,92,246,0.08)', borderRadius: 10, padding: '10px 16px', marginBottom: 12, textAlign: 'center' }}>
+        <div style={{ fontSize: 11, color: 'rgba(240,238,255,0.45)', fontWeight: 600, letterSpacing: '.08em', textTransform: 'uppercase' }}>Número de reserva</div>
+        <div style={{ fontSize: 20, fontWeight: 800, color: '#8B5CF6', letterSpacing: '.05em' }}>{nroCotizacion}</div>
+        <div style={{ fontSize: 11, color: 'rgba(240,238,255,0.45)', marginTop: 3 }}>Guardá este número para consultas</div>
       </div>
       <div className="confirm-title">¡Reserva confirmada!</div>
       <div className="confirm-sub">
         En breve te contactamos por WhatsApp para coordinar el pago del saldo.
       </div>
       {errorGuardado && (
-        <div style={{ background: '#FFF1F0', color: '#A8071A', borderRadius: 10, padding: '10px 12px', fontSize: 12.5, fontWeight: 600, marginBottom: 12, lineHeight: 1.45 }}>
+        <div style={{ background: 'rgba(239,68,68,0.10)', color: '#EF4444', borderRadius: 10, padding: '10px 12px', fontSize: 12.5, fontWeight: 600, marginBottom: 12, lineHeight: 1.45 }}>
           ⚠️ No pudimos registrar la reserva automáticamente. Mandanos el número {nroCotizacion} por WhatsApp (botones de abajo) y la cargamos nosotros.
         </div>
       )}
 
       <div className="confirm-detail">
-        <div className="confirm-row hl"><span>Total del viaje</span><span style={{ color: '#00C896' }}>{formatARS(grandTotal)}</span></div>
-        <div className="confirm-row" style={{ color: '#00C896', fontWeight: 600 }}>
+        <div className="confirm-row hl"><span>Total del viaje</span><span style={{ color: '#10B981' }}>{formatARS(grandTotal)}</span></div>
+        <div className="confirm-row" style={{ color: '#10B981', fontWeight: 600 }}>
           <span>Seña ({Math.round((porcentaje || 0.30) * 100)}%)</span>
           <span>{formatARS(sena)}</span>
         </div>
@@ -87,7 +87,7 @@ export default function Confirmacion({ reserva, pago, onNueva }) {
 
       <button
         className="btn-primary"
-        style={{ marginTop: 0, background: '#7B2FBE' }}
+        style={{ marginTop: 0, background: '#8B5CF6' }}
         onClick={() => descargarPdfCotizacion(datosPdf)}>
         📄 Descargar presupuesto en PDF
       </button>

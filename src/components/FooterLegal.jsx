@@ -9,18 +9,18 @@ export default function FooterLegal() {
   const Modal = ({ titulo, onClose, children }) => (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.6)', zIndex: 9999, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', padding: 0 }}
       onClick={e => e.target === e.currentTarget && onClose()}>
-      <div style={{ background: '#fff', borderRadius: '20px 20px 0 0', padding: '24px 20px 40px', width: '100%', maxWidth: 600, maxHeight: '85vh', overflowY: 'auto' }}>
+      <div style={{ background: '#0D0D1A', borderRadius: '20px 20px 0 0', padding: '24px 20px 40px', width: '100%', maxWidth: 600, maxHeight: '85vh', overflowY: 'auto', border: '1px solid rgba(139,92,246,0.20)', borderBottom: 'none' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-          <div style={{ fontSize: 17, fontWeight: 800, color: '#0A0A0F' }}>{titulo}</div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: '#9090B0' }}>✕</button>
+          <div style={{ fontSize: 17, fontWeight: 800, color: '#F0EEFF' }}>{titulo}</div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: 'rgba(240,238,255,0.45)' }}>✕</button>
         </div>
         {children}
       </div>
     </div>
   );
 
-  const P = ({ children }) => <p style={{ fontSize: 13, color: '#4A4A6A', lineHeight: 1.7, marginBottom: 10 }}>{children}</p>;
-  const H = ({ children }) => <div style={{ fontSize: 14, fontWeight: 700, color: '#0A0A0F', marginTop: 16, marginBottom: 6 }}>{children}</div>;
+  const P = ({ children }) => <p style={{ fontSize: 13, color: 'rgba(240,238,255,0.65)', lineHeight: 1.7, marginBottom: 10 }}>{children}</p>;
+  const H = ({ children }) => <div style={{ fontSize: 14, fontWeight: 700, color: '#F0EEFF', marginTop: 16, marginBottom: 6 }}>{children}</div>;
 
   return (
     <>
@@ -129,7 +129,7 @@ export default function FooterLegal() {
           <P>De acuerdo con la Disposición 954/2025 de la Secretaría de Comercio y la Ley 24.240 de Defensa del Consumidor, el consumidor tiene derecho a revocar la aceptación de una contratación a distancia dentro de los 10 (diez) días corridos desde la fecha de contratación, sin costo ni penalidad.</P>
           <H>¿Cómo ejercer el derecho de arrepentimiento?</H>
           <P>Comunicarse por alguno de los siguientes medios, indicando número de reserva, nombre completo y motivo:</P>
-          <div style={{ background: '#F4F2FA', borderRadius: 10, padding: 14, marginBottom: 10 }}>
+          <div style={{ background: 'rgba(139,92,246,0.08)', borderRadius: 10, padding: 14, marginBottom: 10 }}>
             <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8 }}>📱 WhatsApp</div>
             <a href="https://wa.me/5491158100414?text=Quiero%20ejercer%20mi%20derecho%20de%20arrepentimiento" target="_blank" rel="noreferrer"
               style={{ display: 'block', background: '#25D366', color: '#fff', padding: '10px 14px', borderRadius: 8, textDecoration: 'none', fontWeight: 700, fontSize: 13, textAlign: 'center', marginBottom: 8 }}>
@@ -137,7 +137,7 @@ export default function FooterLegal() {
             </a>
           </div>
           <P>Una vez recibida la solicitud, Surcante S.R.L. procesará la devolución dentro de los 10 días hábiles siguientes, de acuerdo con la política de cancelación vigente y la normativa aplicable a servicios turísticos con fecha determinada.</P>
-          <P style={{ fontSize: 11, color: '#9090B0' }}>Para servicios turísticos con fecha de prestación determinada, el ejercicio del arrepentimiento puede estar sujeto a condiciones específicas conforme a la normativa vigente.</P>
+          <P style={{ fontSize: 11, color: 'rgba(240,238,255,0.40)' }}>Para servicios turísticos con fecha de prestación determinada, el ejercicio del arrepentimiento puede estar sujeto a condiciones específicas conforme a la normativa vigente.</P>
         </Modal>
       )}
 

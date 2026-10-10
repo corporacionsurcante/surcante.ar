@@ -87,7 +87,7 @@ export default function Flota() {
     setSaving(false);
   }
 
-  const TIPO_COLOR = { 'MIX 60': '#4A0FA8', 'Comun 45': '#1565C0', 'Minibus 24': '#00796B', 'Minibus 19': '#558B2F' };
+  const TIPO_COLOR = { 'MIX 60': '#8B5CF6', 'Comun 45': '#1565C0', 'Minibus 24': '#00796B', 'Minibus 19': '#558B2F' };
 
   if (loading) return <div className="admin-loading">Cargando flota...</div>;
 
@@ -97,7 +97,7 @@ export default function Flota() {
         <div className="section-title">Flota ({unidades.length} unidades)</div>
         <div style={{ display: 'flex', gap: 8 }}>
           {unidades.length === 0 && (
-            <button className="section-action" style={{ background: '#555' }} onClick={handleInicializar}>
+            <button className="section-action" style={{ background: 'rgba(240,238,255,0.55)' }} onClick={handleInicializar}>
               Cargar unidades Surcante
             </button>
           )}
@@ -106,7 +106,7 @@ export default function Flota() {
       </div>
 
       {error && modal === null && (
-        <div style={{ background: '#FFF1F0', color: '#A8071A', borderRadius: 10, padding: '10px 12px', fontSize: 13, fontWeight: 600, marginBottom: 14 }}>⛔ {error}</div>
+        <div style={{ background: 'rgba(239,68,68,0.10)', color: '#EF4444', borderRadius: 10, padding: '10px 12px', fontSize: 13, fontWeight: 600, marginBottom: 14 }}>⛔ {error}</div>
       )}
 
       {unidades.length === 0 ? (
@@ -136,24 +136,24 @@ export default function Flota() {
                     <span style={{
                       display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                       width: 32, height: 32, borderRadius: 8, fontSize: 13, fontWeight: 800,
-                      background: TIPO_COLOR[u.tipo] || '#4A0FA8', color: '#fff',
+                      background: TIPO_COLOR[u.tipo] || '#8B5CF6', color: '#fff',
                     }}>{u.interno}</span>
                   </td>
                   <td style={{ fontWeight: 600 }}>{u.patente}</td>
                   <td>{u.tipo}</td>
                   <td>{u.butacas}</td>
                   <td>
-                    <span style={{ background: '#EDE9FB', color: '#4A0FA8', padding: '2px 8px', borderRadius: 20, fontSize: 11, fontWeight: 700 }}>
+                    <span style={{ background: 'rgba(139,92,246,0.15)', color: '#8B5CF6', padding: '2px 8px', borderRadius: 20, fontSize: 11, fontWeight: 700 }}>
                       {u.empresa}
                     </span>
                   </td>
-                  <td style={{ color: u.venceTecnica && new Date(u.venceTecnica) < new Date() ? '#CF1322' : '#555' }}>
+                  <td style={{ color: u.venceTecnica && new Date(u.venceTecnica) < new Date() ? '#EF4444' : 'rgba(240,238,255,0.55)' }}>
                     {u.venceTecnica || '—'}
                   </td>
                   <td>
                     <span style={{
                       background: u.activa !== false ? '#E6FBF5' : '#FFF1F0',
-                      color: u.activa !== false ? '#007A5A' : '#CF1322',
+                      color: u.activa !== false ? '#2DD4BF' : '#EF4444',
                       padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700,
                     }}>
                       {u.activa !== false ? '✅ Activa' : '❌ Inactiva'}
@@ -161,7 +161,7 @@ export default function Flota() {
                   </td>
                   <td>
                     <button onClick={() => abrirEditar(u)}
-                      style={{ background: '#F3EDFB', color: '#7B2FBE', border: 'none', borderRadius: 8, padding: '6px 12px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+                      style={{ background: '#F3EDFB', color: '#8B5CF6', border: 'none', borderRadius: 8, padding: '6px 12px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
                       Editar
                     </button>
                   </td>
@@ -179,12 +179,12 @@ export default function Flota() {
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           zIndex: 200, padding: 20,
         }} onClick={e => e.target === e.currentTarget && setModal(null)}>
-          <div style={{ background: '#fff', borderRadius: 16, padding: 24, width: '100%', maxWidth: 420, maxHeight: '90vh', overflowY: 'auto' }}>
+          <div style={{ background: '#0D0D1A', borderRadius: 16, padding: 24, width: '100%', maxWidth: 420, maxHeight: '90vh', overflowY: 'auto' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-              <div style={{ fontSize: 17, fontWeight: 800, color: '#0A0A0F' }}>
+              <div style={{ fontSize: 17, fontWeight: 800, color: '#F0EEFF' }}>
                 {modal === 'nueva' ? '+ Nueva unidad' : `✏️ Editar unidad ${form.interno}`}
               </div>
-              <button onClick={() => setModal(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, color: '#9090B0' }}>✕</button>
+              <button onClick={() => setModal(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, color: 'rgba(240,238,255,0.45)' }}>✕</button>
             </div>
 
             {[
@@ -195,35 +195,35 @@ export default function Flota() {
               { label: 'Vencimiento técnica', field: 'venceTecnica', type: 'date', placeholder: '' },
             ].map(({ label, field, type, placeholder }) => (
               <div key={field} style={{ marginBottom: 12 }}>
-                <label style={{ fontSize: 10, fontWeight: 700, color: '#9090B0', letterSpacing: '.08em', textTransform: 'uppercase', display: 'block', marginBottom: 5 }}>{label}</label>
+                <label style={{ fontSize: 10, fontWeight: 700, color: 'rgba(240,238,255,0.45)', letterSpacing: '.08em', textTransform: 'uppercase', display: 'block', marginBottom: 5 }}>{label}</label>
                 <input
                   type={type}
                   placeholder={placeholder}
                   value={form[field]}
                   onChange={e => setForm(f => ({ ...f, [field]: e.target.value }))}
-                  style={{ width: '100%', border: '1.5px solid #EDE8F8', borderRadius: 8, padding: '9px 12px', fontSize: 14, fontFamily: 'Inter, sans-serif', outline: 'none' }}
+                  style={{ width: '100%', border: '1.5px solid rgba(139,92,246,0.20)', borderRadius: 8, padding: '9px 12px', fontSize: 14, fontFamily: 'Inter, sans-serif', outline: 'none', background: '#131324', color: '#F0EEFF' }}
                 />
               </div>
             ))}
 
             <div style={{ marginBottom: 12 }}>
-              <label style={{ fontSize: 10, fontWeight: 700, color: '#9090B0', letterSpacing: '.08em', textTransform: 'uppercase', display: 'block', marginBottom: 5 }}>Tipo de unidad</label>
+              <label style={{ fontSize: 10, fontWeight: 700, color: 'rgba(240,238,255,0.45)', letterSpacing: '.08em', textTransform: 'uppercase', display: 'block', marginBottom: 5 }}>Tipo de unidad</label>
               <select value={form.tipo} onChange={e => setForm(f => ({ ...f, tipo: e.target.value }))}
-                style={{ width: '100%', border: '1.5px solid #EDE8F8', borderRadius: 8, padding: '9px 12px', fontSize: 14, fontFamily: 'Inter, sans-serif', outline: 'none', background: '#fff' }}>
+                style={{ width: '100%', border: '1.5px solid rgba(139,92,246,0.20)', borderRadius: 8, padding: '9px 12px', fontSize: 14, fontFamily: 'Inter, sans-serif', outline: 'none', background: '#131324' }}>
                 {TIPOS.map(t => <option key={t} value={t}>{t}</option>)}
               </select>
             </div>
 
             <div style={{ marginBottom: 20 }}>
-              <label style={{ fontSize: 10, fontWeight: 700, color: '#9090B0', letterSpacing: '.08em', textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>Estado</label>
+              <label style={{ fontSize: 10, fontWeight: 700, color: 'rgba(240,238,255,0.45)', letterSpacing: '.08em', textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>Estado</label>
               <div style={{ display: 'flex', gap: 8 }}>
                 {[{ val: true, label: '✅ Activa' }, { val: false, label: '❌ Inactiva' }].map(opt => (
                   <div key={String(opt.val)} onClick={() => setForm(f => ({ ...f, activa: opt.val }))}
                     style={{
                       flex: 1, padding: '10px', textAlign: 'center', borderRadius: 8, cursor: 'pointer',
-                      border: `1.5px solid ${form.activa === opt.val ? '#7B2FBE' : '#EDE8F8'}`,
-                      background: form.activa === opt.val ? '#EDE9FB' : '#fff',
-                      color: form.activa === opt.val ? '#4A0FA8' : '#4A4A6A',
+                      border: `1.5px solid ${form.activa === opt.val ? '#8B5CF6' : 'rgba(139,92,246,0.20)'}`,
+                      background: form.activa === opt.val ? 'rgba(139,92,246,0.15)' : 'transparent',
+                      color: form.activa === opt.val ? '#8B5CF6' : 'rgba(240,238,255,0.55)',
                       fontWeight: 600, fontSize: 13,
                     }}>
                     {opt.label}
@@ -233,11 +233,11 @@ export default function Flota() {
             </div>
 
             {error && (
-              <div style={{ background: '#FFF1F0', color: '#A8071A', borderRadius: 8, padding: '8px 10px', fontSize: 12, fontWeight: 600, marginBottom: 10 }}>{error}</div>
+              <div style={{ background: 'rgba(239,68,68,0.10)', color: '#EF4444', borderRadius: 8, padding: '8px 10px', fontSize: 12, fontWeight: 600, marginBottom: 10 }}>{error}</div>
             )}
             <button onClick={handleGuardar} disabled={saving || !form.interno || !form.patente}
               style={{
-                width: '100%', padding: 13, background: '#7B2FBE', color: '#fff',
+                width: '100%', padding: 13, background: '#8B5CF6', color: '#fff',
                 border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700,
                 cursor: saving ? 'default' : 'pointer', opacity: saving ? .7 : 1,
                 fontFamily: 'Inter, sans-serif', marginBottom: 8,
@@ -249,21 +249,21 @@ export default function Flota() {
               <>
                 {!confirmEliminar ? (
                   <button onClick={() => setConfirmEliminar(true)}
-                    style={{ width: '100%', padding: 11, background: '#FFF1F0', color: '#CF1322', border: '1px solid #FFCCC7', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
+                    style={{ width: '100%', padding: 11, background: 'rgba(239,68,68,0.10)', color: '#EF4444', border: '1px solid rgba(239,68,68,0.30)', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
                     🗑️ Eliminar unidad
                   </button>
                 ) : (
-                  <div style={{ background: '#FFF1F0', border: '1px solid #FFCCC7', borderRadius: 10, padding: 12, textAlign: 'center' }}>
-                    <div style={{ fontSize: 13, color: '#CF1322', fontWeight: 600, marginBottom: 10 }}>
+                  <div style={{ background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.30)', borderRadius: 10, padding: 12, textAlign: 'center' }}>
+                    <div style={{ fontSize: 13, color: '#EF4444', fontWeight: 600, marginBottom: 10 }}>
                       ¿Confirmás que querés eliminar la unidad {form.interno}?
                     </div>
                     <div style={{ display: 'flex', gap: 8 }}>
                       <button onClick={() => setConfirmEliminar(false)}
-                        style={{ flex: 1, padding: 9, background: '#fff', border: '1px solid #ddd', borderRadius: 8, cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontWeight: 600 }}>
+                        style={{ flex: 1, padding: 9, background: '#131324', border: '1px solid rgba(139,92,246,0.20)', borderRadius: 8, cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontWeight: 600 }}>
                         Cancelar
                       </button>
                       <button onClick={handleEliminar} disabled={saving}
-                        style={{ flex: 1, padding: 9, background: '#CF1322', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontWeight: 700 }}>
+                        style={{ flex: 1, padding: 9, background: '#EF4444', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontWeight: 700 }}>
                         Sí, eliminar
                       </button>
                     </div>

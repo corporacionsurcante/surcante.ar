@@ -55,9 +55,9 @@ export default function TabItinerario({ opId, op, buses, itinerario }) {
     <>
       <div className="eg-head" style={{ marginBottom: 12 }}>
         <div className="eg-sub">
-          Cada actividad puede tener indicaciones distintas para <span className="eg-chip" style={{ background: '#F3EDFB', color: '#4A1A7A' }}>pasajeros</span>{' '}
-          <span className="eg-chip" style={{ background: '#EEF4FF', color: '#173F7A' }}>conductores</span>{' '}
-          <span className="eg-chip" style={{ background: '#E6FBF5', color: '#005A43' }}>coordinadores</span> y aplicar a todos los ómnibus o solo a algunos.
+          Cada actividad puede tener indicaciones distintas para <span className="eg-chip" style={{ background: 'rgba(196,181,253,0.15)', color: '#C4B5FD' }}>pasajeros</span>{' '}
+          <span className="eg-chip" style={{ background: 'rgba(45,212,191,0.15)', color: '#2DD4BF' }}>conductores</span>{' '}
+          <span className="eg-chip" style={{ background: 'rgba(16,185,129,0.15)', color: '#10B981' }}>coordinadores</span> y aplicar a todos los ómnibus o solo a algunos.
         </div>
         <div className="eg-actions">
           <button className="eg-btn eg-btn-ghost" onClick={() => setAbiertos(abiertos.size ? new Set() : new Set(fechas))}>
@@ -89,7 +89,7 @@ export default function TabItinerario({ opId, op, buses, itinerario }) {
               <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                 {esSalida && <span className="eg-chip eg-chip-purple">🚏 Salida</span>}
                 {esRegreso && <span className="eg-chip eg-chip-purple">🏁 Regreso</span>}
-                <span style={{ fontSize: 14, color: '#9090B0' }}>{abierto ? '▲' : '▼'}</span>
+                <span style={{ fontSize: 14, color: 'rgba(240,238,255,0.45)' }}>{abierto ? '▲' : '▼'}</span>
               </div>
             </div>
 

@@ -1,6 +1,7 @@
 {
   "short_name": "Surcante",
-  "name": "Surcante — Cotizador de Viajes",
+  "name": "Surcante — Viajes de Egresados",
+  "description": "Portal de egresados, coordinadores y conductores de Surcante.",
   "icons": [
     {
       "src": "favicon.ico",
@@ -25,7 +26,11 @@
     }
   ],
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "theme_color": "#4A0FA8",
-  "background_color": "#ffffff"
+  "orientation": "portrait",
+  "theme_color": "#7B2FBE",
+  "background_color": "#F2F2F7",
+  "categories": ["travel", "education"],
+  "lang": "es-AR"
 }

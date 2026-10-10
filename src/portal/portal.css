@@ -1,17 +1,20 @@
-/* Portal de viaje — diseño iOS (mobile-first) */
+/* Portal de viaje — dark fintech (mobile-first) */
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@800&family=DM+Sans:wght@400;500;600;700&display=swap');
 
 :root {
-  --p-accent:     #7B2FBE;
-  --p-accent-rgb: 123, 47, 190;
-  --p-bg:         #F2F2F7;
-  --p-card:       #FFFFFF;
-  --p-text:       #000000;
-  --p-text-2:     rgba(60, 60, 67, 0.72);
-  --p-text-3:     rgba(60, 60, 67, 0.48);
-  --p-sep:        rgba(60, 60, 67, 0.12);
+  --p-accent:     #8B5CF6;
+  --p-accent-rgb: 139, 92, 246;
+  --p-teal:       #2DD4BF;
+  --p-bg:         #08080F;
+  --p-card:       #0D0D1A;
+  --p-card-2:     #131324;
+  --p-text:       #F0EEFF;
+  --p-text-2:     rgba(240,238,255,0.65);
+  --p-text-3:     rgba(240,238,255,0.38);
+  --p-sep:        rgba(139,92,246,0.12);
   --p-tab-h:      49px;
-  --p-green:      #34C759;
-  --p-red:        #FF3B30;
+  --p-green:      #10B981;
+  --p-red:        #EF4444;
 }
 
 .portal-wrap {
@@ -19,7 +22,7 @@
   display: flex;
   flex-direction: column;
   background: var(--p-bg);
-  font-family: -apple-system, 'Inter', system-ui, sans-serif;
+  font-family: 'DM Sans', -apple-system, 'Inter', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -31,10 +34,10 @@
   gap: 12px;
   padding: 10px 16px;
   padding-top: calc(10px + env(safe-area-inset-top));
-  background: rgba(249, 249, 249, 0.92);
+  background: rgba(8,8,15,0.92);
   backdrop-filter: saturate(180%) blur(20px);
   -webkit-backdrop-filter: saturate(180%) blur(20px);
-  border-bottom: 0.5px solid rgba(60, 60, 67, 0.22);
+  border-bottom: 0.5px solid rgba(139,92,246,0.18);
   position: sticky;
   top: 0;
   z-index: 100;
@@ -48,10 +51,11 @@
 
 .portal-header-title {
   font-size: 17px;
-  font-weight: 600;
+  font-weight: 700;
   line-height: 1.2;
   color: var(--p-text);
   letter-spacing: -0.01em;
+  font-family: 'Syne', 'DM Sans', sans-serif;
 }
 
 .portal-header-sub {
@@ -73,10 +77,10 @@
 /* ─── Tab Bar (iOS bottom) ─── */
 .portal-tabs {
   display: flex;
-  background: rgba(249, 249, 249, 0.94);
+  background: rgba(8,8,15,0.94);
   backdrop-filter: saturate(180%) blur(20px);
   -webkit-backdrop-filter: saturate(180%) blur(20px);
-  border-top: 0.5px solid rgba(60, 60, 67, 0.2);
+  border-top: 0.5px solid rgba(139,92,246,0.15);
   position: fixed;
   bottom: 0;
   left: 0;
@@ -131,9 +135,10 @@
 /* ─── Cards ─── */
 .portal-card {
   background: var(--p-card);
+  border: 1px solid var(--p-sep);
   border-radius: 13px;
   padding: 16px;
-  box-shadow: 0 1px 0 rgba(60, 60, 67, 0.1), 0 2px 10px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 3px rgba(0,0,0,.35), 0 2px 10px rgba(0,0,0,.25);
 }
 
 .portal-card-header {
@@ -161,9 +166,10 @@
   gap: 14px;
   padding: 12px 16px;
   background: var(--p-card);
+  border: 1px solid var(--p-sep);
   border-radius: 13px;
   align-items: flex-start;
-  box-shadow: 0 1px 0 rgba(60, 60, 67, 0.1), 0 2px 8px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 1px 3px rgba(0,0,0,.35), 0 2px 8px rgba(0,0,0,.22);
 }
 
 .portal-act-hora {
@@ -189,8 +195,8 @@
   line-height: 1.5;
 }
 
-.nota-conductor { color: #1255B0; }
-.nota-coord { color: #007A5A; }
+.nota-conductor { color: #7DD3FC; }
+.nota-coord     { color: #6EE7B7; }
 
 /* ─── Bus info ─── */
 .portal-bus-nombre {
@@ -199,6 +205,7 @@
   color: var(--p-text);
   margin-bottom: 4px;
   letter-spacing: -0.02em;
+  font-family: 'Syne', 'DM Sans', sans-serif;
 }
 
 .portal-bus-meta {
@@ -276,12 +283,14 @@
 /* ─── Agenda días ─── */
 .portal-dia-card {
   background: var(--p-card);
+  border: 1px solid var(--p-sep);
   border-radius: 13px;
   overflow: hidden;
-  box-shadow: 0 1px 0 rgba(60, 60, 67, 0.1), 0 2px 10px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 3px rgba(0,0,0,.35), 0 2px 10px rgba(0,0,0,.25);
 }
 .portal-dia-card.hoy {
-  box-shadow: 0 0 0 2px var(--p-accent), 0 4px 16px rgba(var(--p-accent-rgb), 0.18);
+  border-color: var(--p-accent);
+  box-shadow: 0 0 0 1px var(--p-accent), 0 4px 16px rgba(var(--p-accent-rgb), 0.22);
 }
 
 .portal-dia-header {
@@ -346,13 +355,13 @@
 }
 .portal-servicio-estado.activo .portal-servicio-dot {
   background: var(--p-green);
-  box-shadow: 0 0 0 5px rgba(52, 199, 89, 0.2);
+  box-shadow: 0 0 0 5px rgba(16,185,129,0.2);
   animation: portal-pulse 2s ease-in-out infinite;
 }
 
 @keyframes portal-pulse {
-  0%, 100% { box-shadow: 0 0 0 5px rgba(52, 199, 89, 0.2); }
-  50%       { box-shadow: 0 0 0 9px rgba(52, 199, 89, 0.08); }
+  0%, 100% { box-shadow: 0 0 0 5px rgba(16,185,129,0.2); }
+  50%       { box-shadow: 0 0 0 9px rgba(16,185,129,0.08); }
 }
 
 .portal-gps-info {
@@ -388,7 +397,7 @@
 .portal-btn-primary:not(:disabled):active { transform: scale(0.97); opacity: 0.88; }
 
 .portal-btn-iniciar { background: var(--p-green); }
-.portal-btn-iniciar:active { background: #28A745; }
+.portal-btn-iniciar:active { background: #059669; }
 
 .portal-btn-danger {
   width: 100%;
@@ -410,7 +419,7 @@
 .portal-btn-secondary {
   width: 100%;
   padding: 14px;
-  background: rgba(var(--p-accent-rgb), 0.08);
+  background: rgba(var(--p-accent-rgb), 0.10);
   color: var(--p-accent);
   border: none;
   border-radius: 14px;
@@ -421,30 +430,36 @@
   transition: background 0.15s;
   -webkit-tap-highlight-color: transparent;
 }
-.portal-btn-secondary:active { background: rgba(var(--p-accent-rgb), 0.14); }
+.portal-btn-secondary:active { background: rgba(var(--p-accent-rgb), 0.16); }
 
 /* ─── Búsqueda ─── */
 .portal-busqueda {
   width: 100%;
-  border: none;
+  border: 1px solid rgba(139,92,246,0.12);
   border-radius: 12px;
   padding: 11px 16px;
   font-size: 15px;
   font-family: inherit;
   outline: none;
-  background: rgba(118, 118, 128, 0.12);
+  background: rgba(255,255,255,.06);
   color: var(--p-text);
   box-sizing: border-box;
+  transition: border-color .15s, background .15s, box-shadow .15s;
 }
 .portal-busqueda::placeholder { color: var(--p-text-3); }
-.portal-busqueda:focus { background: rgba(118, 118, 128, 0.16); }
+.portal-busqueda:focus {
+  background: rgba(255,255,255,.09);
+  border-color: rgba(139,92,246,0.40);
+  box-shadow: 0 0 0 3px rgba(var(--p-accent-rgb), .14);
+}
 
 /* ─── Lista pasajeros ─── */
 .portal-pax-row {
   background: var(--p-card);
+  border: 1px solid var(--p-sep);
   border-radius: 13px;
   padding: 12px 16px;
-  box-shadow: 0 1px 0 rgba(60, 60, 67, 0.1);
+  box-shadow: 0 1px 3px rgba(0,0,0,.30);
 }
 
 .portal-pax-nombre {
@@ -463,7 +478,7 @@
 .portal-pax-datos span {
   font-size: 12px;
   color: var(--p-text-3);
-  background: rgba(118, 118, 128, 0.1);
+  background: rgba(255,255,255,.06);
   border-radius: 6px;
   padding: 2px 8px;
 }
@@ -490,16 +505,16 @@
   transform: translate(-50%, -50%);
   width: 170px;
   height: 170px;
-  border: 3px solid rgba(255, 255, 255, 0.9);
+  border: 3px solid rgba(255,255,255,0.9);
   border-radius: 16px;
   pointer-events: none;
-  box-shadow: 0 0 0 3000px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 0 0 3000px rgba(0,0,0,0.5);
 }
 
 .portal-qr-cancel { margin-top: 8px; }
 .portal-qr-resultado { margin-top: 4px; }
-.portal-qr-resultado.ok  { box-shadow: 0 0 0 2px var(--p-green), 0 4px 14px rgba(52, 199, 89, 0.14); }
-.portal-qr-resultado.nok { box-shadow: 0 0 0 2px var(--p-red),   0 4px 14px rgba(255, 59, 48, 0.14); }
+.portal-qr-resultado.ok  { box-shadow: 0 0 0 2px var(--p-green), 0 4px 14px rgba(16,185,129,0.18); }
+.portal-qr-resultado.nok { box-shadow: 0 0 0 2px var(--p-red),   0 4px 14px rgba(239,68,68,0.18); }
 .portal-qr-encontrado    { font-size: 15px; font-weight: 600; color: var(--p-green); margin-bottom: 8px; }
 .portal-qr-noencontrado  { font-size: 15px; font-weight: 600; color: var(--p-red); }
 .portal-qr-codigo        { font-size: 12px; color: var(--p-text-3); font-family: monospace; margin-bottom: 8px; }
@@ -507,19 +522,20 @@
 /* ─── Avisos ─── */
 .portal-aviso-warning {
   font-size: 13px;
-  color: #7A5200;
-  background: rgba(255, 196, 61, 0.12);
-  border: 1px solid rgba(255, 196, 61, 0.4);
+  color: #F59E0B;
+  background: rgba(245,158,11,0.10);
+  border: 1px solid rgba(245,158,11,0.25);
   border-radius: 10px;
   padding: 10px 14px;
 }
 
 .portal-aviso-row {
   background: var(--p-card);
+  border: 1px solid var(--p-sep);
   border-radius: 13px;
   padding: 12px 16px;
   border-left: 3px solid var(--p-accent);
-  box-shadow: 0 1px 0 rgba(60, 60, 67, 0.1);
+  box-shadow: 0 1px 3px rgba(0,0,0,.30);
 }
 .portal-aviso-texto {
   font-size: 15px;
@@ -543,14 +559,14 @@
   color: var(--p-text-3);
   font-size: 15px;
   background: var(--p-bg);
-  font-family: -apple-system, 'Inter', system-ui, sans-serif;
+  font-family: 'DM Sans', -apple-system, 'Inter', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
 .portal-spinner {
   width: 36px;
   height: 36px;
-  border: 3px solid rgba(var(--p-accent-rgb), 0.15);
+  border: 3px solid rgba(var(--p-accent-rgb), 0.18);
   border-top-color: var(--p-accent);
   border-radius: 50%;
   animation: portal-spin 0.65s linear infinite;
@@ -565,18 +581,19 @@
   justify-content: center;
   background: var(--p-bg);
   padding: 24px;
-  font-family: -apple-system, 'Inter', system-ui, sans-serif;
+  font-family: 'DM Sans', -apple-system, 'Inter', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
 .portal-error-card {
   background: var(--p-card);
+  border: 1px solid rgba(139,92,246,0.20);
   border-radius: 22px;
   padding: 40px 28px;
   text-align: center;
   max-width: 340px;
   width: 100%;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 8px 30px rgba(0,0,0,.45);
 }
 
 .portal-error-icon {
@@ -591,6 +608,7 @@
   color: var(--p-text);
   margin: 0 0 10px;
   letter-spacing: -0.02em;
+  font-family: 'Syne', 'DM Sans', sans-serif;
 }
 
 .portal-error-card p {

@@ -365,7 +365,7 @@ function TabYo({ pax }) {
             <div style={{ background: '#fff', borderRadius: 10, padding: 10, border: '1px solid #e0d4f7' }}>
               <QRDisplay value={codigoQR} size={180} />
             </div>
-            <div style={{ fontSize: 15, fontWeight: 800, color: '#7b2fbe', letterSpacing: '.04em' }}>{codigoQR}</div>
+            <div style={{ fontSize: 15, fontWeight: 800, color: '#8B5CF6', letterSpacing: '.04em' }}>{codigoQR}</div>
             <div style={{ fontSize: 12, color: '#b0b0c8', lineHeight: 1.5 }}>
               Mostrá este QR al coordinador para el check-in
             </div>

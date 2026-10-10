@@ -132,7 +132,7 @@ function Dashboard({ sesion, onLogout }) {
         </div>
 
         {operativos.length === 0 ? (
-          <div className="ag-section" style={{ textAlign: 'center', color: '#9090B0', fontSize: 14 }}>
+          <div className="ag-section" style={{ textAlign: 'center', color: 'rgba(240,238,255,0.45)', fontSize: 14 }}>
             <div style={{ fontSize: 32, marginBottom: 8 }}>🚌</div>
             No hay operativos cargados para tu agencia todavía.
           </div>
@@ -291,7 +291,7 @@ function DetalleOperativo({ operativo: op, agenciaId, onVolver }) {
 
 function TabBuses({ buses, staff, pasajeros }) {
   if (buses.length === 0) {
-    return <div className="ag-section" style={{ color: '#9090B0', textAlign: 'center', fontSize: 13 }}>No hay buses cargados.</div>;
+    return <div className="ag-section" style={{ color: 'rgba(240,238,255,0.45)', textAlign: 'center', fontSize: 13 }}>No hay buses cargados.</div>;
   }
   return (
     <div className="ag-grid">
@@ -340,7 +340,7 @@ function TabPersonal({ conductores, coordinadores, buses }) {
   ].sort((a, b) => (a.apellido || '').localeCompare(b.apellido || ''));
 
   if (todos.length === 0) {
-    return <div className="ag-section" style={{ color: '#9090B0', textAlign: 'center', fontSize: 13 }}>No hay personal cargado.</div>;
+    return <div className="ag-section" style={{ color: 'rgba(240,238,255,0.45)', textAlign: 'center', fontSize: 13 }}>No hay personal cargado.</div>;
   }
   return (
     <div className="ag-section" style={{ overflowX: 'auto' }}>
@@ -373,7 +373,7 @@ function TabPasajeros({ pasajeros, buses }) {
     : pasajeros;
 
   if (pasajeros.length === 0) {
-    return <div className="ag-section" style={{ color: '#9090B0', textAlign: 'center', fontSize: 13 }}>No hay pasajeros cargados.</div>;
+    return <div className="ag-section" style={{ color: 'rgba(240,238,255,0.45)', textAlign: 'center', fontSize: 13 }}>No hay pasajeros cargados.</div>;
   }
 
   return (
@@ -386,7 +386,7 @@ function TabPasajeros({ pasajeros, buses }) {
           onChange={e => setBusca(e.target.value)}
         />
       </div>
-      <div style={{ fontSize: 12, color: '#9090B0', marginBottom: 8 }}>
+      <div style={{ fontSize: 12, color: 'rgba(240,238,255,0.45)', marginBottom: 8 }}>
         Mostrando {filtrados.length} de {pasajeros.length} pasajeros
       </div>
       <table className="ag-table">
@@ -401,7 +401,7 @@ function TabPasajeros({ pasajeros, buses }) {
         <tbody>
           {filtrados.map((p, i) => (
             <tr key={p.id}>
-              <td style={{ color: '#9090B0' }}>{i + 1}</td>
+              <td style={{ color: 'rgba(240,238,255,0.45)' }}>{i + 1}</td>
               <td>{p.apellido}, {p.nombre}</td>
               <td>{p.dni || '—'}</td>
               <td>{p.busId ? busLabel(p.busId) : '—'}</td>
@@ -415,7 +415,7 @@ function TabPasajeros({ pasajeros, buses }) {
 
 function TabItinerario({ itinerario }) {
   if (itinerario.length === 0) {
-    return <div className="ag-section" style={{ color: '#9090B0', textAlign: 'center', fontSize: 13 }}>No hay itinerario cargado.</div>;
+    return <div className="ag-section" style={{ color: 'rgba(240,238,255,0.45)', textAlign: 'center', fontSize: 13 }}>No hay itinerario cargado.</div>;
   }
   const hoy = hoyISO();
   return (

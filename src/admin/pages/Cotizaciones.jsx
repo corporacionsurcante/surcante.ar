@@ -84,15 +84,15 @@ export default function Cotizaciones() {
           placeholder="🔍 Buscar por cliente, N°, WhatsApp, destino..."
           value={busqueda}
           onChange={e => setBusqueda(e.target.value)}
-          style={{ flex: '1 1 220px', border: '1.5px solid #EDE8F8', borderRadius: 10, padding: '9px 12px', fontSize: 13, fontFamily: 'Inter, sans-serif', outline: 'none' }}
+          style={{ flex: '1 1 220px', border: '1.5px solid rgba(139,92,246,0.20)', borderRadius: 10, padding: '9px 12px', fontSize: 13, fontFamily: 'Inter, sans-serif', outline: 'none' }}
         />
         {['todas', 'charter', 'receptivo', 'disposicion', 'movimientos-caba-gba'].map(t => (
           <button key={t} onClick={() => setFiltroTipo(t)}
             style={{
               padding: '6px 14px', borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: 'pointer',
-              border: '1.5px solid', borderColor: filtroTipo === t ? '#7B2FBE' : '#EDE8F8',
-              background: filtroTipo === t ? '#7B2FBE' : '#fff',
-              color: filtroTipo === t ? '#fff' : '#4A4A6A', fontFamily: 'Inter, sans-serif',
+              border: '1.5px solid', borderColor: filtroTipo === t ? '#8B5CF6' : 'rgba(139,92,246,0.20)',
+              background: filtroTipo === t ? '#8B5CF6' : '#fff',
+              color: filtroTipo === t ? '#fff' : 'rgba(240,238,255,0.55)', fontFamily: 'Inter, sans-serif',
             }}>
             {t === 'todas' ? 'Todas' : (TIPO_LABELS[t] || t)}
           </button>
@@ -111,14 +111,14 @@ export default function Cotizaciones() {
           <div style={{
             display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8,
           }}>
-            <div style={{ fontSize: 13, fontWeight: 800, color: '#0A0A0F' }}>{labelDia(dia)}</div>
+            <div style={{ fontSize: 13, fontWeight: 800, color: '#F0EEFF' }}>{labelDia(dia)}</div>
             <span style={{
-              background: '#F4F2FA', color: '#7B2FBE', borderRadius: 999,
+              background: 'rgba(139,92,246,0.12)', color: '#8B5CF6', borderRadius: 999,
               padding: '2px 10px', fontSize: 11, fontWeight: 700,
             }}>
               {items.length} presupuesto{items.length !== 1 ? 's' : ''}
             </span>
-            <span style={{ fontSize: 11, color: '#9090B0', fontWeight: 600 }}>
+            <span style={{ fontSize: 11, color: 'rgba(240,238,255,0.45)', fontWeight: 600 }}>
               {formatARS(items.reduce((s, r) => s + (r.grandTotal || 0), 0))} cotizados
             </span>
           </div>
@@ -143,7 +143,7 @@ export default function Cotizaciones() {
                   return (
                     <tr key={r.id}>
                       <td>{f ? f.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) : '—'}</td>
-                      <td style={{ fontWeight: 700, color: '#7B2FBE' }}>{r.nroCotizacion || ('SRC-' + r.id.slice(-6).toUpperCase())}</td>
+                      <td style={{ fontWeight: 700, color: '#8B5CF6' }}>{r.nroCotizacion || ('SRC-' + r.id.slice(-6).toUpperCase())}</td>
                       <td>{TIPO_LABELS[r.tipo] || r.tipo || 'Charter'}</td>
                       <td style={{ fontWeight: 600 }}>{r.clienteNombre || '—'}</td>
                       <td>
@@ -157,11 +157,11 @@ export default function Cotizaciones() {
                       <td style={{ textTransform: 'capitalize' }}>{r.payMethod || '—'}</td>
                       <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
                         <button onClick={() => abrirPdfCotizacion(r)} title="Ver PDF"
-                          style={{ border: '1.5px solid #EDE8F8', background: '#fff', borderRadius: 8, padding: '5px 10px', cursor: 'pointer', fontSize: 12, marginRight: 6 }}>
+                          style={{ border: '1.5px solid rgba(139,92,246,0.20)', background: '#131324', borderRadius: 8, padding: '5px 10px', cursor: 'pointer', fontSize: 12, marginRight: 6 }}>
                           👁️ Ver
                         </button>
                         <button onClick={() => descargarPdfCotizacion(r)} title="Descargar PDF"
-                          style={{ border: 'none', background: '#7B2FBE', color: '#fff', borderRadius: 8, padding: '6px 10px', cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>
+                          style={{ border: 'none', background: '#8B5CF6', color: '#fff', borderRadius: 8, padding: '6px 10px', cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>
                           📄 Descargar
                         </button>
                       </td>

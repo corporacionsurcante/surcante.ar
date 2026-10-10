@@ -72,7 +72,7 @@ export default function Dashboard() {
         </div>
         <div className="metric-card">
           <div className="metric-label">Por confirmar</div>
-          <div className="metric-val" style={{ color: pendientesConfirmar.length > 0 ? '#E8A000' : '#00C896' }}>
+          <div className="metric-val" style={{ color: pendientesConfirmar.length > 0 ? '#E8A000' : '#10B981' }}>
             {pendientesConfirmar.length}
           </div>
           <div className="metric-sub">Requieren atención</div>
@@ -104,12 +104,12 @@ export default function Dashboard() {
             <tbody>
               {recientes.map(r => (
                 <tr key={r.id}>
-                  <td style={{ fontFamily: 'monospace', color: '#7B2FBE', fontWeight: 700 }}>SRC-{r.id.slice(-6).toUpperCase()}</td>
+                  <td style={{ fontFamily: 'monospace', color: '#8B5CF6', fontWeight: 700 }}>SRC-{r.id.slice(-6).toUpperCase()}</td>
                   <td>
                     <span style={{
                       fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 20, marginRight: 6,
                       background: r.tipo === 'receptivo' ? '#EDE9FB' : r.tipo === 'disposicion' ? '#FFF8E6' : r.tipo === 'movimientos-caba-gba' ? '#E6FBF5' : '#F4F2FA',
-                      color: r.tipo === 'receptivo' ? '#4A0FA8' : r.tipo === 'disposicion' ? '#7A5200' : r.tipo === 'movimientos-caba-gba' ? '#007A5A' : '#4A4A6A',
+                      color: r.tipo === 'receptivo' ? '#8B5CF6' : r.tipo === 'disposicion' ? '#7A5200' : r.tipo === 'movimientos-caba-gba' ? '#2DD4BF' : 'rgba(240,238,255,0.55)',
                     }}>
                       {r.tipo === 'receptivo' ? '🏛️ Receptivo' : r.tipo === 'disposicion' ? '⏱️ Disposición' : r.tipo === 'movimientos-caba-gba' ? '🚐 Mov. CABA/GBA' : '🚌 Charter'}
                     </span>

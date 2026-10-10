@@ -79,7 +79,7 @@ export function Vacio({ icono = '📭', children }) {
 
 export function BarraOcupacion({ usados, total }) {
   const pct = total > 0 ? Math.min(100, Math.round((usados / total) * 100)) : 0;
-  const color = usados > total ? '#CF1322' : pct >= 90 ? '#F57C00' : '#00A07A';
+  const color = usados > total ? '#EF4444' : pct >= 90 ? '#F59E0B' : '#10B981';
   return (
     <div className="eg-bar" title={`${usados} / ${total}`}>
       <div style={{ width: `${usados > total ? 100 : pct}%`, background: color }} />
@@ -101,7 +101,7 @@ export function BotonEliminar({ onConfirm, texto = 'Eliminar', confirmar = '¿Co
   return (
     <button
       className={cls}
-      style={{ background: '#CF1322', color: '#fff' }}
+      style={{ background: '#EF4444', color: '#fff' }}
       disabled={trabajando}
       onClick={async () => { setTrabajando(true); try { await onConfirm(); } finally { setTrabajando(false); setPaso(false); } }}>
       {trabajando ? 'Eliminando...' : confirmar}

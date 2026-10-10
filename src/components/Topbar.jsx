@@ -16,7 +16,7 @@ export default function Topbar({ onHome }) {
           <div style={{
             display: 'flex', flexDirection: 'column', justifyContent: 'center',
           }}>
-            <div style={{ fontSize: 10, color: 'rgba(123,47,190,.8)', fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase' }}>
+            <div style={{ fontSize: 10, color: 'rgba(139,92,246,.8)', fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase' }}>
               Cotizador
             </div>
             <div style={{ fontSize: 9, color: 'rgba(255,255,255,.25)', fontWeight: 500, letterSpacing: '.05em' }}>
@@ -32,14 +32,14 @@ export default function Topbar({ onHome }) {
           <button
             onClick={onHome}
             style={{
-              background: 'rgba(123,47,190,.15)', border: '1px solid rgba(123,47,190,.3)',
-              borderRadius: 10, padding: '7px 14px', color: 'rgba(123,47,190,1)',
+              background: 'rgba(139,92,246,.15)', border: '1px solid rgba(139,92,246,.3)',
+              borderRadius: 10, padding: '7px 14px', color: 'rgba(139,92,246,1)',
               fontSize: 12, fontWeight: 700, cursor: 'pointer',
               fontFamily: 'Inter, sans-serif', display: 'flex', alignItems: 'center', gap: 6,
               transition: 'all .15s',
             }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(123,47,190,.25)'; }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(123,47,190,.15)'; }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(139,92,246,.25)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(139,92,246,.15)'; }}
           >
             ⌂ Inicio
           </button>

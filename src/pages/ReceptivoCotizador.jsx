@@ -318,7 +318,7 @@ export default function ReceptivoCotizador({ onBack, initialContacto }) {
               Pagás el <strong>{fmtPorc(metodoActual.porc)}</strong> ({formatARS(montoAhora)}) ahora online. El saldo lo coordinamos antes del servicio.
             </div>
             {errorMP && (
-              <div style={{ fontSize: 12, color: '#CF1322', background: '#FFF1F0', borderRadius: 8, padding: '8px 12px', marginBottom: 10 }}>
+              <div style={{ fontSize: 12, color: '#EF4444', background: 'rgba(239,68,68,0.10)', borderRadius: 8, padding: '8px 12px', marginBottom: 10 }}>
                 {errorMP}
               </div>
             )}

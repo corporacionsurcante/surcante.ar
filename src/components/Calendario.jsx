@@ -190,12 +190,12 @@ export default function Calendario({ onChange }) {
             <div>
               <div style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 600, marginBottom: 4, textTransform: 'uppercase', letterSpacing: '.05em' }}>Hora de salida</div>
               <input type="time" value={horaInicio} onChange={e => handleHora('inicio', e.target.value)}
-                style={{ width: '100%', border: '1.5px solid var(--spm)', borderRadius: 8, padding: '8px 10px', fontSize: 15, fontFamily: 'Inter, sans-serif', outline: 'none', background: '#fff', color: 'var(--spd)', fontWeight: 600 }} />
+                style={{ width: '100%', border: '1.5px solid var(--spm)', borderRadius: 8, padding: '8px 10px', fontSize: 15, fontFamily: 'Inter, sans-serif', outline: 'none', background: 'var(--bg-2)', color: 'var(--sp)', fontWeight: 600 }} />
             </div>
             <div>
               <div style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 600, marginBottom: 4, textTransform: 'uppercase', letterSpacing: '.05em' }}>Hora de regreso</div>
               <input type="time" value={horaFin} onChange={e => handleHora('fin', e.target.value)}
-                style={{ width: '100%', border: '1.5px solid var(--spm)', borderRadius: 8, padding: '8px 10px', fontSize: 15, fontFamily: 'Inter, sans-serif', outline: 'none', background: '#fff', color: 'var(--spd)', fontWeight: 600 }} />
+                style={{ width: '100%', border: '1.5px solid var(--spm)', borderRadius: 8, padding: '8px 10px', fontSize: 15, fontFamily: 'Inter, sans-serif', outline: 'none', background: 'var(--bg-2)', color: 'var(--sp)', fontWeight: 600 }} />
             </div>
           </div>
           <div style={{ fontSize: 11, color: 'var(--sp)', marginTop: 8, fontWeight: 500 }}>

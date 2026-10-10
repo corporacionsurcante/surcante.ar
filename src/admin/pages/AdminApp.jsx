@@ -137,8 +137,8 @@ export default function AdminApp() {
             disabled={pushLoading || pushActivo}
             title={pushActivo ? 'Notificaciones activadas en este dispositivo' : 'Recibir notificaciones push de cotizaciones'}
             style={{
-              border: pushActivo ? '1px solid #00C896' : '1px solid rgba(123,47,190,.5)',
-              background: pushActivo ? 'rgba(0,200,150,.12)' : 'rgba(123,47,190,.15)',
+              border: pushActivo ? '1px solid #00C896' : '1px solid rgba(139,92,246,.5)',
+              background: pushActivo ? 'rgba(0,200,150,.12)' : 'rgba(139,92,246,.15)',
               color: pushActivo ? '#00C896' : '#B58AE0',
               borderRadius: 8, padding: '5px 10px', fontSize: 12, fontWeight: 700,
               cursor: pushActivo ? 'default' : 'pointer', fontFamily: 'Inter, sans-serif',
