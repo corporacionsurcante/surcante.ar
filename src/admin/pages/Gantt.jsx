@@ -38,8 +38,8 @@ function mensajeError(e) {
     : 'No se pudo conectar con la base de datos. Revisá la conexión y recargá.';
 }
 
-const lbl = { fontSize: 10, fontWeight: 700, color: 'rgba(240,238,255,0.45)', letterSpacing: '.08em', textTransform: 'uppercase', display: 'block', marginBottom: 5 };
-const inp = { width: '100%', border: '1.5px solid rgba(139,92,246,0.20)', borderRadius: 8, padding: '9px 12px', fontSize: 14, fontFamily: 'Inter, sans-serif', outline: 'none', background: '#131324', color: '#F0EEFF' };
+const lbl = { fontSize: 10, fontWeight: 700, color: 'var(--ad-text-3)', letterSpacing: '.08em', textTransform: 'uppercase', display: 'block', marginBottom: 5 };
+const inp = { width: '100%', border: '1.5px solid var(--ad-sep)', borderRadius: 8, padding: '9px 12px', fontSize: 14, fontFamily: 'Inter, sans-serif', outline: 'none', background: 'var(--ad-card-2)', color: 'var(--ad-text)' };
 
 export default function Gantt() {
   const hoy = new Date();
@@ -184,11 +184,11 @@ export default function Gantt() {
     </div>
   );
 
-  const navBtn = { width: 32, height: 32, borderRadius: '50%', border: '1px solid rgba(139,92,246,0.25)', background: '#131324', cursor: 'pointer', fontSize: 18, color: '#F0EEFF' };
+  const navBtn = { width: 32, height: 32, borderRadius: '50%', border: '1px solid var(--ad-sep)', background: 'var(--ad-card-2)', cursor: 'pointer', fontSize: 18, color: 'var(--ad-text)' };
 
   return (
     <div ref={containerRef} style={{
-      background: '#0D0D1A',
+      background: 'var(--ad-bg)',
       padding: fullscreen ? 16 : 0,
       height: fullscreen ? '100vh' : 'auto',
       display: 'flex', flexDirection: 'column',
@@ -203,7 +203,7 @@ export default function Gantt() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <button onClick={mesAnterior} style={navBtn} aria-label="Mes anterior">‹</button>
-          <span style={{ fontSize: 18, fontWeight: 800, color: '#F0EEFF', minWidth: 200, textAlign: 'center' }}>
+          <span style={{ fontSize: 18, fontWeight: 800, color: 'var(--ad-text)', minWidth: 200, textAlign: 'center' }}>
             {MESES[mesActual]} {anio}
           </span>
           <button onClick={mesSiguiente} style={navBtn} aria-label="Mes siguiente">›</button>
@@ -216,9 +216,9 @@ export default function Gantt() {
               style={{
                 padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600,
                 cursor: 'pointer', border: '1px solid',
-                borderColor: mesActual === i ? '#8B5CF6' : '#EDE8F8',
-                background: mesActual === i ? '#8B5CF6' : 'transparent',
-                color: mesActual === i ? '#fff' : 'rgba(240,238,255,0.55)',
+                borderColor: mesActual === i ? 'var(--ad-accent)' : 'var(--ad-sep)',
+                background: mesActual === i ? 'var(--ad-accent)' : 'transparent',
+                color: mesActual === i ? '#fff' : 'var(--ad-text-2)',
                 fontFamily: 'Inter, sans-serif',
               }}>{m.slice(0, 3)}</button>
           ))}
@@ -226,9 +226,9 @@ export default function Gantt() {
           <button onClick={toggleFullscreen}
             style={{
               padding: '4px 12px', borderRadius: 20, fontSize: 11, fontWeight: 700,
-              cursor: 'pointer', border: '1px solid #8B5CF6',
-              background: fullscreen ? '#8B5CF6' : 'transparent',
-              color: fullscreen ? '#fff' : '#8B5CF6',
+              cursor: 'pointer', border: '1px solid var(--ad-accent)',
+              background: fullscreen ? 'var(--ad-accent)' : 'transparent',
+              color: fullscreen ? '#fff' : 'var(--ad-accent)',
               fontFamily: 'Inter, sans-serif', marginLeft: 4,
             }}>
             {fullscreen ? '✕ Salir' : '⛶ Pantalla completa'}
@@ -239,7 +239,7 @@ export default function Gantt() {
       {/* Leyenda usuarios */}
       <div style={{ display: 'flex', gap: 12, marginBottom: 8, flexWrap: 'wrap' }}>
         {[...new Set(viajes.map(v => v.cargadoPor).filter(Boolean))].map(email => (
-          <div key={email} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: 'rgba(240,238,255,0.55)' }}>
+          <div key={email} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: 'var(--ad-text-3)' }}>
             <span style={{ width: 20, height: 20, borderRadius: '50%', background: getUserColor(email), color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 800 }}>
               {getUserLabel(email)}
             </span>
@@ -249,15 +249,15 @@ export default function Gantt() {
       </div>
 
       {/* Tabla Gantt */}
-      <div style={{ overflowX: 'auto', flex: 1, borderRadius: 10, border: '1px solid rgba(139,92,246,0.15)' }}>
+      <div style={{ overflowX: 'auto', flex: 1, borderRadius: 10, border: '1px solid var(--ad-sep)' }}>
         <table style={{ borderCollapse: 'collapse', width: '100%', fontSize: 11 }}>
           <thead>
             <tr>
               <th rowSpan={2} style={{
-                padding: '8px 12px', background: '#0A0A0F', color: '#fff',
+                padding: '8px 12px', background: 'var(--ad-bg)', color: 'var(--ad-text)',
                 fontWeight: 700, fontSize: 11, letterSpacing: '.05em', textTransform: 'uppercase',
                 minWidth: 150, position: 'sticky', left: 0, zIndex: 3,
-                borderRight: '2px solid #8B5CF6',
+                borderRight: '2px solid var(--ad-accent)',
               }}>Unidad</th>
               {Array.from({ length: diasMes }, (_, i) => {
                 const dow = new Date(anio, mesActual, i + 1).getDay();
@@ -265,9 +265,9 @@ export default function Gantt() {
                 return (
                   <th key={i} colSpan={2} style={{
                     padding: '4px 2px', textAlign: 'center', fontSize: 10, fontWeight: 700,
-                    background: esFinde ? '#1a1a2e' : '#0A0A0F',
+                    background: esFinde ? 'var(--ad-card-2)' : 'var(--ad-bg)',
                     color: esFinde ? '#C4B5F8' : '#9090B0',
-                    borderRight: '1px solid #1E1E2E', minWidth: 28,
+                    borderRight: '1px solid var(--ad-sep)', minWidth: 28,
                   }}>{i + 1}</th>
                 );
               })}
@@ -275,20 +275,20 @@ export default function Gantt() {
             <tr>
               {Array.from({ length: diasMes }, (_, i) => (
                 <React.Fragment key={i}>
-                  <th style={{ padding: '2px 0', textAlign: 'center', fontSize: 9, fontWeight: 600, background: '#141420', color: 'rgba(240,238,255,0.40)', width: 14, borderRight: '1px solid #1E1E2E' }}>M</th>
-                  <th style={{ padding: '2px 0', textAlign: 'center', fontSize: 9, fontWeight: 600, background: '#141420', color: 'rgba(240,238,255,0.40)', width: 14, borderRight: '1px solid #2A2A3E' }}>T</th>
+                  <th style={{ padding: '2px 0', textAlign: 'center', fontSize: 9, fontWeight: 600, background: 'var(--ad-card)', color: 'var(--ad-text-3)', width: 14, borderRight: '1px solid var(--ad-sep)' }}>M</th>
+                  <th style={{ padding: '2px 0', textAlign: 'center', fontSize: 9, fontWeight: 600, background: 'var(--ad-card)', color: 'var(--ad-text-3)', width: 14, borderRight: '1px solid var(--ad-sep)' }}>T</th>
                 </React.Fragment>
               ))}
             </tr>
           </thead>
           <tbody>
             {unidades.map((u, uidx) => (
-              <tr key={u.id} style={{ background: uidx % 2 === 0 ? '#0D0D1A' : '#131324', opacity: u.activa === false ? 0.55 : 1 }}>
+              <tr key={u.id} style={{ background: uidx % 2 === 0 ? 'var(--ad-bg)' : 'var(--ad-card)', opacity: u.activa === false ? 0.55 : 1 }}>
                 <td style={{
                   padding: '6px 12px', fontWeight: 600, fontSize: 11,
-                  background: uidx % 2 === 0 ? '#0D0D1A' : '#131324',
+                  background: uidx % 2 === 0 ? 'var(--ad-bg)' : 'var(--ad-card)',
                   position: 'sticky', left: 0, zIndex: 2,
-                  borderRight: '2px solid #8B5CF6', borderBottom: '1px solid rgba(139,92,246,0.12)',
+                  borderRight: '2px solid var(--ad-accent)', borderBottom: '1px solid var(--ad-sep)',
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                     <span style={{
@@ -297,8 +297,8 @@ export default function Gantt() {
                       display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
                     }}>{u.interno}</span>
                     <div>
-                      <div style={{ color: '#F0EEFF', fontWeight: 700 }}>{u.patente}</div>
-                      <div style={{ color: 'rgba(240,238,255,0.45)', fontSize: 10 }}>{u.tipo}{u.activa === false ? ' · inactiva' : ''}</div>
+                      <div style={{ color: 'var(--ad-text)', fontWeight: 700 }}>{u.patente}</div>
+                      <div style={{ color: 'var(--ad-text-3)', fontSize: 10 }}>{u.tipo}{u.activa === false ? ' · inactiva' : ''}</div>
                     </div>
                   </div>
                 </td>
@@ -317,8 +317,8 @@ export default function Gantt() {
                         style={{
                           width: 14, height: 32, padding: 0, cursor: 'pointer',
                           background: viaje ? viaje.color : 'transparent',
-                          borderRight: turno === 'T' ? '1px solid rgba(139,92,246,0.10)' : '1px solid rgba(139,92,246,0.06)',
-                          borderBottom: '1px solid rgba(139,92,246,0.10)',
+                          borderRight: turno === 'T' ? '1px solid var(--ad-sep)' : '1px solid rgba(var(--ad-accent-rgb),0.05)',
+                          borderBottom: '1px solid var(--ad-sep)',
                           position: 'relative',
                         }}
                         title={viaje ? `${viaje.destino} · ${fechaCorta(viaje.desde)} → ${fechaCorta(viaje.hasta)} · Cargado por: ${viaje.cargadoPor || 'desconocido'}` : `${fechaCorta(fecha)} ${turno === 'M' ? 'mañana' : 'tarde'}`}>
@@ -347,12 +347,12 @@ export default function Gantt() {
       {/* Leyenda tipos */}
       <div style={{ display: 'flex', gap: 16, marginTop: 10, flexWrap: 'wrap', alignItems: 'center' }}>
         {Object.entries(TIPO_COLOR).map(([tipo, color]) => (
-          <div key={tipo} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: 'rgba(240,238,255,0.55)', fontWeight: 500 }}>
+          <div key={tipo} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: 'var(--ad-text-3)', fontWeight: 500 }}>
             <span style={{ width: 14, height: 14, borderRadius: 3, background: color, display: 'inline-block' }} />
             {tipo}
           </div>
         ))}
-        <div style={{ fontSize: 11, color: 'rgba(240,238,255,0.40)', marginLeft: 'auto' }}>
+        <div style={{ fontSize: 11, color: 'var(--ad-text-3)', marginLeft: 'auto' }}>
           Click en celda vacía para asignar · Click en viaje para editar · Lo que cargues acá bloquea la unidad en el cotizador
         </div>
       </div>
@@ -364,29 +364,29 @@ export default function Gantt() {
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           zIndex: 9999, padding: 20,
         }} onClick={e => e.target === e.currentTarget && setModal(null)}>
-          <div style={{ background: '#0D0D1A', borderRadius: 16, padding: 24, width: '100%', maxWidth: 420, maxHeight: '85vh', overflowY: 'auto', border: '1px solid rgba(139,92,246,0.20)' }}>
+          <div style={{ background: 'var(--ad-card)', borderRadius: 16, padding: 24, width: '100%', maxWidth: 420, maxHeight: '85vh', overflowY: 'auto', border: '1px solid var(--ad-sep)' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-              <div style={{ fontSize: 17, fontWeight: 800, color: '#F0EEFF' }}>
+              <div style={{ fontSize: 17, fontWeight: 800, color: 'var(--ad-text)' }}>
                 {modal.tipo === 'nuevo' ? '+ Nuevo viaje' : '✏️ Editar viaje'}
               </div>
-              <button onClick={() => setModal(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, color: 'rgba(240,238,255,0.45)' }}>✕</button>
+              <button onClick={() => setModal(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, color: 'var(--ad-text-3)' }}>✕</button>
             </div>
 
             {(() => {
               const u = unidades.find(x => x.id === (modal.tipo === 'nuevo' ? modal.unidadId : modal.viaje.unidadId));
               return u ? (
-                <div style={{ fontSize: 12, color: 'rgba(240,238,255,0.55)', fontWeight: 600, marginBottom: 12 }}>
+                <div style={{ fontSize: 12, color: 'var(--ad-text-3)', fontWeight: 600, marginBottom: 12 }}>
                   🚌 Interno {u.interno} · {u.patente} · {u.tipo}
                 </div>
               ) : null;
             })()}
 
             {modal.tipo === 'editar' && modal.viaje.cargadoPor && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, padding: '6px 10px', background: 'rgba(139,92,246,0.10)', borderRadius: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, padding: '6px 10px', background: 'rgba(var(--ad-accent-rgb),0.08)', borderRadius: 8 }}>
                 <span style={{ width: 22, height: 22, borderRadius: '50%', background: getUserColor(modal.viaje.cargadoPor), color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 800, flexShrink: 0 }}>
                   {getUserLabel(modal.viaje.cargadoPor)}
                 </span>
-                <span style={{ fontSize: 12, color: 'rgba(240,238,255,0.70)', fontWeight: 500 }}>Cargado por {modal.viaje.cargadoPor}</span>
+                <span style={{ fontSize: 12, color: 'var(--ad-text-2)', fontWeight: 500 }}>Cargado por {modal.viaje.cargadoPor}</span>
               </div>
             )}
 
@@ -431,7 +431,7 @@ export default function Gantt() {
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 {COLORES.map(col => (
                   <div key={col} onClick={() => setForm(f => ({ ...f, color: col }))}
-                    style={{ width: 28, height: 28, borderRadius: 6, background: col, cursor: 'pointer', border: form.color === col ? '3px solid #F0EEFF' : '2px solid transparent', transition: 'border .1s' }} />
+                    style={{ width: 28, height: 28, borderRadius: 6, background: col, cursor: 'pointer', border: form.color === col ? '3px solid var(--ad-text)' : '2px solid transparent', transition: 'border .1s' }} />
                 ))}
               </div>
             </div>
@@ -450,7 +450,7 @@ export default function Gantt() {
 
             <div style={{ display: 'flex', gap: 8 }}>
               <button onClick={handleGuardar} disabled={saving || !form.destino.trim()}
-                style={{ flex: 1, padding: 12, background: '#8B5CF6', color: '#fff', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: saving ? 'default' : 'pointer', opacity: saving ? .7 : 1, fontFamily: 'Inter, sans-serif' }}>
+                style={{ flex: 1, padding: 12, background: 'var(--ad-accent)', color: '#fff', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: saving ? 'default' : 'pointer', opacity: saving ? .7 : 1, fontFamily: 'Inter, sans-serif' }}>
                 {saving ? 'Guardando...' : modal.tipo === 'nuevo' ? '✓ Agregar viaje' : '✓ Guardar cambios'}
               </button>
               {modal.tipo === 'editar' && (

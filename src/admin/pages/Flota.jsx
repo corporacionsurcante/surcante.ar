@@ -97,7 +97,7 @@ export default function Flota() {
         <div className="section-title">Flota ({unidades.length} unidades)</div>
         <div style={{ display: 'flex', gap: 8 }}>
           {unidades.length === 0 && (
-            <button className="section-action" style={{ background: 'rgba(240,238,255,0.55)' }} onClick={handleInicializar}>
+            <button className="section-action" style={{ background: 'var(--ad-card-2)' }} onClick={handleInicializar}>
               Cargar unidades Surcante
             </button>
           )}
@@ -143,11 +143,11 @@ export default function Flota() {
                   <td>{u.tipo}</td>
                   <td>{u.butacas}</td>
                   <td>
-                    <span style={{ background: 'rgba(139,92,246,0.15)', color: '#8B5CF6', padding: '2px 8px', borderRadius: 20, fontSize: 11, fontWeight: 700 }}>
+                    <span style={{ background: 'rgba(var(--ad-accent-rgb),0.12)', color: 'var(--ad-accent)', padding: '2px 8px', borderRadius: 20, fontSize: 11, fontWeight: 700 }}>
                       {u.empresa}
                     </span>
                   </td>
-                  <td style={{ color: u.venceTecnica && new Date(u.venceTecnica) < new Date() ? '#EF4444' : 'rgba(240,238,255,0.55)' }}>
+                  <td style={{ color: u.venceTecnica && new Date(u.venceTecnica) < new Date() ? '#EF4444' : 'var(--ad-text-3)' }}>
                     {u.venceTecnica || '—'}
                   </td>
                   <td>
@@ -161,7 +161,7 @@ export default function Flota() {
                   </td>
                   <td>
                     <button onClick={() => abrirEditar(u)}
-                      style={{ background: '#F3EDFB', color: '#8B5CF6', border: 'none', borderRadius: 8, padding: '6px 12px', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>
+                      style={{ background: 'rgba(var(--ad-accent-rgb),0.10)', color: 'var(--ad-accent)', border: 'none', borderRadius: 8, padding: '6px 12px', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>
                       Editar
                     </button>
                   </td>
@@ -179,12 +179,12 @@ export default function Flota() {
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           zIndex: 200, padding: 20,
         }} onClick={e => e.target === e.currentTarget && setModal(null)}>
-          <div style={{ background: '#0D0D1A', borderRadius: 16, padding: 24, width: '100%', maxWidth: 420, maxHeight: '90vh', overflowY: 'auto' }}>
+          <div style={{ background: 'var(--ad-card)', borderRadius: 16, padding: 24, width: '100%', maxWidth: 420, maxHeight: '90vh', overflowY: 'auto' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-              <div style={{ fontSize: 17, fontWeight: 800, color: '#F0EEFF' }}>
+              <div style={{ fontSize: 17, fontWeight: 800, color: 'var(--ad-text)' }}>
                 {modal === 'nueva' ? '+ Nueva unidad' : `✏️ Editar unidad ${form.interno}`}
               </div>
-              <button onClick={() => setModal(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, color: 'rgba(240,238,255,0.45)' }}>✕</button>
+              <button onClick={() => setModal(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, color: 'var(--ad-text-3)' }}>✕</button>
             </div>
 
             {[
@@ -195,35 +195,35 @@ export default function Flota() {
               { label: 'Vencimiento técnica', field: 'venceTecnica', type: 'date', placeholder: '' },
             ].map(({ label, field, type, placeholder }) => (
               <div key={field} style={{ marginBottom: 12 }}>
-                <label style={{ fontSize: 10, fontWeight: 700, color: 'rgba(240,238,255,0.45)', letterSpacing: '.08em', textTransform: 'uppercase', display: 'block', marginBottom: 5 }}>{label}</label>
+                <label style={{ fontSize: 10, fontWeight: 700, color: 'var(--ad-text-3)', letterSpacing: '.08em', textTransform: 'uppercase', display: 'block', marginBottom: 5 }}>{label}</label>
                 <input
                   type={type}
                   placeholder={placeholder}
                   value={form[field]}
                   onChange={e => setForm(f => ({ ...f, [field]: e.target.value }))}
-                  style={{ width: '100%', border: '1.5px solid rgba(139,92,246,0.20)', borderRadius: 8, padding: '9px 12px', fontSize: 16, fontFamily: 'Inter, sans-serif', outline: 'none', background: '#131324', color: '#F0EEFF' }}
+                  style={{ width: '100%', border: '1.5px solid var(--ad-sep)', borderRadius: 8, padding: '9px 12px', fontSize: 16, fontFamily: 'Inter, sans-serif', outline: 'none', background: 'var(--ad-card-2)', color: 'var(--ad-text)' }}
                 />
               </div>
             ))}
 
             <div style={{ marginBottom: 12 }}>
-              <label style={{ fontSize: 10, fontWeight: 700, color: 'rgba(240,238,255,0.45)', letterSpacing: '.08em', textTransform: 'uppercase', display: 'block', marginBottom: 5 }}>Tipo de unidad</label>
+              <label style={{ fontSize: 10, fontWeight: 700, color: 'var(--ad-text-3)', letterSpacing: '.08em', textTransform: 'uppercase', display: 'block', marginBottom: 5 }}>Tipo de unidad</label>
               <select value={form.tipo} onChange={e => setForm(f => ({ ...f, tipo: e.target.value }))}
-                style={{ width: '100%', border: '1.5px solid rgba(139,92,246,0.20)', borderRadius: 8, padding: '9px 12px', fontSize: 16, fontFamily: 'Inter, sans-serif', outline: 'none', background: '#131324' }}>
+                style={{ width: '100%', border: '1.5px solid var(--ad-sep)', borderRadius: 8, padding: '9px 12px', fontSize: 16, fontFamily: 'Inter, sans-serif', outline: 'none', background: 'var(--ad-card-2)' }}>
                 {TIPOS.map(t => <option key={t} value={t}>{t}</option>)}
               </select>
             </div>
 
             <div style={{ marginBottom: 20 }}>
-              <label style={{ fontSize: 10, fontWeight: 700, color: 'rgba(240,238,255,0.45)', letterSpacing: '.08em', textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>Estado</label>
+              <label style={{ fontSize: 10, fontWeight: 700, color: 'var(--ad-text-3)', letterSpacing: '.08em', textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>Estado</label>
               <div style={{ display: 'flex', gap: 8 }}>
                 {[{ val: true, label: '✅ Activa' }, { val: false, label: '❌ Inactiva' }].map(opt => (
                   <div key={String(opt.val)} onClick={() => setForm(f => ({ ...f, activa: opt.val }))}
                     style={{
                       flex: 1, padding: '10px', textAlign: 'center', borderRadius: 8, cursor: 'pointer',
-                      border: `1.5px solid ${form.activa === opt.val ? '#8B5CF6' : 'rgba(139,92,246,0.20)'}`,
-                      background: form.activa === opt.val ? 'rgba(139,92,246,0.15)' : 'transparent',
-                      color: form.activa === opt.val ? '#8B5CF6' : 'rgba(240,238,255,0.55)',
+                      border: `1.5px solid ${form.activa === opt.val ? 'var(--ad-accent)' : 'var(--ad-sep)'}`,
+                      background: form.activa === opt.val ? 'rgba(var(--ad-accent-rgb),0.12)' : 'transparent',
+                      color: form.activa === opt.val ? 'var(--ad-accent)' : 'var(--ad-text-3)',
                       fontWeight: 600, fontSize: 13,
                     }}>
                     {opt.label}
@@ -237,7 +237,7 @@ export default function Flota() {
             )}
             <button onClick={handleGuardar} disabled={saving || !form.interno || !form.patente}
               style={{
-                width: '100%', padding: 15, background: '#8B5CF6', color: '#fff',
+                width: '100%', padding: 15, background: 'var(--ad-accent)', color: '#fff',
                 border: 'none', borderRadius: 10, fontSize: 16, fontWeight: 700,
                 cursor: saving ? 'default' : 'pointer', opacity: saving ? .7 : 1,
                 fontFamily: 'Inter, sans-serif', marginBottom: 8,
@@ -259,7 +259,7 @@ export default function Flota() {
                     </div>
                     <div style={{ display: 'flex', gap: 8 }}>
                       <button onClick={() => setConfirmEliminar(false)}
-                        style={{ flex: 1, padding: 9, background: '#131324', border: '1px solid rgba(139,92,246,0.20)', borderRadius: 8, cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontWeight: 600 }}>
+                        style={{ flex: 1, padding: 9, background: 'var(--ad-card-2)', border: '1px solid var(--ad-sep)', borderRadius: 8, cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontWeight: 600, color: 'var(--ad-text)' }}>
                         Cancelar
                       </button>
                       <button onClick={handleEliminar} disabled={saving}
