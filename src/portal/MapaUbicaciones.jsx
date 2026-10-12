@@ -196,7 +196,6 @@ export default function MapaUbicaciones({ opId, buses: busesProp = null, filtrar
           {ubicaciones.map(ub => {
             const bus   = buses.find(b => b.id === ub.id) || {};
             const ts    = ub.ts?.seconds ? new Date(ub.ts.seconds * 1000) : null;
-            const color = colorBus(bus) || '#7C3AED';
             return (
               <div key={ub.id} style={{
                 flex: '1 1 160px',

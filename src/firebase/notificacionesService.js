@@ -1,4 +1,4 @@
-import { collection, getDocs, query, updateDoc, where, writeBatch } from 'firebase/firestore';
+import { collection, getDocs, query, where, writeBatch } from 'firebase/firestore';
 import { db } from './config';
 
 // Las notificaciones las crea el servidor (api/notificar.js) al entrar una cotización.
