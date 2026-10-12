@@ -27,7 +27,7 @@ export default function PortalConductor({ sesion }) {
       const q = query(collection(db, 'operativos', opId, 'pasajeros'), where('busId', '==', busId));
       getDocs(q).then(snap =>
         setPasajeros(snap.docs.map(d => ({ id: d.id, ...d.data() }))
-          .sort((a, b) => `${a.apellido} ${a.nombre}`.localeCompare(`${b.apellido} ${b.nombre}`, 'es')))
+          .sort((a, b) => `${a.apellido || ''} ${a.nombre || ''}`.localeCompare(`${b.apellido || ''} ${b.nombre || ''}`, 'es')))
       ).catch(e => setErrorFirestore(e.code || e.message));
     }
     const unsubs = [
@@ -193,6 +193,7 @@ function TabServicio({ opId, busId, refId, bus, busColor }) {
           });
         } catch (e) {
           console.error('[GPS write]', e.message);
+          setErrorGps(`Error al guardar ubicación: ${e.message}`);
         }
       },
       err => setErrorGps(`GPS: ${err.message}`),
@@ -288,7 +289,7 @@ function TabAgendaConductor({ itinerario, hoy, busId, abiertos, setAbiertos }) {
                 {actividades.length === 0
                   ? <div className="portal-empty-sm">Sin actividades</div>
                   : actividades.map((act, i) => (
-                    <div key={i} className="portal-actividad" style={{ padding: '8px 0', borderBottom: i < actividades.length - 1 ? '1px solid #f0ecf8' : 'none', border: 'none', borderRadius: 0 }}>
+                    <div key={act.id || i} className="portal-actividad" style={{ padding: '8px 0', border: 'none', borderBottom: i < actividades.length - 1 ? '1px solid var(--p-sep)' : 'none', borderRadius: 0 }}>
                       <div className="portal-act-hora">{act.hora || '—'}</div>
                       <div>
                         <div className="portal-act-titulo">{act.titulo}</div>

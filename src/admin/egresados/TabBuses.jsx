@@ -48,8 +48,8 @@ export default function TabBuses({ opId, op, buses, staff, pasajeros, unidades }
                     : [b.empresa, b.interno && `Int. ${b.interno}`, b.patente, b.tipo].filter(Boolean).join(' · ') || <span style={{ color: '#EF4444' }}>Sin unidad asignada</span>}
                   {unidad?.venceTecnica && <><br />🔧 Técnica vence {fechaCorta(unidad.venceTecnica)}</>}
                   {usoUnidad[b.unidadId] > 1 && <><br /><span style={{ color: '#EF4444', fontWeight: 700 }}>⚠️ Esta unidad está asignada a otro ómnibus del operativo</span></>}
-                  <br />🧑‍✈️ {conds.map(nombreCompleto).join(', ') || <span style={{ color: '#B07A00' }}>Sin conductor</span>}
-                  <br />📋 {coords.map(nombreCompleto).join(', ') || <span style={{ color: '#B07A00' }}>Sin coordinador</span>}
+                  <br />🧑‍✈️ {conds.map(nombreCompleto).join(', ') || <span style={{ color: '#F59E0B' }}>Sin conductor</span>}
+                  <br />📋 {coords.map(nombreCompleto).join(', ') || <span style={{ color: '#F59E0B' }}>Sin coordinador</span>}
                   {(b.puntoSalida || b.presentacion) && <><br />🚏 {[b.puntoSalida, b.presentacion && `presentación ${b.presentacion} h`].filter(Boolean).join(' · ')}</>}
                 </div>
                 <div style={{ marginTop: 12 }}>
@@ -203,14 +203,18 @@ function VariosForm({ opId, buses, onClose }) {
   async function crear() {
     const n = Math.max(1, Math.min(40, parseInt(cantidad, 10) || 1));
     setGuardando(true);
-    await crearBuses(opId, Array.from({ length: n }, (_, i) => ({
-      codigo: `${prefijo.trim() || 'Bus'} ${desde + i}`,
-      orden: desde + i,
-      capacidad: parseInt(capacidad, 10) || 60,
-      color: COLORES_BUS[(desde + i - 1) % COLORES_BUS.length].id,
-      unidadId: null, empresa: 'SURCANTE', interno: '', patente: '', tipo: '', puntoSalida: '', presentacion: '', notas: '',
-    })));
-    onClose();
+    try {
+      await crearBuses(opId, Array.from({ length: n }, (_, i) => ({
+        codigo: `${prefijo.trim() || 'Bus'} ${desde + i}`,
+        orden: desde + i,
+        capacidad: parseInt(capacidad, 10) || 60,
+        color: COLORES_BUS[(desde + i - 1) % COLORES_BUS.length].id,
+        unidadId: null, empresa: 'SURCANTE', interno: '', patente: '', tipo: '', puntoSalida: '', presentacion: '', notas: '',
+      })));
+      onClose();
+    } catch (_) {
+      setGuardando(false);
+    }
   }
 
   return (

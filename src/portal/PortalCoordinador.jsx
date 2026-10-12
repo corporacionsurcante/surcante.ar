@@ -28,7 +28,7 @@ export default function PortalCoordinador({ sesion }) {
     }
     getDocs(collection(db, 'operativos', opId, 'pasajeros')).then(snap =>
       setPasajeros(snap.docs.map(d => ({ id: d.id, ...d.data() }))
-        .sort((a, b) => `${a.apellido} ${a.nombre}`.localeCompare(`${b.apellido} ${b.nombre}`, 'es')))
+        .sort((a, b) => `${a.apellido || ''} ${a.nombre || ''}`.localeCompare(`${b.apellido || ''} ${b.nombre || ''}`, 'es')))
     ).catch(e => setErrorFirestore(e.code || e.message));
     const unsubs = [
       onSnapshot(
@@ -194,7 +194,7 @@ function TabAgendaCoord({ itinerario, hoy, busId, abiertos, setAbiertos }) {
                 {actividades.length === 0
                   ? <div className="portal-empty-sm">Sin actividades</div>
                   : actividades.map((act, i) => (
-                    <div key={i} className="portal-actividad" style={{ padding: '8px 0', borderBottom: i < actividades.length - 1 ? '1px solid #f0ecf8' : 'none', border: 'none', borderRadius: 0 }}>
+                    <div key={act.id || i} className="portal-actividad" style={{ padding: '8px 0', border: 'none', borderBottom: i < actividades.length - 1 ? '1px solid var(--p-sep)' : 'none', borderRadius: 0 }}>
                       <div className="portal-act-hora">{act.hora || '—'}</div>
                       <div>
                         <div className="portal-act-titulo">{act.titulo}</div>
@@ -249,6 +249,7 @@ function TabQR({ opId, refId, pasajeros }) {
     try {
       await cargarJsQR();
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+      if (!videoRef.current) { stream.getTracks().forEach(t => t.stop()); return; }
       streamRef.current = stream;
       videoRef.current.srcObject = stream;
       await videoRef.current.play();

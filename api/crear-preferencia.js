@@ -29,7 +29,7 @@ export default async function handler(req, res) {
   const titulo = texto(body.titulo, 200) || 'Reserva Surcante';
   const descripcion = texto(body.descripcion, 250);
   const referencia = texto(body.referencia, 64); // N° de cotización (SRC-...)
-  const base = (process.env.REACT_APP_URL || process.env.SITE_URL || 'https://surcante.com').replace(/\/$/, '');
+  const base = (process.env.SITE_URL || 'https://surcante.ar').replace(/\/$/, '');
 
   try {
     const response = await fetch('https://api.mercadopago.com/checkout/preferences', {

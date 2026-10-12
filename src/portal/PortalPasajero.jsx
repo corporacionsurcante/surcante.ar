@@ -246,7 +246,7 @@ function TabBus({ bus, conductor, coordinador, busColor }) {
             </span>
           </div>
         )}
-        {bus.marca && <div className="portal-bus-meta" style={{ marginTop: 6 }}>{bus.marca} {bus.modelo}</div>}
+        {bus.empresa && <div className="portal-bus-meta" style={{ marginTop: 6 }}>{bus.empresa}{bus.tipo ? ` · ${bus.tipo}` : ''}</div>}
       </div>
 
       {conductor && <ContactCard titulo="Conductor" persona={conductor} />}
@@ -310,7 +310,7 @@ function TabAgenda({ itinerario, hoy, abiertos, setAbiertos, busId }) {
                 {actividades.length === 0
                   ? <div className="portal-empty-sm">Sin actividades</div>
                   : actividades.map((act, i) => (
-                    <div key={i} className="portal-actividad" style={{ padding: '8px 0', borderBottom: i < actividades.length - 1 ? '1px solid #f0ecf8' : 'none', border: 'none', borderRadius: 0 }}>
+                    <div key={act.id || i} className="portal-actividad" style={{ padding: '8px 0', border: 'none', borderBottom: i < actividades.length - 1 ? '1px solid var(--p-sep)' : 'none', borderRadius: 0 }}>
                       <div className="portal-act-hora">{act.hora || '—'}</div>
                       <div>
                         <div className="portal-act-titulo">{act.titulo}</div>

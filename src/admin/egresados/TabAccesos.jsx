@@ -65,7 +65,7 @@ function ModalQR({ persona, onClose }) {
         style={{ background: '#0D0D1A', borderRadius: 16, padding: 28, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, maxWidth: 320, width: '100%', boxShadow: '0 8px 40px rgba(0,0,0,.6)', border: '1px solid rgba(139,92,246,0.20)' }}
         onClick={e => e.stopPropagation()}
       >
-        <div style={{ fontWeight: 800, fontSize: 15, color: '#1a1a2e', textAlign: 'center' }}>{apellidoNombre(persona)}</div>
+        <div style={{ fontWeight: 800, fontSize: 15, color: '#fff', textAlign: 'center' }}>{apellidoNombre(persona)}</div>
         <div style={{ background: '#fff', border: '1px solid #e0d4f7', borderRadius: 10, padding: 10 }} ref={canvasRef}>
           <QRCanvas value={codigo} size={200} />
         </div>

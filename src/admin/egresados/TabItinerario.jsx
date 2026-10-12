@@ -273,9 +273,13 @@ function DiaForm({ fecha, dia, onClose, onGuardar }) {
   const F = { form, set: setForm };
   async function guardar() {
     setGuardando(true);
-    const data = {};
-    Object.keys(DIA_VACIO).forEach(k => { data[k] = String(form[k] ?? '').trim(); });
-    await onGuardar(data);
+    try {
+      const data = {};
+      Object.keys(DIA_VACIO).forEach(k => { data[k] = String(form[k] ?? '').trim(); });
+      await onGuardar(data);
+    } catch (_) {
+      setGuardando(false);
+    }
   }
   return (
     <Modal titulo={labelFecha(fecha, { largo: true })} onClose={onClose}

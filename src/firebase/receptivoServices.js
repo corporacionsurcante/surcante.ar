@@ -28,8 +28,7 @@ export async function inicializarPreciosCityTour() {
 // ---- CIRCUITOS ----
 export function suscribirCircuitos(callback, onError) {
   return onSnapshot(collection(db, 'receptivo_circuitos'), snap => {
-    const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    callback(data.length > 0 ? data : null);
+    callback(snap.docs.map(d => ({ id: d.id, ...d.data() })));
   }, logError('receptivo_circuitos', onError));
 }
 
@@ -61,8 +60,7 @@ export async function inicializarCircuitos() {
 // ---- TRANSFERS ----
 export function suscribirTransfers(callback, onError) {
   return onSnapshot(collection(db, 'receptivo_transfers'), snap => {
-    const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    callback(data.length > 0 ? data : null);
+    callback(snap.docs.map(d => ({ id: d.id, ...d.data() })));
   }, logError('receptivo_transfers', onError));
 }
 

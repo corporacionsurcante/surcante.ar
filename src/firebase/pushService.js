@@ -2,6 +2,8 @@
 // En iPhone: agregar /admin a la pantalla de inicio (PWA) y tocar "Activar notificaciones".
 // Requiere REACT_APP_FIREBASE_VAPID_KEY (ver INSTRUCCIONES.md).
 import { getMessaging, getToken, onMessage, isSupported } from 'firebase/messaging';
+
+let _onMessageRegistered = false;
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { app, db } from './config';
 
@@ -49,19 +51,22 @@ export async function activarNotificacionesPush(email) {
     actualizadoEn: serverTimestamp(),
   });
 
-  // Notificaciones con la app abierta (primer plano)
-  onMessage(messaging, (payload) => {
-    const title = payload.data?.title || payload.notification?.title || '🚌 Surcante';
-    const body = payload.data?.body || payload.notification?.body || 'Nueva cotización recibida';
-    try {
-      reg.showNotification(title, {
-        body,
-        icon: '/logo192.png',
-        tag: 'surcante-cotizacion',
-        data: { url: '/admin' },
-      });
-    } catch (_) { /* noop */ }
-  });
+  // Notificaciones con la app abierta (primer plano) — registrar solo una vez
+  if (!_onMessageRegistered) {
+    _onMessageRegistered = true;
+    onMessage(messaging, (payload) => {
+      const title = payload.data?.title || payload.notification?.title || '🚌 Surcante';
+      const body = payload.data?.body || payload.notification?.body || 'Nueva cotización recibida';
+      try {
+        reg.showNotification(title, {
+          body,
+          icon: '/logo192.png',
+          tag: 'surcante-cotizacion',
+          data: { url: '/admin' },
+        });
+      } catch (_) { /* noop */ }
+    });
+  }
 
   try { window.localStorage.setItem('surcante_push_activo', '1'); } catch (_) { /* noop */ }
   return token;

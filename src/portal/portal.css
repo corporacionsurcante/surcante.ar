@@ -80,6 +80,8 @@
 /* ─── Tab Bar ─── */
 .portal-tabs {
   display: flex;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   background: rgba(255,255,255,0.97);
   backdrop-filter: saturate(180%) blur(20px);
   -webkit-backdrop-filter: saturate(180%) blur(20px);
@@ -90,11 +92,13 @@
   right: 0;
   z-index: 100;
   padding-bottom: env(safe-area-inset-bottom);
+  scrollbar-width: none;
 }
 .portal-tabs::-webkit-scrollbar { display: none; }
 
 .portal-tab {
   flex: 1;
+  min-width: 68px;
   min-height: var(--p-tab-h);
   padding: 10px 6px;
   font-size: 13px;
@@ -461,7 +465,7 @@
   font-size: 16px;
   font-family: inherit;
   outline: none;
-  background: rgba(255,255,255,.07);
+  background: var(--p-card);
   color: var(--p-text);
   box-sizing: border-box;
   transition: border-color .15s, background .15s, box-shadow .15s;
@@ -499,7 +503,7 @@
 .portal-pax-datos span {
   font-size: 14px;
   color: var(--p-text-2);
-  background: rgba(255,255,255,.08);
+  background: rgba(28,27,46,.07);
   border-radius: 8px;
   padding: 5px 12px;
   font-weight: 500;

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   signInWithPopup, signInWithCustomToken, signOut, onAuthStateChanged,
 } from 'firebase/auth';
@@ -456,6 +456,7 @@ export default function AgenciaPortal() {
   const [sesion, setSesion] = useState(null);
   const [estado, setEstado] = useState('init'); // init | login | cargando | ok | error
   const [errorMsg, setErrorMsg] = useState('');
+  const loginInProgressRef = useRef(false);
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, user => {
@@ -475,15 +476,15 @@ export default function AgenciaPortal() {
             setEstado('login');
           }
         }).catch(() => setEstado('login'));
-      } else if (estado === 'init') {
+      } else if (!loginInProgressRef.current) {
         setEstado('login');
       }
     });
     return unsub;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleLogin = useCallback(async () => {
+    loginInProgressRef.current = true;
     setEstado('cargando');
     setErrorMsg('');
     try {
@@ -513,6 +514,8 @@ export default function AgenciaPortal() {
       try { await signOut(auth); } catch (_) { /* noop */ }
       setErrorMsg(e.message || 'No se pudo iniciar sesión.');
       setEstado('login');
+    } finally {
+      loginInProgressRef.current = false;
     }
   }, []);
 
