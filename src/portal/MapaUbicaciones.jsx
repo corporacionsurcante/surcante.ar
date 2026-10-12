@@ -196,12 +196,12 @@ export default function MapaUbicaciones({ opId, buses: busesProp = null, filtrar
           {ubicaciones.map(ub => {
             const bus   = buses.find(b => b.id === ub.id) || {};
             const ts    = ub.ts?.seconds ? new Date(ub.ts.seconds * 1000) : null;
-            const color = colorBus(bus) || '#7C3AED';
+            const busColor = colorBus(bus) || '#7C3AED';
             return (
               <div key={ub.id} style={{
                 flex: '1 1 160px',
                 background: 'var(--p-card, #fff)',
-                border: '1px solid var(--p-sep, rgba(28,27,46,.08))',
+                border: `1.5px solid ${busColor}`,
                 borderRadius: 14,
                 padding: '12px 16px',
                 boxShadow: '0 1px 4px rgba(0,0,0,.05)',
