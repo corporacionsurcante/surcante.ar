@@ -23,7 +23,7 @@
   /* Texto */
   --st-text:         #1A1B2E;   /* Medianoche */
   --st-text-2:       #3D3F5C;   /* Pizarra Índigo */
-  --st-text-3:       #6970A3;   /* Índigo Gris */
+  --st-text-3:       #5E659A;   /* Índigo Gris (oscurecido para WCAG AA) */
   --st-text-4:       #A9ACCA;   /* disabled */
 
   /* Bordes */
@@ -39,7 +39,7 @@
   --st-amber-text:   #B45309;
   --st-red:          #EF4444;
   --st-red-bg:       #FEF2F2;
-  --st-red-text:     #DC2626;
+  --st-red-text:     #B91C1C;
 }
 
 /* ── Modo oscuro ── */
@@ -54,4 +54,11 @@
   --st-text-4:       #464878;
   --st-border:       #2A2C4A;
   --st-border-2:     #383A60;
+  /* semantic state tokens — dark overrides para evitar pasteles light en fondo oscuro */
+  --st-red-bg:       #2A1010;
+  --st-red-text:     #F87171;
+  --st-green-bg:     #0A2018;
+  --st-green-text:   #34D399;
+  --st-amber-bg:     #221A05;
+  --st-amber-text:   #FCD34D;
 }

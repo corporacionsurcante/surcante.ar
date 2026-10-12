@@ -117,6 +117,8 @@ body {
   --ag-text:   #E8E9F6;
   --ag-text-2: #B8BADB;
   --ag-text-3: #7278B0;
+  --ag-card-2: #1E2040;
+  --ag-sep:    #2A2C4A;
 }
 
 .ag-login-card {
