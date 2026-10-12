@@ -128,8 +128,11 @@ export default function MapaUbicaciones({ opId, buses: busesProp = null, filtrar
       } else {
         const icon = window.L.divIcon({
           className: '',
-          html: `<div style="background:${color};color:#fff;font-size:11px;font-weight:700;padding:5px 10px;border-radius:20px;border:2.5px solid #fff;box-shadow:0 2px 10px rgba(0,0,0,.35);white-space:nowrap;font-family:Arial,sans-serif">${label}</div>`,
-          iconAnchor: [24, 14],
+          html: `<div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+            <div style="background:${color};border-radius:50%;width:38px;height:38px;display:flex;align-items:center;justify-content:center;border:2.5px solid #fff;box-shadow:0 2px 10px rgba(0,0,0,.35);font-size:20px;line-height:1">🚌</div>
+            <div style="background:${color};color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;border:1.5px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.25);white-space:nowrap;font-family:Arial,sans-serif;max-width:80px;overflow:hidden;text-overflow:ellipsis">${label}</div>
+          </div>`,
+          iconAnchor: [19, 44],
         });
         const marker = window.L.marker([ub.lat, ub.lng], { icon })
           .bindPopup(popupContent)
