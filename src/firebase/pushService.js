@@ -2,10 +2,10 @@
 // En iPhone: agregar /admin a la pantalla de inicio (PWA) y tocar "Activar notificaciones".
 // Requiere REACT_APP_FIREBASE_VAPID_KEY (ver INSTRUCCIONES.md).
 import { getMessaging, getToken, onMessage, isSupported } from 'firebase/messaging';
-
-let _onMessageRegistered = false;
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { app, db } from './config';
+
+let _onMessageRegistered = false;
 
 function configQueryString() {
   return new URLSearchParams({
