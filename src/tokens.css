@@ -1,0 +1,64 @@
+/* =====================================================================
+   SURCANTE — Horizonte Índigo
+   Fuente única de verdad para la paleta del ecosistema.
+   Importado en src/index.js antes de cualquier otra hoja de estilos.
+   Todos los archivos CSS consumen estos tokens vía var(--st-*).
+   ===================================================================== */
+
+/* ── Paleta base (modo claro — predeterminado) ── */
+:root {
+  /* Marca */
+  --st-brand:        #3D4EE8;   /* Índigo Eléctrico */
+  --st-brand-d:      #2E3DBF;   /* hover / pressed */
+  --st-brand-l:      #EEF0FD;   /* tints, chips, fondos sutiles */
+  --st-brand-rgb:    61, 78, 232;
+  --st-teal:         #00C5A1;   /* Aguamarina — secundario */
+  --st-teal-rgb:     0, 197, 161;
+
+  /* Fondos */
+  --st-bg:           #F5F6FA;   /* Lavanda Nieve */
+  --st-surface:      #FFFFFF;
+  --st-surface-2:    #F0F1F8;   /* rows alternas, sidebar */
+
+  /* Texto */
+  --st-text:         #1A1B2E;   /* Medianoche */
+  --st-text-2:       #3D3F5C;   /* Pizarra Índigo */
+  --st-text-3:       #5E659A;   /* Índigo Gris (oscurecido para WCAG AA) */
+  --st-text-4:       #A9ACCA;   /* disabled */
+
+  /* Bordes */
+  --st-border:       #E2E4F0;
+  --st-border-2:     #C8CBE0;
+
+  /* Estados */
+  --st-green:        #10B981;
+  --st-green-bg:     #ECFDF5;
+  --st-green-text:   #047857;
+  --st-amber:        #F59E0B;
+  --st-amber-bg:     #FFFBEB;
+  --st-amber-text:   #B45309;
+  --st-red:          #EF4444;
+  --st-red-bg:       #FEF2F2;
+  --st-red-text:     #B91C1C;
+}
+
+/* ── Modo oscuro ── */
+[data-theme="dark"] {
+  --st-bg:           #0E0F1F;
+  --st-surface:      #171831;
+  --st-surface-2:    #1E2040;
+  --st-brand-l:      #1E2050;
+  --st-text:         #E8E9F6;
+  --st-text-2:       #B8BADB;
+  --st-text-3:       #7278B0;
+  --st-text-4:       #464878;
+  --st-border:       #2A2C4A;
+  --st-border-2:     #383A60;
+  /* semantic state tokens — dark overrides para evitar pasteles light en fondo oscuro */
+  --st-red-bg:       #2A1010;
+  --st-red-text:     #F87171;
+  --st-green-bg:     #0A2018;
+  --st-green-text:   #34D399;
+  --st-amber-bg:     #221A05;
+  --st-amber-text:   #FCD34D;
+}

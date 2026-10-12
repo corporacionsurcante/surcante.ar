@@ -1,22 +1,38 @@
-/* Portal de viaje — light fintech mobile-first v2 */
-@import url('https://fonts.googleapis.com/css2?family=Syne:wght@800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap');
+/* Portal de viaje — Horizonte Índigo mobile-first */
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
 
+/* ── Modo claro (predeterminado) ── */
 :root {
-  --p-accent:     #7C3AED;
-  --p-accent-rgb: 124, 58, 237;
-  --p-teal:       #0D9488;
-  --p-bg:         #F2F2F7;
-  --p-card:       #FFFFFF;
-  --p-card-2:     #F8F8FC;
-  --p-text:       #1C1B2E;
-  --p-text-2:     rgba(28, 27, 46, 0.65);
-  --p-text-3:     rgba(28, 27, 46, 0.42);
-  --p-sep:        rgba(28, 27, 46, 0.08);
+  --p-accent:     var(--st-brand);
+  --p-accent-rgb: 61, 78, 232;
+  --p-teal:       var(--st-teal);
+  --p-bg:         var(--st-bg);
+  --p-card:       var(--st-surface);
+  --p-card-2:     var(--st-surface-2);
+  --p-text:       var(--st-text);
+  --p-text-2:     var(--st-text-2);
+  --p-text-3:     var(--st-text-3);
+  --p-sep:        var(--st-border);
   --p-tab-h:      64px;
-  --p-green:      #059669;
-  --p-red:        #DC2626;
+  --p-green:      var(--st-green);
+  --p-red:        var(--st-red);
   --p-radius:     16px;
   --p-radius-sm:  12px;
+  --p-chrome:     rgba(255,255,255,0.94);
+  --p-chrome-b:   rgba(61,78,232,.10);
+}
+
+/* ── Modo oscuro ── */
+[data-theme="dark"] {
+  --p-bg:         var(--st-bg);
+  --p-card:       var(--st-surface);
+  --p-card-2:     var(--st-surface-2);
+  --p-text:       var(--st-text);
+  --p-text-2:     var(--st-text-2);
+  --p-text-3:     var(--st-text-3);
+  --p-sep:        var(--st-border);
+  --p-chrome:     rgba(14,15,31,0.94);
+  --p-chrome-b:   rgba(61,78,232,.15);
 }
 
 .portal-wrap {
@@ -24,7 +40,7 @@
   display: flex;
   flex-direction: column;
   background: var(--p-bg);
-  font-family: 'DM Sans', -apple-system, 'Inter', system-ui, sans-serif;
+  font-family: 'Plus Jakarta Sans', -apple-system, 'Inter', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   font-size: 16px;
@@ -37,10 +53,10 @@
   gap: 14px;
   padding: 14px 20px;
   padding-top: calc(14px + env(safe-area-inset-top));
-  background: rgba(255,255,255,0.94);
+  background: var(--p-chrome);
   backdrop-filter: saturate(180%) blur(20px);
   -webkit-backdrop-filter: saturate(180%) blur(20px);
-  border-bottom: 0.5px solid rgba(28,27,46,0.10);
+  border-bottom: 0.5px solid var(--p-chrome-b);
   position: sticky;
   top: 0;
   z-index: 100;
@@ -80,21 +96,25 @@
 /* ─── Tab Bar ─── */
 .portal-tabs {
   display: flex;
-  background: rgba(255,255,255,0.97);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  background: var(--p-chrome);
   backdrop-filter: saturate(180%) blur(20px);
   -webkit-backdrop-filter: saturate(180%) blur(20px);
-  border-top: 0.5px solid rgba(28,27,46,0.10);
+  border-top: 0.5px solid var(--p-chrome-b);
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
   z-index: 100;
   padding-bottom: env(safe-area-inset-bottom);
+  scrollbar-width: none;
 }
 .portal-tabs::-webkit-scrollbar { display: none; }
 
 .portal-tab {
   flex: 1;
+  min-width: 68px;
   min-height: var(--p-tab-h);
   padding: 10px 6px;
   font-size: 13px;
@@ -455,13 +475,13 @@
 /* ─── Búsqueda ─── */
 .portal-busqueda {
   width: 100%;
-  border: 1.5px solid rgba(139,92,246,0.15);
+  border: 1.5px solid var(--p-sep);
   border-radius: var(--p-radius-sm);
   padding: 14px 18px;
   font-size: 16px;
   font-family: inherit;
   outline: none;
-  background: rgba(255,255,255,.07);
+  background: var(--p-card);
   color: var(--p-text);
   box-sizing: border-box;
   transition: border-color .15s, background .15s, box-shadow .15s;
@@ -470,7 +490,7 @@
 .portal-busqueda::placeholder { color: var(--p-text-3); }
 .portal-busqueda:focus {
   background: rgba(255,255,255,.10);
-  border-color: rgba(139,92,246,0.45);
+  border-color: var(--p-accent);
   box-shadow: 0 0 0 3px rgba(var(--p-accent-rgb), .14);
 }
 
@@ -499,7 +519,7 @@
 .portal-pax-datos span {
   font-size: 14px;
   color: var(--p-text-2);
-  background: rgba(255,255,255,.08);
+  background: rgba(28,27,46,.07);
   border-radius: 8px;
   padding: 5px 12px;
   font-weight: 500;
@@ -582,7 +602,7 @@
   color: var(--p-text-3);
   font-size: 16px;
   background: var(--p-bg);
-  font-family: 'DM Sans', -apple-system, 'Inter', system-ui, sans-serif;
+  font-family: 'Plus Jakarta Sans', -apple-system, 'Inter', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -604,13 +624,13 @@
   justify-content: center;
   background: var(--p-bg);
   padding: 24px;
-  font-family: 'DM Sans', -apple-system, 'Inter', system-ui, sans-serif;
+  font-family: 'Plus Jakarta Sans', -apple-system, 'Inter', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
 .portal-error-card {
   background: var(--p-card);
-  border: 1px solid rgba(139,92,246,0.20);
+  border: 1px solid var(--p-sep);
   border-radius: 24px;
   padding: 44px 32px;
   text-align: center;

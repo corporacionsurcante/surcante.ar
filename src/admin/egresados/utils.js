@@ -491,6 +491,6 @@ export const ESTADOS_OPERATIVO = {
   planificacion: { label: 'Planificación', bg: 'rgba(245,158,11,0.12)', color: '#F59E0B' },
   confirmado: { label: 'Confirmado', bg: 'rgba(37,99,235,0.12)', color: '#60A5FA' },
   en_curso: { label: 'En curso', bg: 'rgba(16,185,129,0.12)', color: '#10B981' },
-  finalizado: { label: 'Finalizado', bg: 'rgba(240,238,255,0.08)', color: 'rgba(240,238,255,0.55)' },
+  finalizado: { label: 'Finalizado', bg: 'rgba(100,116,139,0.12)', color: '#64748B' },
   cancelado: { label: 'Cancelado', bg: 'rgba(239,68,68,0.12)', color: '#EF4444' },
 };

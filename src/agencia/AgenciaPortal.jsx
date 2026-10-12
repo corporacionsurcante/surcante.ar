@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import {
   signInWithPopup, signInWithCustomToken, signOut, onAuthStateChanged,
 } from 'firebase/auth';
@@ -6,7 +6,11 @@ import {
   collection, query, where, orderBy, onSnapshot,
 } from 'firebase/firestore';
 import { auth, db, googleProvider } from '../firebase/config';
-import { fechaCorta, hoyISO } from '../admin/egresados/utils';
+import {
+  fechaCorta, hoyISO,
+  CAMPOS_PASAJERO, detectarEncabezados, filasAPasajeros, leerArchivoPlanilla, parsearTexto, apellidoNombre,
+} from '../admin/egresados/utils';
+import { guardarPasajerosMasivo } from '../firebase/egresadosService';
 import './agencia.css';
 
 const ESTADOS = {
@@ -43,7 +47,7 @@ function LoginScreen({ onLoginOk, cargando, error }) {
             : <><GoogleIcon /> Continuar con Google</>
           }
         </button>
-        <div style={{ marginTop: 18, fontSize: 11, color: '#B0B0C8' }}>
+        <div style={{ marginTop: 18, fontSize: 11, color: 'var(--ag-text-3)' }}>
           surcante.com — Sistema de gestión de egresados
         </div>
       </div>
@@ -132,7 +136,7 @@ function Dashboard({ sesion, onLogout }) {
         </div>
 
         {operativos.length === 0 ? (
-          <div className="ag-section" style={{ textAlign: 'center', color: 'rgba(240,238,255,0.45)', fontSize: 14 }}>
+          <div className="ag-section" style={{ textAlign: 'center', color: 'var(--ag-text-3)', fontSize: 14 }}>
             <div style={{ fontSize: 32, marginBottom: 8 }}>🚌</div>
             No hay operativos cargados para tu agencia todavía.
           </div>
@@ -283,7 +287,14 @@ function DetalleOperativo({ operativo: op, agenciaId, onVolver }) {
           <>
             {tab === 'buses' && <TabBuses buses={buses} staff={staff} pasajeros={pasajeros} />}
             {tab === 'personal' && <TabPersonal conductores={conductores} coordinadores={coordinadores} buses={buses} />}
-            {tab === 'pasajeros' && <TabPasajeros pasajeros={pasajeros} buses={buses} />}
+            {tab === 'pasajeros' && (
+              <TabPasajeros
+                pasajeros={pasajeros}
+                buses={buses}
+                staff={staff}
+                opId={op.id}
+              />
+            )}
             {tab === 'itinerario' && <TabItinerario itinerario={itinerario} />}
           </>
         )}
@@ -299,7 +310,7 @@ function busNombre(bus) {
 
 function TabBuses({ buses, staff, pasajeros }) {
   if (buses.length === 0) {
-    return <div className="ag-section" style={{ color: 'rgba(240,238,255,0.45)', textAlign: 'center', fontSize: 13 }}>No hay buses cargados.</div>;
+    return <div className="ag-section" style={{ color: 'var(--ag-text-3)', textAlign: 'center', fontSize: 13 }}>No hay buses cargados.</div>;
   }
   return (
     <div className="ag-grid">
@@ -347,7 +358,7 @@ function TabPersonal({ conductores, coordinadores, buses }) {
   ].sort((a, b) => (a.apellido || '').localeCompare(b.apellido || ''));
 
   if (todos.length === 0) {
-    return <div className="ag-section" style={{ color: 'rgba(240,238,255,0.45)', textAlign: 'center', fontSize: 13 }}>No hay personal cargado.</div>;
+    return <div className="ag-section" style={{ color: 'var(--ag-text-3)', textAlign: 'center', fontSize: 13 }}>No hay personal cargado.</div>;
   }
   return (
     <div className="ag-section" style={{ overflowX: 'auto' }}>
@@ -366,8 +377,9 @@ function TabPersonal({ conductores, coordinadores, buses }) {
   );
 }
 
-function TabPasajeros({ pasajeros, buses }) {
+function TabPasajeros({ pasajeros, buses, staff, opId }) {
   const [busca, setBusca] = useState('');
+  const [mostrarImport, setMostrarImport] = useState(false);
 
   function busLabel(busId) {
     return busNombre(buses.find(b => b.id === busId));
@@ -378,50 +390,360 @@ function TabPasajeros({ pasajeros, buses }) {
         [p.apellido, p.nombre, p.dni, p.localidad].join(' ').toLowerCase().includes(busca.toLowerCase()))
     : pasajeros;
 
-  if (pasajeros.length === 0) {
-    return <div className="ag-section" style={{ color: 'rgba(240,238,255,0.45)', textAlign: 'center', fontSize: 13 }}>No hay pasajeros cargados.</div>;
+  return (
+    <>
+      {mostrarImport && (
+        <ImportarPasajerosAgencia
+          opId={opId}
+          buses={buses}
+          staff={staff}
+          pasajeros={pasajeros}
+          onClose={() => setMostrarImport(false)}
+          onListo={n => setMostrarImport(false)}
+        />
+      )}
+
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginBottom: 12, flexWrap: 'wrap' }}>
+        <div style={{ fontSize: 13, color: 'var(--ag-text-3)' }}>
+          {pasajeros.length === 0 ? 'Sin pasajeros cargados' : `${pasajeros.length} pasajero${pasajeros.length !== 1 ? 's' : ''}`}
+        </div>
+        <button className="ag-btn ag-btn-primary ag-btn-sm" onClick={() => setMostrarImport(true)}>
+          📥 Importar desde Excel
+        </button>
+      </div>
+
+      {pasajeros.length === 0 ? (
+        <div className="ag-section" style={{ color: 'var(--ag-text-3)', textAlign: 'center', fontSize: 13 }}>
+          No hay pasajeros cargados. Usá el botón <strong>Importar desde Excel</strong> para cargarlos.
+        </div>
+      ) : (
+        <div className="ag-section" style={{ overflowX: 'auto' }}>
+          <div style={{ marginBottom: 12 }}>
+            <input
+              className="ag-input"
+              placeholder="🔍 Buscar por apellido, nombre o DNI..."
+              value={busca}
+              onChange={e => setBusca(e.target.value)}
+            />
+          </div>
+          <div style={{ fontSize: 12, color: 'var(--ag-text-3)', marginBottom: 8 }}>
+            Mostrando {filtrados.length} de {pasajeros.length} pasajeros
+          </div>
+          <table className="ag-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Apellido y nombre</th>
+                <th>DNI</th>
+                <th>Bus</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtrados.map((p, i) => (
+                <tr key={p.id}>
+                  <td style={{ color: 'var(--ag-text-3)' }}>{i + 1}</td>
+                  <td>{p.apellido}, {p.nombre}</td>
+                  <td>{p.dni || '—'}</td>
+                  <td>{p.busId ? busLabel(p.busId) : '—'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </>
+  );
+}
+
+// ---- Importar pasajeros desde Excel (ag-* styles) ----
+function ImportarPasajerosAgencia({ opId, buses, staff, pasajeros, onClose, onListo }) {
+  const [paso, setPaso] = useState('origen'); // origen | mapeo
+  const [libro, setLibro] = useState(null);
+  const [hoja, setHoja] = useState('');
+  const [filas, setFilas] = useState([]);
+  const [idxEnc, setIdxEnc] = useState(0);
+  const [mapeo, setMapeo] = useState([]);
+  const [texto, setTexto] = useState('');
+  const [modoDuplicado, setModoDuplicado] = useState('actualizar');
+  const [error, setError] = useState('');
+  const [cargando, setCargando] = useState(false);
+  const [drag, setDrag] = useState(false);
+  const inputRef = useRef(null);
+
+  function prepararFilas(f) {
+    const limpias = f.filter(r => Array.isArray(r) && r.some(c => String(c ?? '').trim() !== ''));
+    if (limpias.length < 2) {
+      setError('No encontramos datos: el archivo necesita una fila de títulos y al menos un pasajero.');
+      return;
+    }
+    const det = detectarEncabezados(limpias);
+    setFilas(limpias);
+    setIdxEnc(det.idx);
+    setMapeo(ajustarLargo(det.mapeo, limpias[det.idx].length));
+    setError('');
+    setPaso('mapeo');
   }
 
+  async function abrirArchivo(file) {
+    if (!file) return;
+    setCargando(true);
+    setError('');
+    try {
+      const lb = await leerArchivoPlanilla(file);
+      setLibro(lb);
+      setHoja(lb.hojas[0]);
+      prepararFilas(lb.leer(lb.hojas[0]));
+    } catch (e) {
+      setError(e.message || 'No se pudo leer el archivo.');
+    }
+    setCargando(false);
+  }
+
+  function cambiarHoja(h) {
+    setHoja(h);
+    prepararFilas(libro.leer(h));
+  }
+
+  function usarTexto() {
+    if (!texto.trim()) { setError('Pegá los datos copiados del Excel (incluyendo la fila de títulos).'); return; }
+    prepararFilas(parsearTexto(texto));
+  }
+
+  function cambiarEncabezado(i) {
+    setIdxEnc(i);
+    const det = detectarEncabezados([filas[i]]);
+    setMapeo(ajustarLargo(det.mapeo, filas[i].length));
+  }
+
+  function cambiarMapeo(col, campo) {
+    setMapeo(prev => prev.map((m, i) => {
+      if (i === col) return campo;
+      return campo && m === campo ? '' : m;
+    }));
+  }
+
+  const nuevos = useMemo(
+    () => (paso === 'mapeo' ? filasAPasajeros(filas, idxEnc, mapeo, buses, staff) : []),
+    [paso, filas, idxEnc, mapeo, buses, staff],
+  );
+
+  const analisis = useMemo(() => {
+    const porDni = new Map(pasajeros.filter(p => p.dni).map(p => [p.dni, p]));
+    let actualizan = 0; let omitidos = 0; let dupInternos = 0;
+    const vistos = new Set();
+    const lista = [];
+    nuevos.forEach(p => {
+      if (p.dni && vistos.has(p.dni)) { dupInternos++; return; }
+      if (p.dni) vistos.add(p.dni);
+      const existente = p.dni ? porDni.get(p.dni) : null;
+      if (existente) {
+        if (modoDuplicado === 'omitir') { omitidos++; return; }
+        actualizan++;
+        lista.push({ ...p, id: existente.id, _existe: true });
+      } else {
+        lista.push(p);
+      }
+    });
+    const busNoEncontrado = [...new Set(nuevos.filter(p => p._busTexto && !p.busId).map(p => p._busTexto))];
+    const sinDni = nuevos.filter(p => !p.dni).length;
+    return { lista, actualizan, omitidos, dupInternos, busNoEncontrado, sinDni };
+  }, [nuevos, pasajeros, modoDuplicado]);
+
+  async function importar() {
+    setCargando(true);
+    setError('');
+    try {
+      const datos = analisis.lista.map(({ _busTexto, _coordTexto, _existe, ...p }) => {
+        if (!_existe) return p;
+        const limpio = { ...p };
+        Object.keys(limpio).forEach(k => { if (k !== 'id' && (limpio[k] === '' || limpio[k] === null)) delete limpio[k]; });
+        return limpio;
+      });
+      await guardarPasajerosMasivo(opId, datos);
+      onListo?.(datos.length);
+      onClose();
+    } catch (e) {
+      console.error(e);
+      setError('Error guardando. Revisá los datos y volvé a intentar (los DNI ya cargados se actualizan, no se duplican).');
+      setCargando(false);
+    }
+  }
+
+  const tieneNombre = mapeo.some(m => ['apellido', 'nombre', 'apellidoNombre', 'nombreApellido'].includes(m));
+
   return (
-    <div className="ag-section" style={{ overflowX: 'auto' }}>
-      <div style={{ marginBottom: 12 }}>
-        <input
-          className="ag-input"
-          placeholder="🔍 Buscar por apellido, nombre o DNI..."
-          value={busca}
-          onChange={e => setBusca(e.target.value)}
-        />
+    <div className="ag-modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="ag-modal">
+        <div className="ag-modal-head">
+          <div className="ag-modal-title">📥 Importar pasajeros desde Excel</div>
+          <button className="ag-modal-close" onClick={onClose}>✕</button>
+        </div>
+        <div className="ag-modal-body">
+
+          {paso === 'origen' && (
+            <>
+              <div
+                className={`ag-drop${drag ? ' drag' : ''}`}
+                onClick={() => inputRef.current?.click()}
+                onDragOver={e => { e.preventDefault(); setDrag(true); }}
+                onDragLeave={() => setDrag(false)}
+                onDrop={e => { e.preventDefault(); setDrag(false); abrirArchivo(e.dataTransfer.files?.[0]); }}
+              >
+                <div style={{ fontSize: 34 }}>📄</div>
+                <div className="ag-drop-title">
+                  {cargando ? 'Leyendo archivo...' : 'Arrastrá el Excel o tocá para elegirlo'}
+                </div>
+                <div>.xlsx · .xls · .csv — detectamos las columnas automáticamente</div>
+                <input
+                  ref={inputRef}
+                  type="file"
+                  accept=".xlsx,.xls,.csv,.txt,.tsv,.ods"
+                  style={{ display: 'none' }}
+                  onChange={e => { abrirArchivo(e.target.files?.[0]); e.target.value = ''; }}
+                />
+              </div>
+
+              <div style={{ textAlign: 'center', margin: '14px 0', fontSize: 12, color: 'var(--ag-text-3)', fontWeight: 700 }}>— o pegá las celdas copiadas del Excel —</div>
+
+              <div className="ag-form-row">
+                <label className="ag-label">Datos pegados del Excel (con la fila de títulos)</label>
+                <textarea
+                  className="ag-input"
+                  rows={5}
+                  value={texto}
+                  onChange={e => setTexto(e.target.value)}
+                  placeholder={'Apellido\tNombre\tDNI\tColegio\nPérez\tJuan\t45123456\tEsc. N°53'}
+                  style={{ fontFamily: 'monospace', fontSize: 13 }}
+                />
+              </div>
+              <button className="ag-btn ag-btn-ghost" style={{ width: '100%' }} onClick={usarTexto}>
+                Continuar con el texto pegado →
+              </button>
+            </>
+          )}
+
+          {paso === 'mapeo' && (
+            <>
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 14 }}>
+                {libro?.hojas?.length > 1 && (
+                  <div className="ag-form-row" style={{ flex: '1 1 160px', marginBottom: 0 }}>
+                    <label className="ag-label">Hoja</label>
+                    <select className="ag-input" style={{ padding: '8px 10px', fontSize: 14 }} value={hoja} onChange={e => cambiarHoja(e.target.value)}>
+                      {libro.hojas.map(h => <option key={h} value={h}>{h}</option>)}
+                    </select>
+                  </div>
+                )}
+                <div className="ag-form-row" style={{ flex: '1 1 200px', marginBottom: 0 }}>
+                  <label className="ag-label">Fila de títulos</label>
+                  <select className="ag-input" style={{ padding: '8px 10px', fontSize: 14 }} value={idxEnc} onChange={e => cambiarEncabezado(Number(e.target.value))}>
+                    {filas.slice(0, 15).map((f, i) => (
+                      <option key={i} value={i}>Fila {i + 1}: {f.filter(Boolean).slice(0, 3).join(' | ').slice(0, 50)}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="ag-form-row" style={{ flex: '1 1 200px', marginBottom: 0 }}>
+                  <label className="ag-label">Si el DNI ya existe</label>
+                  <select className="ag-input" style={{ padding: '8px 10px', fontSize: 14 }} value={modoDuplicado} onChange={e => setModoDuplicado(e.target.value)}>
+                    <option value="actualizar">Actualizar sus datos</option>
+                    <option value="omitir">Dejarlo como está</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="ag-section-title">Columnas detectadas — corregí las que hagan falta</div>
+              <div className="ag-map-grid">
+                {(filas[idxEnc] || []).map((h, i) => (
+                  <div key={i} className={`ag-map-item${mapeo[i] ? ' ok' : ''}`}>
+                    <div className="col" title={String(h)}>{String(h || `Col. ${i + 1}`)}</div>
+                    <select value={mapeo[i] || ''} onChange={e => cambiarMapeo(i, e.target.value)}>
+                      <option value="">— No importar —</option>
+                      {CAMPOS_PASAJERO.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
+                    </select>
+                  </div>
+                ))}
+              </div>
+
+              {!tieneNombre && (
+                <div className="ag-alert ag-alert-error" style={{ marginBottom: 10 }}>
+                  ⛔ Indicá qué columna tiene el nombre y apellido del pasajero.
+                </div>
+              )}
+
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
+                <span className="ag-chip ag-chip-purple">{nuevos.length} filas leídas</span>
+                <span className="ag-chip ag-chip-green">{analisis.lista.length - analisis.actualizan} nuevos</span>
+                {analisis.actualizan > 0 && <span className="ag-chip">{analisis.actualizan} se actualizan</span>}
+                {analisis.omitidos > 0 && <span className="ag-chip">{analisis.omitidos} se omiten</span>}
+                {analisis.dupInternos > 0 && <span className="ag-chip ag-chip-red">{analisis.dupInternos} DNI repetidos</span>}
+                {analisis.sinDni > 0 && <span className="ag-chip ag-chip-amber">{analisis.sinDni} sin DNI</span>}
+              </div>
+
+              {analisis.busNoEncontrado.length > 0 && (
+                <div className="ag-alert ag-alert-info" style={{ marginBottom: 10 }}>
+                  ⚠️ Estos ómnibus del Excel no existen en el operativo: <b>{analisis.busNoEncontrado.slice(0, 5).join(', ')}</b>. Esos pasajeros quedan sin asignar.
+                </div>
+              )}
+
+              <div className="ag-section" style={{ overflowX: 'auto', maxHeight: 220, marginBottom: 0 }}>
+                <table className="ag-table" style={{ fontSize: 12 }}>
+                  <thead>
+                    <tr><th>Pasajero</th><th>DNI</th><th>Bus</th></tr>
+                  </thead>
+                  <tbody>
+                    {analisis.lista.slice(0, 10).map((p, i) => (
+                      <tr key={i}>
+                        <td style={{ fontWeight: 600 }}>
+                          {apellidoNombre(p)}
+                          {p._existe && <span className="ag-chip" style={{ marginLeft: 6, fontSize: 10 }}>actualiza</span>}
+                        </td>
+                        <td>{p.dni || <span style={{ color: 'var(--ag-text-3)' }}>—</span>}</td>
+                        <td>{p.busId ? (buses.find(b => b.id === p.busId)?.nombre || `Bus ${buses.find(b => b.id === p.busId)?.numero}`) : <span style={{ color: 'var(--ag-text-3)' }}>{p._busTexto || '—'}</span>}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {analisis.lista.length > 10 && (
+                  <div style={{ fontSize: 12, color: 'var(--ag-text-3)', padding: '8px 0 0' }}>…y {analisis.lista.length - 10} más.</div>
+                )}
+              </div>
+            </>
+          )}
+
+          {error && <div className="ag-alert ag-alert-error" style={{ marginTop: 12 }}>{error}</div>}
+        </div>
+
+        <div className="ag-modal-foot">
+          {paso === 'mapeo' ? (
+            <>
+              <button className="ag-btn ag-btn-ghost ag-btn-sm" onClick={() => { setPaso('origen'); setLibro(null); }}>
+                ← Otro archivo
+              </button>
+              <button
+                className="ag-btn ag-btn-primary"
+                onClick={importar}
+                disabled={cargando || !tieneNombre || !analisis.lista.length}
+              >
+                {cargando ? 'Importando...' : `✓ Importar ${analisis.lista.length} pasajeros`}
+              </button>
+            </>
+          ) : (
+            <button className="ag-btn ag-btn-ghost ag-btn-sm" onClick={onClose}>Cancelar</button>
+          )}
+        </div>
       </div>
-      <div style={{ fontSize: 12, color: 'rgba(240,238,255,0.45)', marginBottom: 8 }}>
-        Mostrando {filtrados.length} de {pasajeros.length} pasajeros
-      </div>
-      <table className="ag-table">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Apellido y nombre</th>
-            <th>DNI</th>
-            <th>Bus</th>
-          </tr>
-        </thead>
-        <tbody>
-          {filtrados.map((p, i) => (
-            <tr key={p.id}>
-              <td style={{ color: 'rgba(240,238,255,0.45)' }}>{i + 1}</td>
-              <td>{p.apellido}, {p.nombre}</td>
-              <td>{p.dni || '—'}</td>
-              <td>{p.busId ? busLabel(p.busId) : '—'}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
     </div>
   );
 }
 
+function ajustarLargo(m, largo) {
+  const arr = m.slice(0, largo);
+  while (arr.length < largo) arr.push('');
+  return arr;
+}
+
 function TabItinerario({ itinerario }) {
   if (itinerario.length === 0) {
-    return <div className="ag-section" style={{ color: 'rgba(240,238,255,0.45)', textAlign: 'center', fontSize: 13 }}>No hay itinerario cargado.</div>;
+    return <div className="ag-section" style={{ color: 'var(--ag-text-3)', textAlign: 'center', fontSize: 13 }}>No hay itinerario cargado.</div>;
   }
   const hoy = hoyISO();
   return (
@@ -438,7 +760,7 @@ function TabItinerario({ itinerario }) {
           </div>
           {dia.resumen && <div style={{ fontSize: 13, color: 'var(--ag-text-2)', lineHeight: 1.6 }}>{dia.resumen}</div>}
           {dia.actividades?.length > 0 && (
-            <ul style={{ margin: '8px 0 0 14px', fontSize: 12.5, color: 'var(--ag-text-3)', lineHeight: 1.7 }}>
+            <ul style={{ margin: '8px 0 0 14px', fontSize: 12.5, color: 'var(--ag-text-2)', lineHeight: 1.7 }}>
               {dia.actividades.map((a, i) => <li key={i}>{a.hora ? `${a.hora} — ` : ''}{a.texto}</li>)}
             </ul>
           )}
@@ -462,6 +784,7 @@ export default function AgenciaPortal() {
   const [sesion, setSesion] = useState(null);
   const [estado, setEstado] = useState('init'); // init | login | cargando | ok | error
   const [errorMsg, setErrorMsg] = useState('');
+  const loginInProgressRef = useRef(false);
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, user => {
@@ -481,15 +804,15 @@ export default function AgenciaPortal() {
             setEstado('login');
           }
         }).catch(() => setEstado('login'));
-      } else if (estado === 'init') {
+      } else if (!loginInProgressRef.current) {
         setEstado('login');
       }
     });
     return unsub;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleLogin = useCallback(async () => {
+    loginInProgressRef.current = true;
     setEstado('cargando');
     setErrorMsg('');
     try {
@@ -519,6 +842,8 @@ export default function AgenciaPortal() {
       try { await signOut(auth); } catch (_) { /* noop */ }
       setErrorMsg(e.message || 'No se pudo iniciar sesión.');
       setEstado('login');
+    } finally {
+      loginInProgressRef.current = false;
     }
   }, []);
 

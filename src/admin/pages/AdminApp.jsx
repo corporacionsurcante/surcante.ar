@@ -15,6 +15,7 @@ import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { marcarNotificacionesComoLeidas } from '../../firebase/notificacionesService';
 import { activarNotificacionesPush, pushYaActivado } from '../../firebase/pushService';
+import ThemeToggle from '../ThemeToggle';
 import '../admin.css';
 
 // Módulo Egresados: se carga bajo demanda para no agrandar el cotizador público
@@ -105,7 +106,7 @@ export default function AdminApp() {
   }, [tab, user]);
 
   if (checking) return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0A0A0F', color: 'rgba(255,255,255,.4)', fontSize: 14 }}>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }}>
       Verificando acceso...
     </div>
   );
@@ -137,15 +138,16 @@ export default function AdminApp() {
             disabled={pushLoading || pushActivo}
             title={pushActivo ? 'Notificaciones activadas en este dispositivo' : 'Recibir notificaciones push de cotizaciones'}
             style={{
-              border: pushActivo ? '1px solid #00C896' : '1px solid rgba(139,92,246,.5)',
-              background: pushActivo ? 'rgba(0,200,150,.12)' : 'rgba(139,92,246,.15)',
-              color: pushActivo ? '#00C896' : '#B58AE0',
+              border: pushActivo ? '1px solid var(--ad-teal)' : '1px solid rgba(var(--ad-accent-rgb),.4)',
+              background: pushActivo ? 'rgba(0,197,161,.12)' : 'rgba(var(--ad-accent-rgb),.12)',
+              color: pushActivo ? 'var(--ad-teal)' : 'var(--ad-accent)',
               borderRadius: 8, padding: '5px 10px', fontSize: 12, fontWeight: 700,
               cursor: pushActivo ? 'default' : 'pointer', fontFamily: 'Inter, sans-serif',
               marginRight: 8,
             }}>
             {pushLoading ? '...' : pushActivo ? '🔔 Activadas' : '🔔 Activar avisos'}
           </button>
+          <ThemeToggle />
           <div className="admin-avatar">{initials}</div>
           <span className="admin-email">{user.email}</span>
           <button className="admin-logout" onClick={() => signOut(auth)}>Salir</button>

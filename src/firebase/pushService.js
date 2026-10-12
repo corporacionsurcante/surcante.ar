@@ -5,6 +5,8 @@ import { getMessaging, getToken, onMessage, isSupported } from 'firebase/messagi
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { app, db } from './config';
 
+let _onMessageRegistered = false;
+
 function configQueryString() {
   return new URLSearchParams({
     apiKey: process.env.REACT_APP_FIREBASE_API_KEY || '',
@@ -49,19 +51,22 @@ export async function activarNotificacionesPush(email) {
     actualizadoEn: serverTimestamp(),
   });
 
-  // Notificaciones con la app abierta (primer plano)
-  onMessage(messaging, (payload) => {
-    const title = payload.data?.title || payload.notification?.title || '🚌 Surcante';
-    const body = payload.data?.body || payload.notification?.body || 'Nueva cotización recibida';
-    try {
-      reg.showNotification(title, {
-        body,
-        icon: '/logo192.png',
-        tag: 'surcante-cotizacion',
-        data: { url: '/admin' },
-      });
-    } catch (_) { /* noop */ }
-  });
+  // Notificaciones con la app abierta (primer plano) — registrar solo una vez
+  if (!_onMessageRegistered) {
+    _onMessageRegistered = true;
+    onMessage(messaging, (payload) => {
+      const title = payload.data?.title || payload.notification?.title || '🚌 Surcante';
+      const body = payload.data?.body || payload.notification?.body || 'Nueva cotización recibida';
+      try {
+        reg.showNotification(title, {
+          body,
+          icon: '/logo192.png',
+          tag: 'surcante-cotizacion',
+          data: { url: '/admin' },
+        });
+      } catch (_) { /* noop */ }
+    });
+  }
 
   try { window.localStorage.setItem('surcante_push_activo', '1'); } catch (_) { /* noop */ }
   return token;

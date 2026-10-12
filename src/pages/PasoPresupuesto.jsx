@@ -278,15 +278,15 @@ export default function PasoPresupuesto({ reserva, onBack, onConfirm, isAdmin, i
       {/* Panel desglose interno — solo visible para admins */}
       {isAdmin && !loading && detalles.length > 0 && (
         <div style={{
-          background: '#0A0A0F', border: '1px solid rgba(139,92,246,.3)',
+          background: 'var(--bg-2)', border: '1px solid var(--border)',
           borderRadius: 14, padding: 16, marginBottom: 16,
         }}>
-          <div style={{ fontSize: 11, fontWeight: 800, color: '#8B5CF6', letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 12 }}>
+          <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--sp)', letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 12 }}>
             🔍 Desglose interno (solo admin)
           </div>
           {detalles.map((d, idx) => (
             <div key={d.id} style={{ marginBottom: idx < detalles.length - 1 ? 12 : 0 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: '#fff', marginBottom: 6 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text)', marginBottom: 6 }}>
                 {d.type?.icon} {d.label}
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4 }}>
@@ -302,19 +302,19 @@ export default function PasoPresupuesto({ reserva, onBack, onConfirm, isAdmin, i
                   [`IVA ${fmtPorc(params.iva)}`, formatARS(d.ivaTotal)],
                   ['Total unidad', formatARS(d.total)],
                 ].filter(Boolean).map(([label, value]) => (
-                  <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 6px', background: 'rgba(255,255,255,.04)', borderRadius: 5 }}>
-                    <span style={{ fontSize: 10, color: 'rgba(255,255,255,.4)', fontWeight: 500 }}>{label}</span>
-                    <span style={{ fontSize: 10, color: 'rgba(255,255,255,.8)', fontWeight: 600 }}>{value}</span>
+                  <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 6px', background: 'var(--bg-3)', borderRadius: 5 }}>
+                    <span style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 500 }}>{label}</span>
+                    <span style={{ fontSize: 10, color: 'var(--text)', fontWeight: 600 }}>{value}</span>
                   </div>
                 ))}
               </div>
             </div>
           ))}
-          <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid rgba(255,255,255,.1)', display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: 11, color: 'rgba(255,255,255,.4)', fontWeight: 600 }}>TOTAL GENERAL</span>
-            <span style={{ fontSize: 14, color: '#8B5CF6', fontWeight: 800 }}>{formatARS(grandTotal)}</span>
+          <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: 11, color: 'var(--text-3)', fontWeight: 600 }}>TOTAL GENERAL</span>
+            <span style={{ fontSize: 14, color: 'var(--sp)', fontWeight: 800 }}>{formatARS(grandTotal)}</span>
           </div>
-          <div style={{ marginTop: 6, fontSize: 10, color: 'rgba(255,255,255,.25)', textAlign: 'right' }}>
+          <div style={{ marginTop: 6, fontSize: 10, color: 'var(--text-3)', textAlign: 'right' }}>
             Dólar BNA: ${dolar?.toLocaleString('es-AR')} · {new Date().toLocaleDateString('es-AR')}
           </div>
         </div>

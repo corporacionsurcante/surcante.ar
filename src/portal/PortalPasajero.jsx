@@ -246,7 +246,7 @@ function TabBus({ bus, conductor, coordinador, busColor }) {
             </span>
           </div>
         )}
-        {bus.marca && <div className="portal-bus-meta" style={{ marginTop: 6 }}>{bus.marca} {bus.modelo}</div>}
+        {bus.empresa && <div className="portal-bus-meta" style={{ marginTop: 6 }}>{bus.empresa}{bus.tipo ? ` · ${bus.tipo}` : ''}</div>}
       </div>
 
       {conductor && <ContactCard titulo="Conductor" persona={conductor} />}
@@ -310,7 +310,7 @@ function TabAgenda({ itinerario, hoy, abiertos, setAbiertos, busId }) {
                 {actividades.length === 0
                   ? <div className="portal-empty-sm">Sin actividades</div>
                   : actividades.map((act, i) => (
-                    <div key={i} className="portal-actividad" style={{ padding: '8px 0', borderBottom: i < actividades.length - 1 ? '1px solid #f0ecf8' : 'none', border: 'none', borderRadius: 0 }}>
+                    <div key={act.id || i} className="portal-actividad" style={{ padding: '8px 0', border: 'none', borderBottom: i < actividades.length - 1 ? '1px solid var(--p-sep)' : 'none', borderRadius: 0 }}>
                       <div className="portal-act-hora">{act.hora || '—'}</div>
                       <div>
                         <div className="portal-act-titulo">{act.titulo}</div>
@@ -367,7 +367,7 @@ function TabYo({ pax }) {
             <div style={{ background: '#fff', borderRadius: 10, padding: 10, border: '1px solid #e0d4f7' }}>
               <QRDisplay value={codigoQR} size={180} />
             </div>
-            <div style={{ fontSize: 15, fontWeight: 800, color: '#8B5CF6', letterSpacing: '.04em' }}>{codigoQR}</div>
+            <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--p-accent)', letterSpacing: '.04em' }}>{codigoQR}</div>
             <div style={{ fontSize: 12, color: '#b0b0c8', lineHeight: 1.5 }}>
               Mostrá este QR al coordinador para el check-in
             </div>

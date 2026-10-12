@@ -18,10 +18,10 @@ export default function ReservaConfirmada({ datos, onNueva }) {
         </div>
       </div>
 
-      <div style={{ background: 'rgba(139,92,246,0.08)', borderRadius: 10, padding: '10px 16px', margin: '14px 0', textAlign: 'center' }}>
-        <div style={{ fontSize: 11, color: 'rgba(240,238,255,0.45)', fontWeight: 600, letterSpacing: '.08em', textTransform: 'uppercase' }}>Número de cotización</div>
-        <div style={{ fontSize: 20, fontWeight: 800, color: '#8B5CF6', letterSpacing: '.05em' }}>{datos.nroCotizacion}</div>
-        <div style={{ fontSize: 11, color: 'rgba(240,238,255,0.45)', marginTop: 3 }}>Guardá este número para consultas</div>
+      <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 10, padding: '10px 16px', margin: '14px 0', textAlign: 'center' }}>
+        <div style={{ fontSize: 11, color: 'var(--text-3)', fontWeight: 600, letterSpacing: '.08em', textTransform: 'uppercase' }}>Número de cotización</div>
+        <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--sp)', letterSpacing: '.05em' }}>{datos.nroCotizacion}</div>
+        <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 3 }}>Guardá este número para consultas</div>
       </div>
 
       {datos.errorGuardado && (
@@ -60,7 +60,7 @@ export default function ReservaConfirmada({ datos, onNueva }) {
 
       <button
         className="btn-primary"
-        style={{ background: '#8B5CF6', marginTop: 0 }}
+        style={{ marginTop: 0 }}
         onClick={() => descargarPdfCotizacion(datos)}>
         📄 Descargar presupuesto en PDF
       </button>

@@ -112,7 +112,7 @@ export default function Precios() {
           </div>
 
           <div style={{ marginTop: 16 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(240,238,255,0.45)', letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: 4 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--ad-text-3)', letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: 4 }}>
               Movimientos en destino (USD por movimiento)
             </div>
             <div style={{ fontSize: 12, color: '#6A6A8A', marginBottom: 10, lineHeight: 1.45 }}>

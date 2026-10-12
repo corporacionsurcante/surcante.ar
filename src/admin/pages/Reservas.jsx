@@ -100,9 +100,9 @@ export default function Reservas() {
             style={{
               padding: '6px 14px', borderRadius: 20, fontSize: 12, fontWeight: 600,
               cursor: 'pointer', border: '1.5px solid',
-              borderColor: filtro === f ? '#8B5CF6' : 'rgba(139,92,246,0.20)',
-              background: filtro === f ? '#8B5CF6' : 'rgba(139,92,246,0.08)',
-              color: filtro === f ? '#fff' : 'rgba(240,238,255,0.65)',
+              borderColor: filtro === f ? 'var(--ad-accent)' : 'var(--ad-sep)',
+              background: filtro === f ? 'var(--ad-accent)' : 'rgba(var(--ad-accent-rgb),0.08)',
+              color: filtro === f ? '#fff' : 'var(--ad-text-2)',
               fontFamily: 'Inter, sans-serif',
             }}>
             {FILTRO_LABEL[f]}
@@ -134,16 +134,16 @@ export default function Reservas() {
             <tbody>
               {filtradas.map(r => (
                 <tr key={r.id} style={{ cursor: 'pointer' }} onClick={() => { setSelectedId(r.id); setErrorEstado(''); }}>
-                  <td style={{ fontFamily: 'monospace', color: '#8B5CF6', fontWeight: 700 }}>{nroDe(r)}</td>
+                  <td style={{ fontFamily: 'monospace', color: 'var(--ad-accent)', fontWeight: 700 }}>{nroDe(r)}</td>
                   <td>
                     <div style={{ fontWeight: 600 }}>{r.clienteNombre || '—'}</div>
-                    {r.clienteWhatsapp && <div style={{ fontSize: 11, color: 'rgba(240,238,255,0.45)' }}>📱 {r.clienteWhatsapp}</div>}
+                    {r.clienteWhatsapp && <div style={{ fontSize: 11, color: 'var(--ad-text-3)' }}>📱 {r.clienteWhatsapp}</div>}
                   </td>
                   <td style={{ maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    <div style={{ fontSize: 10, fontWeight: 700, color: '#8B5CF6' }}>{TIPO_LABEL[r.tipo] || TIPO_LABEL.charter}</div>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--ad-accent)' }}>{TIPO_LABEL[r.tipo] || TIPO_LABEL.charter}</div>
                     {resumenServicio(r)}
                     {Array.isArray(r.puntosCarga) && r.puntosCarga.length > 0 && (
-                      <div style={{ fontSize: 11, color: 'rgba(240,238,255,0.45)' }}>+ {r.puntosCarga.length} punto{r.puntosCarga.length > 1 ? 's' : ''} de carga</div>
+                      <div style={{ fontSize: 11, color: 'var(--ad-text-3)' }}>+ {r.puntosCarga.length} punto{r.puntosCarga.length > 1 ? 's' : ''} de carga</div>
                     )}
                   </td>
                   <td>{r.fechaInicio || '—'}</td>
@@ -151,7 +151,7 @@ export default function Reservas() {
                   <td style={{ fontWeight: 700 }}>{formatARS(r.grandTotal || 0)}</td>
                   <td style={{ color: '#10B981', fontWeight: 700 }}>{formatARS(r.sena || 0)}</td>
                   <td>{estadoBadge(r.estado)}</td>
-                  <td style={{ color: '#8B5CF6', fontWeight: 600, fontSize: 12 }}>Ver →</td>
+                  <td style={{ color: 'var(--ad-accent)', fontWeight: 600, fontSize: 12 }}>Ver →</td>
                 </tr>
               ))}
             </tbody>
@@ -195,19 +195,19 @@ export default function Reservas() {
             {Array.isArray(selected.programaResumen) && selected.programaResumen.map(p => (
               <div key={p.dia} className="modal-row"><span>Día {p.dia}</span><span>{p.actividades}</span></div>
             ))}
-            <div className="modal-row"><span>Total</span><span style={{ color: '#8B5CF6', fontWeight: 800 }}>{formatARS(selected.grandTotal || 0)}</span></div>
+            <div className="modal-row"><span>Total</span><span style={{ color: 'var(--ad-accent)', fontWeight: 800 }}>{formatARS(selected.grandTotal || 0)}</span></div>
             <div className="modal-row"><span>Seña{selected.porcentaje ? ` (${Math.round(selected.porcentaje * 100)}%)` : ''}</span><span style={{ color: '#10B981', fontWeight: 700 }}>{formatARS(selected.sena || 0)}</span></div>
             <div className="modal-row"><span>Saldo</span><span>{formatARS(selected.saldo != null ? selected.saldo : (selected.grandTotal || 0) - (selected.sena || 0))}</span></div>
             {fila('Método de pago', PAGO_LABEL[selected.payMethod] || selected.payMethod)}
             {fila('MercadoPago', selected.mpPreferenceId ? `Preferencia ${selected.mpPreferenceId}` : null)}
 
             <button onClick={() => abrirPdfCotizacion(selected)}
-              style={{ marginTop: 14, width: '100%', border: '1.5px solid rgba(139,92,246,0.20)', background: '#131324', borderRadius: 10, padding: '9px 12px', cursor: 'pointer', fontSize: 13, fontWeight: 600, fontFamily: 'Inter, sans-serif' }}>
+              style={{ marginTop: 14, width: '100%', border: '1.5px solid var(--ad-sep)', background: 'var(--ad-card-2)', borderRadius: 10, padding: '9px 12px', cursor: 'pointer', fontSize: 13, fontWeight: 600, fontFamily: 'Inter, sans-serif' }}>
               📄 Ver PDF del presupuesto
             </button>
 
-            <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid rgba(139,92,246,0.12)' }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(240,238,255,0.45)', letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: 10 }}>
+            <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid var(--ad-sep)' }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--ad-text-3)', letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: 10 }}>
                 Cambiar estado
               </div>
               <div className="modal-estado-row">
