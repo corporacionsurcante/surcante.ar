@@ -111,19 +111,23 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: radial-gradient(ellipse at 50% 0%, rgba(139,92,246,0.18) 0%, transparent 60%), #08080F;
+  background: radial-gradient(ellipse at 50% 0%, rgba(var(--ag-accent-rgb),0.18) 0%, transparent 60%), #08080F;
   padding: 24px 16px;
+  /* la pantalla de login siempre tiene fondo oscuro — forzar tokens de texto claros */
+  --ag-text:   #E8E9F6;
+  --ag-text-2: #B8BADB;
+  --ag-text-3: #7278B0;
 }
 
 .ag-login-card {
   background: rgba(13,13,26,0.95);
-  border: 1px solid rgba(139,92,246,0.22);
+  border: 1px solid rgba(var(--ag-accent-rgb),0.22);
   border-radius: 20px;
   padding: 36px 28px;
   width: 100%;
   max-width: 380px;
   text-align: center;
-  box-shadow: 0 8px 40px rgba(139,92,246,.15), 0 2px 8px rgba(0,0,0,.35);
+  box-shadow: 0 8px 40px rgba(var(--ag-accent-rgb),.15), 0 2px 8px rgba(0,0,0,.35);
 }
 
 .ag-login-logo { font-size: 44px; margin-bottom: 14px; }
@@ -169,26 +173,27 @@ body {
 .ag-btn:not(:disabled):active { transform: scale(0.97); }
 
 .ag-btn-google {
-  background: rgba(255,255,255,.06);
+  background: var(--ag-card-2);
   color: var(--ag-text);
-  border: 1px solid rgba(255,255,255,.12);
+  border: 1px solid var(--ag-sep);
   width: 100%;
   font-size: 16px;
   box-shadow: var(--ag-shadow-sm);
 }
-.ag-btn-google:hover:not(:disabled) { background: rgba(255,255,255,.10); }
+.ag-btn-google:hover:not(:disabled) { background: var(--ag-sep); }
 
 .ag-btn-primary {
   background: var(--ag-accent);
   color: #fff;
 }
-.ag-btn-primary:hover:not(:disabled) { background: #7C3AED; }
+.ag-btn-primary:hover:not(:disabled) { background: var(--st-brand-d, #2E3DBF); }
 
 .ag-btn-ghost {
-  background: rgba(255,255,255,.07);
+  background: var(--ag-card-2);
   color: var(--ag-accent);
+  border: 1px solid var(--ag-sep);
 }
-.ag-btn-ghost:hover:not(:disabled) { background: rgba(255,255,255,.11); }
+.ag-btn-ghost:hover:not(:disabled) { background: var(--ag-sep); }
 
 .ag-btn-sm {
   padding: 8px 14px;
@@ -269,7 +274,7 @@ body {
   touch-action: manipulation;
 }
 
-.ag-card:hover { box-shadow: 0 8px 32px rgba(0,0,0,.5); border-color: rgba(139,92,246,0.30); }
+.ag-card:hover { box-shadow: 0 8px 32px rgba(0,0,0,.15); border-color: rgba(var(--ag-accent-rgb),0.30); }
 .ag-card:active { transform: scale(0.98); }
 
 .ag-card-title {
@@ -300,7 +305,8 @@ body {
   font-weight: 600;
   padding: 3px 10px;
   border-radius: 20px;
-  background: rgba(255,255,255,.07);
+  background: var(--ag-card-2);
+  border: 1px solid var(--ag-sep);
   color: var(--ag-text-2);
   white-space: nowrap;
 }
@@ -359,7 +365,8 @@ body {
   display: flex;
   gap: 4px;
   margin-bottom: 16px;
-  background: rgba(255,255,255,.05);
+  background: var(--ag-card-2);
+  border: 1px solid var(--ag-sep);
   border-radius: 10px;
   padding: 3px;
   overflow-x: auto;
@@ -441,8 +448,8 @@ body {
 
 .ag-input {
   width: 100%;
-  background: rgba(255,255,255,.06);
-  border: 1px solid rgba(139,92,246,0.12);
+  background: var(--ag-card-2);
+  border: 1.5px solid var(--ag-sep);
   border-radius: 10px;
   padding: 11px 14px;
   font-size: 15px;
@@ -455,8 +462,7 @@ body {
 
 .ag-input::placeholder { color: var(--ag-text-3); }
 .ag-input:focus {
-  background: rgba(255,255,255,.09);
-  border-color: rgba(139,92,246,0.40);
+  border-color: var(--ag-accent);
   box-shadow: 0 0 0 3px rgba(var(--ag-accent-rgb), .15);
 }
 
