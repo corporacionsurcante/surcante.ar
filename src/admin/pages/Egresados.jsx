@@ -408,7 +408,7 @@ function AgenciaUsuarios({ agenciaId }) {
           </thead>
           <tbody>
             {usuarios.map(u => (
-              <tr key={u.id} style={{ borderTop: '1px solid rgba(139,92,246,0.12)' }}>
+              <tr key={u.id} style={{ borderTop: '1px solid var(--eg-sep)' }}>
                 <td style={{ padding: '8px 6px 8px 0', fontFamily: 'monospace', fontSize: 12 }}>{u.id}</td>
                 <td style={{ padding: '8px 6px' }}>{u.nombre || '—'}</td>
                 <td style={{ padding: '8px 6px' }}>
