@@ -328,7 +328,7 @@ export default function Gantt() {
                               {viaje.destino}
                             </span>
                             {userLabel && (
-                              <span style={{ fontSize: 7, color: 'rgba(255,255,255,.7)', fontWeight: 600 }}>
+                              <span style={{ fontSize: 7, color: 'var(--ad-text-2)', fontWeight: 600 }}>
                                 {userLabel}
                               </span>
                             )}
