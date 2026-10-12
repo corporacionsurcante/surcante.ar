@@ -1,35 +1,53 @@
-/* Portal de agencias — dark fintech */
-@import url('https://fonts.googleapis.com/css2?family=Syne:wght@800&family=DM+Sans:wght@400;500;600;700&display=swap');
+/* Portal de agencias — Horizonte Índigo */
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 @keyframes spin    { to { transform: rotate(360deg); } }
 @keyframes fadeIn  { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 
+/* ── Modo claro (predeterminado) ── */
 :root {
-  --ag-accent:      #8B5CF6;
-  --ag-accent-rgb:  139, 92, 246;
-  --ag-teal:        #2DD4BF;
-  --ag-bg:          #08080F;
-  --ag-card:        #0D0D1A;
-  --ag-card-2:      #131324;
-  --ag-text:        #F0EEFF;
-  --ag-text-2:      rgba(240,238,255,0.65);
-  --ag-text-3:      rgba(240,238,255,0.38);
-  --ag-sep:         rgba(139,92,246,0.15);
-  --ag-green:       #10B981;
-  --ag-red:         #EF4444;
-  --ag-amber:       #F59E0B;
-  --ag-blue:        #2DD4BF;
+  --ag-accent:      var(--st-brand);
+  --ag-accent-rgb:  61, 78, 232;
+  --ag-teal:        var(--st-teal);
+  --ag-bg:          var(--st-bg);
+  --ag-card:        var(--st-surface);
+  --ag-card-2:      var(--st-surface-2);
+  --ag-text:        var(--st-text);
+  --ag-text-2:      var(--st-text-2);
+  --ag-text-3:      var(--st-text-3);
+  --ag-sep:         var(--st-border);
+  --ag-green:       var(--st-green);
+  --ag-red:         var(--st-red);
+  --ag-amber:       var(--st-amber);
+  --ag-blue:        var(--st-teal);
   --ag-bar-h:       52px;
   --ag-radius-card: 13px;
   --ag-radius-btn:  14px;
-  --ag-shadow-card: 0 1px 3px rgba(0,0,0,.35), 0 4px 16px rgba(0,0,0,.28);
+  --ag-shadow-card: 0 1px 3px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.08);
+  --ag-shadow-sm:   0 1px 2px rgba(0,0,0,.06);
+  --ag-chrome:      rgba(255,255,255,0.92);
+  --ag-chrome-b:    rgba(61,78,232,.10);
+}
+
+/* ── Modo oscuro ── */
+[data-theme="dark"] {
+  --ag-bg:          var(--st-bg);
+  --ag-card:        var(--st-surface);
+  --ag-card-2:      var(--st-surface-2);
+  --ag-text:        var(--st-text);
+  --ag-text-2:      var(--st-text-2);
+  --ag-text-3:      var(--st-text-3);
+  --ag-sep:         var(--st-border);
+  --ag-shadow-card: 0 1px 3px rgba(0,0,0,.3), 0 4px 16px rgba(0,0,0,.25);
   --ag-shadow-sm:   0 1px 2px rgba(0,0,0,.25);
+  --ag-chrome:      rgba(14,15,31,0.92);
+  --ag-chrome-b:    rgba(61,78,232,.15);
 }
 
 body {
-  font-family: 'DM Sans', -apple-system, 'Inter', system-ui, sans-serif;
+  font-family: 'Plus Jakarta Sans', -apple-system, 'Inter', system-ui, sans-serif;
   background: var(--ag-bg);
   color: var(--ag-text);
   -webkit-font-smoothing: antialiased;
@@ -55,10 +73,10 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  background: rgba(8,8,15,0.92);
+  background: var(--ag-chrome);
   backdrop-filter: saturate(180%) blur(20px);
   -webkit-backdrop-filter: saturate(180%) blur(20px);
-  border-bottom: 0.5px solid rgba(139,92,246,0.15);
+  border-bottom: 0.5px solid var(--ag-chrome-b);
 }
 
 .ag-topbar-brand {

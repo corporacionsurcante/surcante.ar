@@ -1,39 +1,58 @@
-/* ---- Admin panel — fintech dark ---- */
-@import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&family=Inter:wght@300;400;500;600;700&display=swap');
+/* ---- Admin panel — Horizonte Índigo ---- */
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap');
 
 @keyframes spin   { to { transform: rotate(360deg); } }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 
+/* ── Modo claro (predeterminado) ── */
 :root {
-  --ad-accent:      #8B5CF6;
-  --ad-accent-rgb:  139, 92, 246;
-  --ad-teal:        #2DD4BF;
-  --ad-bg:          #08080F;
-  --ad-card:        #0D0D1A;
-  --ad-card-2:      #131324;
-  --ad-text:        #F0EEFF;
-  --ad-text-2:      rgba(240,238,255,0.65);
-  --ad-text-3:      rgba(240,238,255,0.38);
-  --ad-sep:         rgba(139,92,246,0.12);
-  --ad-green:       #10B981;
-  --ad-red:         #EF4444;
-  --ad-amber:       #F59E0B;
-  --ad-blue:        #2DD4BF;
-  --ad-bar-dark:    #0D0D1A;
+  --ad-accent:      var(--st-brand);
+  --ad-accent-rgb:  61, 78, 232;
+  --ad-teal:        var(--st-teal);
+  --ad-bg:          var(--st-bg);
+  --ad-card:        var(--st-surface);
+  --ad-card-2:      var(--st-surface-2);
+  --ad-text:        var(--st-text);
+  --ad-text-2:      var(--st-text-2);
+  --ad-text-3:      var(--st-text-3);
+  --ad-sep:         var(--st-border);
+  --ad-green:       var(--st-green);
+  --ad-red:         var(--st-red);
+  --ad-amber:       var(--st-amber);
+  --ad-blue:        var(--st-teal);
+  --ad-bar-dark:    var(--st-surface);
   --ad-radius:      13px;
-  --ad-shadow:      0 1px 3px rgba(0,0,0,.3), 0 4px 16px rgba(0,0,0,.25);
-  --ad-shadow-lg:   0 8px 32px rgba(0,0,0,.4), 0 2px 8px rgba(0,0,0,.3);
+  --ad-shadow:      0 1px 3px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.08);
+  --ad-shadow-lg:   0 8px 32px rgba(0,0,0,.12), 0 2px 8px rgba(0,0,0,.08);
+  --ad-chrome:      rgba(255,255,255,0.95);
+  --ad-chrome-b:    rgba(61,78,232,.10);
 }
 
-/* ---- Global form element dark reset (admin scope) ---- */
+/* ── Modo oscuro ── */
+[data-theme="dark"] {
+  --ad-bg:          var(--st-bg);
+  --ad-card:        var(--st-surface);
+  --ad-card-2:      var(--st-surface-2);
+  --ad-text:        var(--st-text);
+  --ad-text-2:      var(--st-text-2);
+  --ad-text-3:      var(--st-text-3);
+  --ad-sep:         var(--st-border);
+  --ad-bar-dark:    var(--st-surface);
+  --ad-shadow:      0 1px 3px rgba(0,0,0,.3), 0 4px 16px rgba(0,0,0,.25);
+  --ad-shadow-lg:   0 8px 32px rgba(0,0,0,.4), 0 2px 8px rgba(0,0,0,.3);
+  --ad-chrome:      rgba(14,15,31,0.95);
+  --ad-chrome-b:    rgba(61,78,232,.15);
+}
+
+/* ---- Global form element reset (admin scope) ---- */
 .admin-shell input:not([type="checkbox"]):not([type="radio"]),
 .admin-shell textarea,
 .admin-shell select {
   background: var(--ad-card-2);
   color: var(--ad-text);
-  border: 1.5px solid rgba(139,92,246,0.18);
+  border: 1.5px solid var(--ad-sep);
   border-radius: 8px;
-  font-family: 'DM Sans', -apple-system, sans-serif;
+  font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
 }
 .admin-shell input::placeholder,
 .admin-shell textarea::placeholder { color: var(--ad-text-3); }
@@ -44,13 +63,13 @@
   border-color: var(--ad-accent);
   background: var(--ad-card-2);
 }
-.admin-shell select option { background: #131324; color: var(--ad-text); }
+.admin-shell select option { background: var(--ad-card-2); color: var(--ad-text); }
 
 /* ---- Shell ---- */
 .admin-shell {
   min-height: 100vh;
   background: var(--ad-bg);
-  font-family: 'DM Sans', -apple-system, 'Inter', system-ui, sans-serif;
+  font-family: 'Plus Jakarta Sans', -apple-system, 'Inter', system-ui, sans-serif;
   font-size: 16px;
   -webkit-font-smoothing: antialiased;
   color: var(--ad-text);
@@ -62,13 +81,13 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: radial-gradient(ellipse at 50% 0%, rgba(139,92,246,0.18) 0%, transparent 60%), #08080F;
+  background: radial-gradient(ellipse at 50% 0%, rgba(61,78,232,0.12) 0%, transparent 60%), var(--ad-bg);
   padding: 24px;
 }
 
 .login-card {
-  background: rgba(13,13,26,0.95);
-  border: 1px solid rgba(139,92,246,0.20);
+  background: var(--ad-card);
+  border: 1px solid var(--ad-chrome-b);
   border-radius: 22px;
   padding: 48px 40px;
   width: 100%;
@@ -76,12 +95,12 @@
   text-align: center;
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  box-shadow: 0 20px 60px rgba(0,0,0,.5), 0 0 40px rgba(139,92,246,0.08);
+  box-shadow: var(--ad-shadow-lg);
 }
 
 .login-logo   { height: 40px; margin-bottom: 32px; }
-.login-title  { font-size: 24px; font-weight: 800; color: #fff; margin-bottom: 8px; letter-spacing: -0.03em; font-family: 'Syne', sans-serif; }
-.login-sub    { font-size: 14px; color: rgba(240,238,255,.45); margin-bottom: 36px; line-height: 1.5; }
+.login-title  { font-size: 24px; font-weight: 800; color: var(--ad-text); margin-bottom: 8px; letter-spacing: -0.03em; font-family: 'Syne', sans-serif; }
+.login-sub    { font-size: 14px; color: var(--ad-text-3); margin-bottom: 36px; line-height: 1.5; }
 
 .login-btn {
   width: 100%;
@@ -135,12 +154,12 @@
 .login-btn img      { width: 20px; height: 20px; }
 .login-error        { margin-top: 16px; font-size: 13px; color: #FF6B6B; font-weight: 500; }
 
-/* ---- Topbar admin (dark) ---- */
+/* ---- Topbar admin ---- */
 .admin-topbar {
-  background: rgba(8,8,15,0.95);
+  background: var(--ad-chrome);
   backdrop-filter: saturate(180%) blur(20px);
   -webkit-backdrop-filter: saturate(180%) blur(20px);
-  border-bottom: 1px solid rgba(139,92,246,0.12);
+  border-bottom: 1px solid var(--ad-chrome-b);
   padding: 0 24px;
   height: 58px;
   display: flex;
@@ -180,12 +199,12 @@
   color: var(--ad-accent);
 }
 
-.admin-email  { font-size: 12px; color: rgba(240,238,255,.4); font-weight: 500; }
+.admin-email  { font-size: 12px; color: var(--ad-text-3); font-weight: 500; }
 
 .admin-logout {
-  background: rgba(255,255,255,.05);
-  border: 1px solid rgba(255,255,255,.08);
-  color: rgba(240,238,255,.5);
+  background: transparent;
+  border: 1px solid var(--ad-sep);
+  color: var(--ad-text-3);
   padding: 7px 13px;
   border-radius: 8px;
   font-size: 12px;
@@ -199,8 +218,8 @@
 
 /* ---- Nav ---- */
 .admin-nav {
-  background: rgba(8,8,15,0.92);
-  border-bottom: 1px solid rgba(139,92,246,0.08);
+  background: var(--ad-chrome);
+  border-bottom: 1px solid var(--ad-chrome-b);
   padding: 0 24px;
   display: flex;
   gap: 2px;
@@ -210,7 +229,7 @@
   padding: 14px 18px;
   font-size: 15px;
   font-weight: 500;
-  color: rgba(240,238,255,.38);
+  color: var(--ad-text-3);
   cursor: pointer;
   border-bottom: 2px solid transparent;
   transition: all .15s;

@@ -1,32 +1,32 @@
-@import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap');
 
 @keyframes spin { to { transform: rotate(360deg); } }
 
 :root {
-  --sp:        #7C3AED;
-  --spd:       #6D28D9;
-  --spl:       rgba(124,58,237,0.09);
-  --spm:       rgba(124,58,237,0.22);
-  --sp-hover:  #6D28D9;
-  --black:     #F2F2F7;
-  --black-2:   #FFFFFF;
-  --black-3:   #F0F0F6;
-  --green:     #059669;
-  --green-bg:  rgba(5,150,105,0.10);
-  --green-text:#047857;
-  --amber-bg:  rgba(217,119,6,0.10);
-  --amber-text:#B45309;
-  --red:       #DC2626;
-  --red-bg:    rgba(220,38,38,0.10);
-  --red-text:  #B91C1C;
-  --text:      #1A1829;
-  --text-2:    rgba(26, 24, 41, 0.65);
-  --text-3:    rgba(26, 24, 41, 0.40);
-  --bg:        #F5F5FA;
-  --bg-2:      #FFFFFF;
-  --bg-3:      rgba(124,58,237,0.06);
-  --border:    rgba(26, 24, 41, 0.10);
-  --border-2:  rgba(26, 24, 41, 0.18);
+  --sp:        var(--st-brand);
+  --spd:       var(--st-brand-d);
+  --spl:       var(--st-brand-l);
+  --spm:       rgba(61,78,232,0.22);
+  --sp-hover:  var(--st-brand-d);
+  --black:     var(--st-surface-2);
+  --black-2:   var(--st-surface);
+  --black-3:   var(--st-surface-2);
+  --green:     var(--st-green);
+  --green-bg:  var(--st-green-bg);
+  --green-text:var(--st-green-text);
+  --amber-bg:  var(--st-amber-bg);
+  --amber-text:var(--st-amber-text);
+  --red:       var(--st-red);
+  --red-bg:    var(--st-red-bg);
+  --red-text:  var(--st-red-text);
+  --text:      var(--st-text);
+  --text-2:    var(--st-text-2);
+  --text-3:    var(--st-text-3);
+  --bg:        var(--st-bg);
+  --bg-2:      var(--st-surface);
+  --bg-3:      var(--st-brand-l);
+  --border:    var(--st-border);
+  --border-2:  var(--st-border-2);
   --radius:    12px;
   --radius-lg: 16px;
   --radius-xl: 20px;
@@ -52,7 +52,7 @@ select option { background: #FFFFFF; color: var(--text); }
 
 html, body, #root {
   height: 100%;
-  font-family: 'DM Sans', -apple-system, 'Inter', BlinkMacSystemFont, sans-serif;
+  font-family: 'Plus Jakarta Sans', -apple-system, 'Inter', BlinkMacSystemFont, sans-serif;
   font-size: 17px;
   color: var(--text);
   background: #F2F2F7;

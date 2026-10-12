@@ -15,6 +15,7 @@ import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { marcarNotificacionesComoLeidas } from '../../firebase/notificacionesService';
 import { activarNotificacionesPush, pushYaActivado } from '../../firebase/pushService';
+import ThemeToggle from '../ThemeToggle';
 import '../admin.css';
 
 // Módulo Egresados: se carga bajo demanda para no agrandar el cotizador público
@@ -146,6 +147,7 @@ export default function AdminApp() {
             }}>
             {pushLoading ? '...' : pushActivo ? '🔔 Activadas' : '🔔 Activar avisos'}
           </button>
+          <ThemeToggle />
           <div className="admin-avatar">{initials}</div>
           <span className="admin-email">{user.email}</span>
           <button className="admin-logout" onClick={() => signOut(auth)}>Salir</button>
