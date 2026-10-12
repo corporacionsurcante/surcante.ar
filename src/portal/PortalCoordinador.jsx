@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { doc, getDoc, getDocs, collection, onSnapshot, runTransaction, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { colorBus, labelFecha, hoyISO, nombreCompleto, diaActivoDeItinerario } from '../admin/egresados/utils';
+import MapaUbicaciones from './MapaUbicaciones';
 
 export default function PortalCoordinador({ sesion }) {
   const { opId, refId, busId } = sesion;
@@ -76,7 +77,7 @@ export default function PortalCoordinador({ sesion }) {
       </header>
 
       <nav className="portal-tabs">
-        {[['hoy', 'Hoy'], ['agenda', 'Agenda'], ['pasajeros', 'Pasajeros'], ['qr', 'Escáner QR']].map(([id, label]) => (
+        {[['hoy', 'Hoy'], ['mapa', 'Mapa'], ['agenda', 'Agenda'], ['pasajeros', 'Pasajeros'], ['qr', 'Escáner QR']].map(([id, label]) => (
           <button key={id} className={`portal-tab${tab === id ? ' activo' : ''}`} onClick={() => setTab(id)}>
             {label}
           </button>
@@ -89,7 +90,8 @@ export default function PortalCoordinador({ sesion }) {
             ⚠️ Error al cargar datos: <code>{errorFirestore}</code>. Si el problema persiste, contactá al administrador.
           </div>
         )}
-        {tab === 'hoy' && <TabHoyCoord dia={diaActivo} avisos={avisos} fecha={hoy} busId={busId} />}
+        {tab === 'hoy'   && <TabHoyCoord dia={diaActivo} avisos={avisos} fecha={hoy} busId={busId} />}
+        {tab === 'mapa'  && <MapaUbicaciones opId={opId} esPortal={true} />}
         {tab === 'agenda' && <TabAgendaCoord itinerario={itinerario} hoy={hoy} busId={busId} abiertos={abiertos} setAbiertos={setAbiertos} />}
         {tab === 'pasajeros' && (
           <div className="portal-section">

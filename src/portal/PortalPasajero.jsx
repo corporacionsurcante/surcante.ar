@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { doc, getDoc, getDocs, collection, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { colorBus, labelFecha, hoyISO, nombreCompleto, linkWhatsApp, diaActivoDeItinerario } from '../admin/egresados/utils';
+import MapaUbicaciones from './MapaUbicaciones';
 
 const QR_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
 
@@ -119,7 +120,7 @@ export default function PortalPasajero({ sesion }) {
       </header>
 
       <nav className="portal-tabs">
-        {[['hoy', 'Hoy'], ['bus', 'Mi bus'], ['agenda', 'Agenda'], ['yo', 'Yo']].map(([id, label]) => (
+        {[['hoy', 'Hoy'], ['bus', 'Mi bus'], ['mapa', 'Mapa'], ['agenda', 'Agenda'], ['yo', 'Yo']].map(([id, label]) => (
           <button key={id} className={`portal-tab${tab === id ? ' activo' : ''}`} onClick={() => setTab(id)}>
             {label}
           </button>
@@ -134,6 +135,7 @@ export default function PortalPasajero({ sesion }) {
         )}
         {tab === 'hoy'    && <TabHoy dia={diaActivo} avisos={avisos} fecha={hoy} rol="pasajero" busId={busId} />}
         {tab === 'bus'    && <TabBus bus={bus} conductor={conductor} coordinador={coordinador} busColor={busColor} />}
+        {tab === 'mapa'   && <MapaUbicaciones opId={opId} filtrarBusId={busId} esPortal={true} />}
         {tab === 'agenda' && <TabAgenda itinerario={itinerario} hoy={hoy} abiertos={abiertos} setAbiertos={setAbiertos} busId={busId} />}
         {tab === 'yo'     && <TabYo pax={pax} />}
       </main>
