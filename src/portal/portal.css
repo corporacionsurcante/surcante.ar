@@ -1,20 +1,20 @@
-/* Portal de viaje — dark fintech mobile-first v2 */
+/* Portal de viaje — light fintech mobile-first v2 */
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap');
 
 :root {
-  --p-accent:     #8B5CF6;
-  --p-accent-rgb: 139, 92, 246;
-  --p-teal:       #2DD4BF;
-  --p-bg:         #08080F;
-  --p-card:       #0D0D1A;
-  --p-card-2:     #131324;
-  --p-text:       #F0EEFF;
-  --p-text-2:     rgba(240,238,255,0.70);
-  --p-text-3:     rgba(240,238,255,0.42);
-  --p-sep:        rgba(139,92,246,0.14);
+  --p-accent:     #7C3AED;
+  --p-accent-rgb: 124, 58, 237;
+  --p-teal:       #0D9488;
+  --p-bg:         #F2F2F7;
+  --p-card:       #FFFFFF;
+  --p-card-2:     #F8F8FC;
+  --p-text:       #1C1B2E;
+  --p-text-2:     rgba(28, 27, 46, 0.65);
+  --p-text-3:     rgba(28, 27, 46, 0.42);
+  --p-sep:        rgba(28, 27, 46, 0.08);
   --p-tab-h:      64px;
-  --p-green:      #10B981;
-  --p-red:        #EF4444;
+  --p-green:      #059669;
+  --p-red:        #DC2626;
   --p-radius:     16px;
   --p-radius-sm:  12px;
 }
@@ -37,10 +37,10 @@
   gap: 14px;
   padding: 14px 20px;
   padding-top: calc(14px + env(safe-area-inset-top));
-  background: rgba(8,8,15,0.92);
+  background: rgba(255,255,255,0.94);
   backdrop-filter: saturate(180%) blur(20px);
   -webkit-backdrop-filter: saturate(180%) blur(20px);
-  border-bottom: 0.5px solid rgba(139,92,246,0.18);
+  border-bottom: 0.5px solid rgba(28,27,46,0.10);
   position: sticky;
   top: 0;
   z-index: 100;
@@ -80,10 +80,10 @@
 /* ─── Tab Bar ─── */
 .portal-tabs {
   display: flex;
-  background: rgba(8,8,15,0.96);
+  background: rgba(255,255,255,0.97);
   backdrop-filter: saturate(180%) blur(20px);
   -webkit-backdrop-filter: saturate(180%) blur(20px);
-  border-top: 0.5px solid rgba(139,92,246,0.18);
+  border-top: 0.5px solid rgba(28,27,46,0.10);
   position: fixed;
   bottom: 0;
   left: 0;
@@ -144,7 +144,7 @@
   border: 1px solid var(--p-sep);
   border-radius: var(--p-radius);
   padding: 22px;
-  box-shadow: 0 2px 8px rgba(0,0,0,.40), 0 4px 20px rgba(0,0,0,.28);
+  box-shadow: 0 1px 4px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.08);
 }
 
 .portal-card-header {
@@ -175,7 +175,7 @@
   border: 1px solid var(--p-sep);
   border-radius: var(--p-radius);
   align-items: flex-start;
-  box-shadow: 0 2px 8px rgba(0,0,0,.35), 0 4px 12px rgba(0,0,0,.22);
+  box-shadow: 0 1px 4px rgba(0,0,0,.06), 0 4px 12px rgba(0,0,0,.07);
 }
 
 .portal-act-hora {
@@ -201,8 +201,8 @@
   line-height: 1.55;
 }
 
-.nota-conductor { color: #7DD3FC; }
-.nota-coord     { color: #6EE7B7; }
+.nota-conductor { color: #0369A1; }
+.nota-coord     { color: #047857; }
 
 /* ─── Bus info ─── */
 .portal-bus-nombre {
@@ -292,7 +292,7 @@
   border: 1px solid var(--p-sep);
   border-radius: var(--p-radius);
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0,0,0,.35), 0 4px 16px rgba(0,0,0,.25);
+  box-shadow: 0 1px 4px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.08);
 }
 .portal-dia-card.hoy {
   border-color: var(--p-accent);
