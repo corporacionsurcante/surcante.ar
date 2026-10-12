@@ -104,12 +104,12 @@ export default function Dashboard() {
             <tbody>
               {recientes.map(r => (
                 <tr key={r.id}>
-                  <td style={{ fontFamily: 'monospace', color: '#8B5CF6', fontWeight: 700 }}>SRC-{r.id.slice(-6).toUpperCase()}</td>
+                  <td style={{ fontFamily: 'monospace', color: 'var(--ad-accent)', fontWeight: 700 }}>SRC-{r.id.slice(-6).toUpperCase()}</td>
                   <td>
                     <span style={{
                       fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 20, marginRight: 6,
-                      background: r.tipo === 'receptivo' ? 'rgba(139,92,246,0.15)' : r.tipo === 'disposicion' ? 'rgba(245,158,11,0.15)' : r.tipo === 'movimientos-caba-gba' ? 'rgba(45,212,191,0.12)' : 'rgba(139,92,246,0.08)',
-                      color: r.tipo === 'receptivo' ? '#8B5CF6' : r.tipo === 'disposicion' ? '#F59E0B' : r.tipo === 'movimientos-caba-gba' ? '#2DD4BF' : 'rgba(240,238,255,0.65)',
+                      background: r.tipo === 'receptivo' ? 'rgba(var(--ad-accent-rgb),0.12)' : r.tipo === 'disposicion' ? 'rgba(245,158,11,0.15)' : r.tipo === 'movimientos-caba-gba' ? 'rgba(45,212,191,0.12)' : 'rgba(var(--ad-accent-rgb),0.08)',
+                      color: r.tipo === 'receptivo' ? 'var(--ad-accent)' : r.tipo === 'disposicion' ? '#F59E0B' : r.tipo === 'movimientos-caba-gba' ? '#2DD4BF' : 'var(--ad-text-2)',
                     }}>
                       {r.tipo === 'receptivo' ? '🏛️ Receptivo' : r.tipo === 'disposicion' ? '⏱️ Disposición' : r.tipo === 'movimientos-caba-gba' ? '🚐 Mov. CABA/GBA' : '🚌 Charter'}
                     </span>
