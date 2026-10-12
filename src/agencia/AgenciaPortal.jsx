@@ -214,7 +214,10 @@ function DetalleOperativo({ operativo: op, agenciaId, onVolver }) {
     const done = () => { pendientes--; if (pendientes === 0) setCargando(false); };
 
     const q1 = onSnapshot(collection(db, 'operativos', op.id, 'buses'),
-      s => { setBuses(s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => a.numero - b.numero || a.nombre?.localeCompare(b.nombre))); done(); },
+      s => { setBuses(s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) =>
+        (a.numero ?? Infinity) - (b.numero ?? Infinity) ||
+        (a.nombre || a.codigo || '').localeCompare(b.nombre || b.codigo || '')
+      )); done(); },
       () => done());
     const q2 = onSnapshot(collection(db, 'operativos', op.id, 'staff'),
       s => { setStaff(s.docs.map(d => ({ id: d.id, ...d.data() }))); done(); },
@@ -235,7 +238,7 @@ function DetalleOperativo({ operativo: op, agenciaId, onVolver }) {
   return (
     <div className="ag-shell">
       <header className="ag-topbar">
-        <div className="ag-topbar-brand">🎓 Portal de agencias</div>
+        <div className="ag-topbar-brand">🎓 {op.agenciaNombre || 'Portal de agencias'}</div>
         <div className="ag-topbar-right">
           <button className="ag-btn ag-btn-ghost ag-btn-sm" onClick={onVolver}>← Volver</button>
         </div>
@@ -300,6 +303,11 @@ function DetalleOperativo({ operativo: op, agenciaId, onVolver }) {
   );
 }
 
+function busNombre(bus) {
+  if (!bus) return '—';
+  return bus.nombre || bus.codigo || (bus.numero != null ? `Bus ${bus.numero}` : null) || bus.patente || 'Sin nombre';
+}
+
 function TabBuses({ buses, staff, pasajeros }) {
   if (buses.length === 0) {
     return <div className="ag-section" style={{ color: 'var(--ag-text-3)', textAlign: 'center', fontSize: 13 }}>No hay buses cargados.</div>;
@@ -313,7 +321,7 @@ function TabBuses({ buses, staff, pasajeros }) {
         return (
           <div key={bus.id} className="ag-section">
             <div className="ag-section-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              🚌 {bus.nombre || `Bus ${bus.numero}`}
+              🚌 {busNombre(bus)}
               {bus.patente && <span className="ag-chip">{bus.patente}</span>}
             </div>
             <div style={{ fontSize: 14, color: 'var(--ag-text-2)', lineHeight: 1.7 }}>
@@ -332,8 +340,7 @@ function TabBuses({ buses, staff, pasajeros }) {
 
 function TabPersonal({ conductores, coordinadores, buses }) {
   function busLabel(busId) {
-    const b = buses.find(b => b.id === busId);
-    return b ? (b.nombre || `Bus ${b.numero}`) : '—';
+    return busNombre(buses.find(b => b.id === busId));
   }
   function filaPersona(p, rol) {
     return (
@@ -375,8 +382,7 @@ function TabPasajeros({ pasajeros, buses, staff, opId }) {
   const [mostrarImport, setMostrarImport] = useState(false);
 
   function busLabel(busId) {
-    const b = buses.find(b => b.id === busId);
-    return b ? (b.nombre || `Bus ${b.numero}`) : '—';
+    return busNombre(buses.find(b => b.id === busId));
   }
 
   const filtrados = busca.trim()
