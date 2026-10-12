@@ -89,7 +89,7 @@ export default function TabItinerario({ opId, op, buses, itinerario }) {
               <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                 {esSalida && <span className="eg-chip eg-chip-purple">🚏 Salida</span>}
                 {esRegreso && <span className="eg-chip eg-chip-purple">🏁 Regreso</span>}
-                <span style={{ fontSize: 14, color: 'rgba(240,238,255,0.45)' }}>{abierto ? '▲' : '▼'}</span>
+                <span style={{ fontSize: 14, color: 'var(--eg-text-3)' }}>{abierto ? '▲' : '▼'}</span>
               </div>
             </div>
 

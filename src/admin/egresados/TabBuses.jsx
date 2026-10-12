@@ -55,7 +55,7 @@ export default function TabBuses({ opId, op, buses, staff, pasajeros, unidades }
                 <div style={{ marginTop: 12 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11.5, fontWeight: 700, marginBottom: 4 }}>
                     <span>{pax} pasajeros + {coords.length} coord.</span>
-                    <span style={{ color: ocupados > cap ? '#EF4444' : 'rgba(240,238,255,0.55)' }}>{ocupados} / {cap}</span>
+                    <span style={{ color: ocupados > cap ? 'var(--eg-red)' : 'var(--eg-text-3)' }}>{ocupados} / {cap}</span>
                   </div>
                   <BarraOcupacion usados={ocupados} total={cap} />
                 </div>

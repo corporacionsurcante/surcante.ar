@@ -79,7 +79,7 @@ export default function ConfigModulos() {
           const activo = modulos[m.id] !== false;
           return (
             <div key={m.id} style={{
-              background: 'var(--ad-card)', border: `1.5px solid ${activo ? '#8B5CF6' : 'rgba(139,92,246,0.15)'}`,
+              background: 'var(--ad-card)', border: `1.5px solid ${activo ? 'var(--ad-accent)' : 'var(--ad-sep)'}`,
               borderRadius: 14, padding: '16px 20px',
               display: 'flex', alignItems: 'center', gap: 16,
               transition: 'all .15s',

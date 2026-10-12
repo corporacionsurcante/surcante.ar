@@ -9,30 +9,30 @@ export default function FooterLegal() {
   const Modal = ({ titulo, onClose, children }) => (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.6)', zIndex: 9999, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', padding: 0 }}
       onClick={e => e.target === e.currentTarget && onClose()}>
-      <div style={{ background: '#0D0D1A', borderRadius: '20px 20px 0 0', padding: '24px 20px 40px', width: '100%', maxWidth: 600, maxHeight: '85vh', overflowY: 'auto', border: '1px solid rgba(139,92,246,0.20)', borderBottom: 'none' }}>
+      <div style={{ background: 'var(--bg)', borderRadius: '20px 20px 0 0', padding: '24px 20px 40px', width: '100%', maxWidth: 600, maxHeight: '85vh', overflowY: 'auto', border: '1px solid var(--border)', borderBottom: 'none' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-          <div style={{ fontSize: 17, fontWeight: 800, color: '#F0EEFF' }}>{titulo}</div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: 'rgba(240,238,255,0.45)' }}>✕</button>
+          <div style={{ fontSize: 17, fontWeight: 800, color: 'var(--text)' }}>{titulo}</div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: 'var(--text-3)' }}>✕</button>
         </div>
         {children}
       </div>
     </div>
   );
 
-  const P = ({ children }) => <p style={{ fontSize: 13, color: 'rgba(240,238,255,0.65)', lineHeight: 1.7, marginBottom: 10 }}>{children}</p>;
-  const H = ({ children }) => <div style={{ fontSize: 14, fontWeight: 700, color: '#F0EEFF', marginTop: 16, marginBottom: 6 }}>{children}</div>;
+  const P = ({ children, style }) => <p style={{ fontSize: 13, color: 'var(--text-2)', lineHeight: 1.7, marginBottom: 10, ...style }}>{children}</p>;
+  const H = ({ children }) => <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', marginTop: 16, marginBottom: 6 }}>{children}</div>;
 
   return (
     <>
       <div style={{
-        background: '#0A0A0F', borderTop: '1px solid rgba(255,255,255,.08)',
+        background: 'var(--bg-2)', borderTop: '1px solid var(--border)',
         padding: '28px 20px 20px', marginTop: 32,
       }}>
         {/* Datos institucionales */}
         <div style={{ textAlign: 'center', marginBottom: 20 }}>
           <img src="/Logo_Surcante_01.png" alt="Surcante" style={{ height: 32, marginBottom: 10 }} />
-          <div style={{ fontSize: 12, color: 'rgba(255,255,255,.5)', lineHeight: 1.8 }}>
-            <div style={{ fontWeight: 600, color: 'rgba(255,255,255,.7)' }}>SURCANTE S.R.L.</div>
+          <div style={{ fontSize: 12, color: 'var(--text-3)', lineHeight: 1.8 }}>
+            <div style={{ fontWeight: 600, color: 'var(--text-2)' }}>SURCANTE S.R.L.</div>
             <div>CUIT: 30-71098078-7</div>
             <div>Servicio de transporte automotor de pasajeros</div>
             <div>Buenos Aires, Argentina</div>
@@ -67,7 +67,7 @@ export default function FooterLegal() {
             { label: 'Política de privacidad', fn: () => setShowPrivacidad(true) },
           ].map(({ label, fn }) => (
             <button key={label} onClick={fn}
-              style={{ background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.1)', borderRadius: 20, padding: '6px 14px', fontSize: 11, color: 'rgba(255,255,255,.5)', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
+              style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 20, padding: '6px 14px', fontSize: 11, color: 'var(--text-3)', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
               {label}
             </button>
           ))}
@@ -77,14 +77,14 @@ export default function FooterLegal() {
         <button onClick={() => setShowArrepentimiento(true)}
           style={{
             width: '100%', padding: '12px 16px',
-            background: 'rgba(207,19,34,.15)', border: '1.5px solid rgba(207,19,34,.4)',
-            borderRadius: 10, color: '#FF4D5E', fontSize: 13, fontWeight: 700,
+            background: 'var(--red-bg)', border: '1.5px solid var(--red)',
+            borderRadius: 10, color: 'var(--red-text)', fontSize: 13, fontWeight: 700,
             cursor: 'pointer', fontFamily: 'Inter, sans-serif', marginBottom: 16,
           }}>
           ⚠️ BOTÓN DE ARREPENTIMIENTO
         </button>
 
-        <div style={{ textAlign: 'center', fontSize: 10, color: 'rgba(255,255,255,.2)' }}>
+        <div style={{ textAlign: 'center', fontSize: 10, color: 'var(--text-3)' }}>
           © {new Date().getFullYear()} Surcante S.R.L. · Todos los derechos reservados
         </div>
       </div>
@@ -129,15 +129,15 @@ export default function FooterLegal() {
           <P>De acuerdo con la Disposición 954/2025 de la Secretaría de Comercio y la Ley 24.240 de Defensa del Consumidor, el consumidor tiene derecho a revocar la aceptación de una contratación a distancia dentro de los 10 (diez) días corridos desde la fecha de contratación, sin costo ni penalidad.</P>
           <H>¿Cómo ejercer el derecho de arrepentimiento?</H>
           <P>Comunicarse por alguno de los siguientes medios, indicando número de reserva, nombre completo y motivo:</P>
-          <div style={{ background: 'rgba(139,92,246,0.08)', borderRadius: 10, padding: 14, marginBottom: 10 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8 }}>📱 WhatsApp</div>
+          <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 10, padding: 14, marginBottom: 10 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8, color: 'var(--text)' }}>📱 WhatsApp</div>
             <a href="https://wa.me/5491158100414?text=Quiero%20ejercer%20mi%20derecho%20de%20arrepentimiento" target="_blank" rel="noreferrer"
               style={{ display: 'block', background: '#25D366', color: '#fff', padding: '10px 14px', borderRadius: 8, textDecoration: 'none', fontWeight: 700, fontSize: 13, textAlign: 'center', marginBottom: 8 }}>
               Contactar por WhatsApp
             </a>
           </div>
           <P>Una vez recibida la solicitud, Surcante S.R.L. procesará la devolución dentro de los 10 días hábiles siguientes, de acuerdo con la política de cancelación vigente y la normativa aplicable a servicios turísticos con fecha determinada.</P>
-          <P style={{ fontSize: 11, color: 'rgba(240,238,255,0.40)' }}>Para servicios turísticos con fecha de prestación determinada, el ejercicio del arrepentimiento puede estar sujeto a condiciones específicas conforme a la normativa vigente.</P>
+          <P style={{ fontSize: 11, color: 'var(--text-3)' }}>Para servicios turísticos con fecha de prestación determinada, el ejercicio del arrepentimiento puede estar sujeto a condiciones específicas conforme a la normativa vigente.</P>
         </Modal>
       )}
 
