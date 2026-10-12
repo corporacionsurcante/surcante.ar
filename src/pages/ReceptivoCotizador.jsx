@@ -445,7 +445,7 @@ export default function ReceptivoCotizador({ onBack, initialContacto }) {
                 style={{
                   border: `1.5px solid ${sel ? 'var(--sp)' : 'var(--spm)'}`,
                   borderRadius: 10, padding: '10px 12px', marginBottom: 6, cursor: 'pointer',
-                  background: sel ? 'var(--sp)' : 'rgba(139,92,246,0.06)',
+                  background: sel ? 'var(--sp)' : 'var(--bg-2)',
                   display: 'flex', alignItems: 'center', gap: 10,
                 }}>
                 <span style={{ fontSize: 18 }}>{t.emoji}</span>
@@ -475,7 +475,7 @@ export default function ReceptivoCotizador({ onBack, initialContacto }) {
                 style={{
                   border: `1.5px solid ${sel ? 'var(--sp)' : 'var(--spm)'}`,
                   borderRadius: 10, padding: '10px 12px', marginBottom: 8, cursor: 'pointer',
-                  background: sel ? 'var(--sp)' : 'rgba(139,92,246,0.06)',
+                  background: sel ? 'var(--sp)' : 'var(--bg-2)',
                   display: 'flex', alignItems: 'center', gap: 10,
                 }}>
                 <span style={{ fontSize: 20 }}>🏛️</span>
@@ -502,7 +502,7 @@ export default function ReceptivoCotizador({ onBack, initialContacto }) {
                 style={{
                   border: `1.5px solid ${sel ? 'var(--sp)' : 'var(--spm)'}`,
                   borderRadius: 10, padding: '10px 12px', marginBottom: 6, cursor: 'pointer',
-                  background: sel ? 'var(--sp)' : 'rgba(139,92,246,0.06)',
+                  background: sel ? 'var(--sp)' : 'var(--bg-2)',
                   display: 'flex', alignItems: 'center', gap: 10,
                 }}>
                 <span style={{ fontSize: 18 }}>{c.emoji}</span>

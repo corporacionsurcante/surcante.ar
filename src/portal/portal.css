@@ -475,7 +475,7 @@
 /* ─── Búsqueda ─── */
 .portal-busqueda {
   width: 100%;
-  border: 1.5px solid rgba(139,92,246,0.15);
+  border: 1.5px solid var(--p-sep);
   border-radius: var(--p-radius-sm);
   padding: 14px 18px;
   font-size: 16px;
@@ -490,7 +490,7 @@
 .portal-busqueda::placeholder { color: var(--p-text-3); }
 .portal-busqueda:focus {
   background: rgba(255,255,255,.10);
-  border-color: rgba(139,92,246,0.45);
+  border-color: var(--p-accent);
   box-shadow: 0 0 0 3px rgba(var(--p-accent-rgb), .14);
 }
 
@@ -630,7 +630,7 @@
 
 .portal-error-card {
   background: var(--p-card);
-  border: 1px solid rgba(139,92,246,0.20);
+  border: 1px solid var(--p-sep);
   border-radius: 24px;
   padding: 44px 32px;
   text-align: center;

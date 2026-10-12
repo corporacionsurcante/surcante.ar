@@ -26,10 +26,10 @@ export default function Confirmacion({ reserva, pago, onNueva }) {
   return (
     <div className="confirm-page">
       <div className="confirm-icon">✅</div>
-      <div style={{ background: 'rgba(139,92,246,0.08)', borderRadius: 10, padding: '10px 16px', marginBottom: 12, textAlign: 'center' }}>
-        <div style={{ fontSize: 11, color: 'rgba(240,238,255,0.45)', fontWeight: 600, letterSpacing: '.08em', textTransform: 'uppercase' }}>Número de reserva</div>
-        <div style={{ fontSize: 20, fontWeight: 800, color: '#8B5CF6', letterSpacing: '.05em' }}>{nroCotizacion}</div>
-        <div style={{ fontSize: 11, color: 'rgba(240,238,255,0.45)', marginTop: 3 }}>Guardá este número para consultas</div>
+      <div style={{ background: 'var(--spl)', borderRadius: 10, padding: '10px 16px', marginBottom: 12, textAlign: 'center' }}>
+        <div style={{ fontSize: 11, color: 'var(--text-3)', fontWeight: 600, letterSpacing: '.08em', textTransform: 'uppercase' }}>Número de reserva</div>
+        <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--sp)', letterSpacing: '.05em' }}>{nroCotizacion}</div>
+        <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 3 }}>Guardá este número para consultas</div>
       </div>
       <div className="confirm-title">¡Reserva confirmada!</div>
       <div className="confirm-sub">
@@ -47,13 +47,13 @@ export default function Confirmacion({ reserva, pago, onNueva }) {
           <span>Seña ({Math.round((porcentaje || 0.30) * 100)}%)</span>
           <span>{formatARS(sena)}</span>
         </div>
-        <div className="confirm-row"><span>Saldo pendiente</span><span style={{ color: 'rgba(255,255,255,.8)' }}>{formatARS(saldo)}</span></div>
+        <div className="confirm-row"><span>Saldo pendiente</span><span style={{ color: 'var(--text)' }}>{formatARS(saldo)}</span></div>
         <div style={{ height: 12 }} />
         {reserva.baseNombre && (
-          <div className="confirm-row"><span>Base de salida</span><span style={{ color: 'rgba(255,255,255,.8)' }}>{reserva.baseNombre}</span></div>
+          <div className="confirm-row"><span>Base de salida</span><span style={{ color: 'var(--text)' }}>{reserva.baseNombre}</span></div>
         )}
-        <div className="confirm-row"><span>Origen</span><span style={{ color: 'rgba(255,255,255,.8)' }}>{origen}</span></div>
-        <div className="confirm-row"><span>Destino</span><span style={{ color: 'rgba(255,255,255,.8)' }}>{destino}</span></div>
+        <div className="confirm-row"><span>Origen</span><span style={{ color: 'var(--text)' }}>{origen}</span></div>
+        <div className="confirm-row"><span>Destino</span><span style={{ color: 'var(--text)' }}>{destino}</span></div>
         <div className="confirm-row"><span>Salida</span><span>{formatDate(fechaInicio)}</span></div>
         <div className="confirm-row"><span>Regreso</span><span>{formatDate(fechaFin)}</span></div>
         <div className="confirm-row"><span>Días de servicio</span><span>{dias}</span></div>
@@ -66,7 +66,7 @@ export default function Confirmacion({ reserva, pago, onNueva }) {
       </div>
 
       <div style={{ marginBottom: 16 }}>
-        <div className="section-label" style={{ marginBottom: 8, color: 'rgba(255,255,255,.7)' }}>¿Querés confirmar ahora?</div>
+        <div className="section-label" style={{ marginBottom: 8, color: 'var(--text-2)' }}>¿Querés confirmar ahora?</div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
           {WHATSAPP.map(w => (
             <a key={w.numero}
@@ -87,7 +87,7 @@ export default function Confirmacion({ reserva, pago, onNueva }) {
 
       <button
         className="btn-primary"
-        style={{ marginTop: 0, background: '#8B5CF6' }}
+        style={{ marginTop: 0, background: 'var(--sp)' }}
         onClick={() => descargarPdfCotizacion(datosPdf)}>
         📄 Descargar presupuesto en PDF
       </button>
