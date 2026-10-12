@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import MapaUbicaciones from '../../portal/MapaUbicaciones';
 import {
   suscribirOperativo, suscribirSub, suscribirAccesos, suscribirConductores,
   actualizarOperativo, eliminarOperativo,
@@ -21,6 +22,7 @@ const TABS = [
   { id: 'personal', label: 'Conductores y coordinadores', icon: '🧑‍✈️' },
   { id: 'pasajeros', label: 'Pasajeros', icon: '🎒' },
   { id: 'itinerario', label: 'Diagrama día a día', icon: '🗓️' },
+  { id: 'mapa', label: 'Mapa en vivo', icon: '🗺️' },
   { id: 'accesos', label: 'Links de acceso', icon: '🔗' },
 ];
 
@@ -131,6 +133,7 @@ export default function OperativoDetalle({ opId, agencia, onVolverAgencias, onVo
       {tab === 'personal' && <TabPersonal {...ctx} />}
       {tab === 'pasajeros' && <TabPasajeros {...ctx} />}
       {tab === 'itinerario' && <TabItinerario {...ctx} />}
+      {tab === 'mapa' && <div style={{ padding: '16px 0' }}><MapaUbicaciones opId={opId} buses={ctx.buses} esPortal={false} /></div>}
       {tab === 'accesos' && <TabAccesos {...ctx} />}
 
       {tab === 'resumen' && (
