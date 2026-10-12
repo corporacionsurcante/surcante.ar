@@ -126,33 +126,6 @@
 .login-btn img      { width: 20px; height: 20px; }
 .login-error        { margin-top: 16px; font-size: 13px; color: #F87171; font-weight: 500; }
 
-.login-logo   { height: 40px; margin-bottom: 32px; }
-.login-title  { font-size: 24px; font-weight: 700; color: #fff; margin-bottom: 8px; letter-spacing: -0.03em; }
-.login-sub    { font-size: 14px; color: rgba(255,255,255,.45); margin-bottom: 36px; line-height: 1.5; }
-
-.login-btn {
-  width: 100%;
-  padding: 15px;
-  background: var(--ad-accent);
-  color: #fff;
-  border: none;
-  border-radius: 14px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  font-family: inherit;
-  box-shadow: 0 6px 20px rgba(var(--ad-accent-rgb), .45);
-  transition: opacity .15s, transform .1s;
-  -webkit-tap-highlight-color: transparent;
-}
-.login-btn:hover    { opacity: .9; }
-.login-btn:active   { transform: scale(0.97); }
-.login-btn img      { width: 20px; height: 20px; }
-.login-error        { margin-top: 16px; font-size: 13px; color: #FF6B6B; font-weight: 500; }
 
 /* ---- Topbar admin ---- */
 .admin-topbar {
@@ -239,8 +212,8 @@
   gap: 7px;
   -webkit-tap-highlight-color: transparent;
 }
-.admin-nav-item:hover { color: rgba(240,238,255,.65); }
-.admin-nav-item.active { color: #fff; border-bottom-color: var(--ad-accent); }
+.admin-nav-item:hover { color: var(--ad-text); }
+.admin-nav-item.active { color: var(--ad-accent); font-weight: 600; border-bottom-color: var(--ad-accent); }
 .admin-nav-item .nav-icon { font-size: 15px; }
 
 /* ---- Content ---- */
@@ -427,8 +400,8 @@
 
 .flota-field input {
   width: 100%;
-  background: rgba(255,255,255,.06);
-  border: 1px solid rgba(139,92,246,0.12);
+  background: var(--ad-card-2);
+  border: 1.5px solid var(--ad-sep);
   border-radius: 10px;
   padding: 10px 13px;
   font-size: 14px;
@@ -436,11 +409,11 @@
   color: var(--ad-text);
   font-weight: 500;
   outline: none;
-  transition: background .15s, box-shadow .15s;
+  transition: background .15s, box-shadow .15s, border-color .15s;
 }
 .flota-field input:focus {
-  background: rgba(255,255,255,.08);
-  box-shadow: 0 0 0 3px rgba(var(--ad-accent-rgb), .18);
+  border-color: var(--ad-accent);
+  box-shadow: 0 0 0 3px rgba(var(--ad-accent-rgb), .15);
 }
 
 .flota-toggle {
@@ -460,7 +433,7 @@
   position: absolute;
   cursor: pointer;
   inset: 0;
-  background: rgba(255,255,255,.15);
+  background: var(--ad-sep);
   border-radius: 13px;
   transition: .2s;
 }
@@ -533,8 +506,8 @@
 
 .precio-field input {
   width: 100%;
-  background: rgba(255,255,255,.06);
-  border: 1px solid rgba(139,92,246,0.12);
+  background: var(--ad-card-2);
+  border: 1.5px solid var(--ad-sep);
   border-radius: 10px;
   padding: 10px 13px;
   font-size: 15px;
@@ -542,11 +515,11 @@
   color: var(--ad-text);
   font-weight: 600;
   outline: none;
-  transition: background .15s, box-shadow .15s;
+  transition: background .15s, box-shadow .15s, border-color .15s;
 }
 .precio-field input:focus {
-  background: rgba(255,255,255,.08);
-  box-shadow: 0 0 0 3px rgba(var(--ad-accent-rgb), .18);
+  border-color: var(--ad-accent);
+  box-shadow: 0 0 0 3px rgba(var(--ad-accent-rgb), .15);
 }
 
 .precios-save {
@@ -601,8 +574,8 @@
 }
 
 .modal-title { font-size: 18px; font-weight: 700; color: var(--ad-text); letter-spacing: -0.02em; }
-.modal-close { background: rgba(255,255,255,.07); border: none; cursor: pointer; font-size: 16px; color: var(--ad-text-3); width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
-.modal-close:hover { background: rgba(255,255,255,.12); }
+.modal-close { background: var(--ad-card-2); border: none; cursor: pointer; font-size: 16px; color: var(--ad-text-3); width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+.modal-close:hover { background: var(--ad-sep); }
 
 .modal-row {
   display: flex;
@@ -630,8 +603,8 @@
   min-height: 44px;
 }
 .modal-estado-btn.active      { background: var(--ad-accent); color: #fff; }
-.modal-estado-btn:not(.active){ background: rgba(255,255,255,.07); color: var(--ad-text-2); }
-.modal-estado-btn:not(.active):hover { background: rgba(255,255,255,.12); }
+.modal-estado-btn:not(.active){ background: var(--ad-card-2); color: var(--ad-text-2); border: 1px solid var(--ad-sep); }
+.modal-estado-btn:not(.active):hover { background: var(--ad-sep); }
 
 /* ---- Loading / Empty ---- */
 .admin-loading {

@@ -18,6 +18,8 @@
   --p-red:        var(--st-red);
   --p-radius:     16px;
   --p-radius-sm:  12px;
+  --p-chrome:     rgba(255,255,255,0.94);
+  --p-chrome-b:   rgba(61,78,232,.10);
 }
 
 /* ── Modo oscuro ── */
@@ -29,6 +31,8 @@
   --p-text-2:     var(--st-text-2);
   --p-text-3:     var(--st-text-3);
   --p-sep:        var(--st-border);
+  --p-chrome:     rgba(14,15,31,0.94);
+  --p-chrome-b:   rgba(61,78,232,.15);
 }
 
 .portal-wrap {
@@ -49,10 +53,10 @@
   gap: 14px;
   padding: 14px 20px;
   padding-top: calc(14px + env(safe-area-inset-top));
-  background: rgba(255,255,255,0.94);
+  background: var(--p-chrome);
   backdrop-filter: saturate(180%) blur(20px);
   -webkit-backdrop-filter: saturate(180%) blur(20px);
-  border-bottom: 0.5px solid rgba(28,27,46,0.10);
+  border-bottom: 0.5px solid var(--p-chrome-b);
   position: sticky;
   top: 0;
   z-index: 100;
@@ -94,10 +98,10 @@
   display: flex;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
-  background: rgba(255,255,255,0.97);
+  background: var(--p-chrome);
   backdrop-filter: saturate(180%) blur(20px);
   -webkit-backdrop-filter: saturate(180%) blur(20px);
-  border-top: 0.5px solid rgba(28,27,46,0.10);
+  border-top: 0.5px solid var(--p-chrome-b);
   position: fixed;
   bottom: 0;
   left: 0;
