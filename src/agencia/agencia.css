@@ -478,10 +478,139 @@ body {
   font-size: 12px;
 }
 
+/* ---- Modal ---- */
+.ag-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(0,0,0,.55);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 20px 16px;
+  overflow-y: auto;
+}
+
+.ag-modal {
+  background: var(--ag-card);
+  border: 1px solid var(--ag-sep);
+  border-radius: 18px;
+  width: 100%;
+  max-width: 640px;
+  box-shadow: 0 24px 80px rgba(0,0,0,.25);
+  margin: auto;
+}
+
+.ag-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px 14px;
+  border-bottom: 0.5px solid var(--ag-sep);
+}
+
+.ag-modal-title {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ag-text);
+}
+
+.ag-modal-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 20px;
+  color: var(--ag-text-3);
+  padding: 4px;
+  line-height: 1;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.ag-modal-body {
+  padding: 18px 20px;
+}
+
+.ag-modal-foot {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  padding: 14px 20px;
+  border-top: 0.5px solid var(--ag-sep);
+  flex-wrap: wrap;
+}
+
+/* ---- Drop zone (importar Excel) ---- */
+.ag-drop {
+  border: 2px dashed var(--ag-sep);
+  border-radius: 12px;
+  padding: 32px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color .15s, background .15s;
+  font-size: 14px;
+  color: var(--ag-text-2);
+}
+.ag-drop.drag,
+.ag-drop:hover {
+  border-color: var(--ag-accent);
+  background: rgba(var(--ag-accent-rgb), .04);
+}
+.ag-drop-title {
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--ag-text);
+  margin-top: 8px;
+  margin-bottom: 4px;
+}
+
+/* ---- Mapeo de columnas ---- */
+.ag-map-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.ag-map-item {
+  background: var(--ag-card-2);
+  border: 1px solid var(--ag-sep);
+  border-radius: 8px;
+  padding: 8px;
+  font-size: 12px;
+}
+.ag-map-item.ok {
+  border-color: rgba(var(--ag-accent-rgb), .4);
+}
+.ag-map-item .col {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-bottom: 5px;
+  color: var(--ag-text-2);
+}
+.ag-map-item select {
+  width: 100%;
+  background: var(--ag-card);
+  border: 1px solid var(--ag-sep);
+  border-radius: 6px;
+  padding: 5px 6px;
+  font-size: 12px;
+  font-family: inherit;
+  color: var(--ag-text);
+  outline: none;
+}
+.ag-map-item select:focus {
+  border-color: var(--ag-accent);
+}
+
 /* ---- Responsive ---- */
 @media (max-width: 480px) {
   .ag-login-card  { padding: 28px 20px; }
   .ag-card-title  { font-size: 15px; }
   .ag-title       { font-size: 20px; }
   .ag-grid        { grid-template-columns: 1fr; }
+  .ag-modal       { border-radius: 12px; }
+  .ag-modal-body  { padding: 14px 16px; }
+  .ag-modal-foot  { padding: 12px 16px; }
 }
