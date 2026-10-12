@@ -109,33 +109,46 @@ export default function MapaUbicaciones({ opId, buses: busesProp = null, filtrar
 
     ubicaciones.forEach(ub => {
       if (!ub.lat || !ub.lng) return;
-      const bus   = busMap[ub.id] || {};
-      const color = colorBus(bus) || '#7C3AED';
-      const label = bus.codigo || bus.color || ub.id;
+      const bus    = busMap[ub.id] || {};
+      const color  = colorBus(bus) || '#7C3AED';
+      const interno = bus.codigo || bus.interno || bus.numero || '';
+      const patente = bus.patente || '';
+      // Línea principal del ícono: interno si existe, si no patente, si no '?'
+      const labelTop  = interno || patente || '?';
+      // Segunda línea: patente si ya mostramos interno
+      const labelSub  = interno && patente ? patente : '';
       const ts    = ub.ts?.seconds ? new Date(ub.ts.seconds * 1000) : null;
       const hace  = ts ? tiempoDesde(ts) : null;
 
-      const popupContent = `<b style="font-size:13px">${label}</b><br>
-        <span style="font-size:12px;color:#555">${[bus.empresa, bus.patente].filter(Boolean).join(' · ')}</span><br>
-        <span style="font-size:12px">📡 ${hace ? `Actualizado ${hace}` : 'En línea'}</span>
-        ${ub.accuracy ? `<br><span style="font-size:11px;color:#888">Precisión ±${Math.round(ub.accuracy)} m</span>` : ''}`;
+      const popupContent = `
+        <div style="font-family:Arial,sans-serif;min-width:140px">
+          <div style="font-size:14px;font-weight:700;color:#1C1B2E;margin-bottom:2px">${interno || patente || 'Bus'}</div>
+          ${patente && interno ? `<div style="font-size:12px;color:#888;margin-bottom:4px">${patente}</div>` : ''}
+          ${bus.empresa ? `<div style="font-size:12px;color:#555;margin-bottom:4px">${bus.empresa}</div>` : ''}
+          <div style="font-size:12px;color:#10B981">📡 ${hace ? `Actualizado ${hace}` : 'En línea'}</div>
+          ${ub.accuracy ? `<div style="font-size:11px;color:#aaa;margin-top:2px">Precisión ±${Math.round(ub.accuracy)} m</div>` : ''}
+        </div>`;
+
+      const iconHtml = `
+        <div style="display:flex;flex-direction:column;align-items:center;gap:3px;filter:drop-shadow(0 3px 8px rgba(0,0,0,.30))">
+          <div style="background:${color};border-radius:50%;width:42px;height:42px;display:flex;align-items:center;justify-content:center;border:3px solid #fff;font-size:22px;line-height:1">🚌</div>
+          <div style="background:${color};color:#fff;font-size:10px;font-weight:800;padding:2px 8px;border-radius:10px;border:1.5px solid rgba(255,255,255,.8);white-space:nowrap;font-family:Arial,sans-serif;letter-spacing:.3px;text-align:center">
+            ${labelTop}${labelSub ? `<br><span style="font-weight:500;opacity:.85">${labelSub}</span>` : ''}
+          </div>
+        </div>`;
 
       bounds.push([ub.lat, ub.lng]);
 
+      const icon = window.L.divIcon({ className: '', html: iconHtml, iconAnchor: [21, 52] });
+
       if (markersRef.current[ub.id]) {
+        // Actualiza posición, ícono (puede haber llegado info del bus después) y popup
         markersRef.current[ub.id].setLatLng([ub.lat, ub.lng]);
+        markersRef.current[ub.id].setIcon(icon);
         markersRef.current[ub.id].getPopup()?.setContent(popupContent);
       } else {
-        const icon = window.L.divIcon({
-          className: '',
-          html: `<div style="display:flex;flex-direction:column;align-items:center;gap:2px">
-            <div style="background:${color};border-radius:50%;width:38px;height:38px;display:flex;align-items:center;justify-content:center;border:2.5px solid #fff;box-shadow:0 2px 10px rgba(0,0,0,.35);font-size:20px;line-height:1">🚌</div>
-            <div style="background:${color};color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;border:1.5px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.25);white-space:nowrap;font-family:Arial,sans-serif;max-width:80px;overflow:hidden;text-overflow:ellipsis">${label}</div>
-          </div>`,
-          iconAnchor: [19, 44],
-        });
         const marker = window.L.marker([ub.lat, ub.lng], { icon })
-          .bindPopup(popupContent)
+          .bindPopup(popupContent, { maxWidth: 200 })
           .addTo(map);
         markersRef.current[ub.id] = marker;
       }
