@@ -41,10 +41,10 @@ export default function MapaUbicaciones({ opId, buses: busesProp = null, filtrar
   const mapContainer = useRef(null);
   const mapInstance  = useRef(null);
   const markersRef   = useRef({});
-  const [cargando, setCargando] = useState(true);
-  const [error, setError]       = useState('');
+  const [listo, setListo]           = useState(false);
+  const [error, setError]           = useState('');
   const [ubicaciones, setUbicaciones] = useState([]);
-  const [buses, setBuses] = useState(busesProp || []);
+  const [buses, setBuses]           = useState(busesProp || []);
 
   // Cargar buses si no llegan como prop
   useEffect(() => {
@@ -68,41 +68,43 @@ export default function MapaUbicaciones({ opId, buses: busesProp = null, filtrar
     return unsub;
   }, [opId, filtrarBusId]);
 
-  // Inicializar mapa Leaflet una sola vez
+  // Efecto 1: Cargar biblioteca Leaflet
   useEffect(() => {
     cargarLeaflet()
-      .then(() => {
-        setCargando(false);
-        if (!mapContainer.current || mapInstance.current) return;
-        const map = window.L.map(mapContainer.current, {
-          center: [-34.6037, -58.3816],
-          zoom: 13,
-          zoomControl: true,
-        });
-        window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '© OpenStreetMap contributors',
-          maxZoom: 19,
-        }).addTo(map);
-        mapInstance.current = map;
-      })
-      .catch(e => { setError(e.message); setCargando(false); });
-    return () => {
-      if (mapInstance.current) {
-        mapInstance.current.remove();
-        mapInstance.current = null;
-        markersRef.current = {};
-      }
-    };
-  }, []); // solo al montar
+      .then(() => setListo(true))
+      .catch(e => setError(e.message));
+  }, []);
 
-  // Actualizar marcadores cuando cambian los datos
+  // Efecto 2: Inicializar mapa DESPUÉS de que la biblioteca esté lista y el contenedor visible.
+  // Al correr este efecto, el re-render ya ocurrió → el div ya tiene dimensiones reales.
+  useEffect(() => {
+    if (!listo || !mapContainer.current || mapInstance.current) return;
+    const map = window.L.map(mapContainer.current, {
+      center: [-34.6037, -58.3816],
+      zoom: 13,
+      zoomControl: true,
+    });
+    window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors',
+      maxZoom: 19,
+    }).addTo(map);
+    mapInstance.current = map;
+    // Forzar recálculo de dimensiones por si el contenedor cambió de tamaño
+    setTimeout(() => map.invalidateSize(), 100);
+    return () => {
+      mapInstance.current.remove();
+      mapInstance.current = null;
+      markersRef.current = {};
+    };
+  }, [listo]);
+
+  // Efecto 3: Actualizar marcadores cuando cambian datos o cuando el mapa se inicializa
   useEffect(() => {
     const map = mapInstance.current;
     if (!map || !window.L) return;
 
     const busMap = {};
     buses.forEach(b => { busMap[b.id] = b; });
-
     const bounds = [];
 
     ubicaciones.forEach(ub => {
@@ -149,33 +151,47 @@ export default function MapaUbicaciones({ opId, buses: busesProp = null, filtrar
     } else if (bounds.length > 1) {
       map.fitBounds(bounds, { padding: [40, 40] });
     }
-  }, [ubicaciones, buses]);
+  }, [ubicaciones, buses, listo]); // listo en deps: re-corre cuando el mapa se inicializa
 
   const wrapClass = esPortal ? 'portal-section' : '';
 
   return (
     <div className={wrapClass}>
-      {/* Mapa */}
+      {/* Contenedor del mapa — siempre en el DOM con altura fija para que Leaflet mida bien */}
       <div style={{
+        position: 'relative',
         borderRadius: 16,
         overflow: 'hidden',
         border: '1px solid var(--p-sep, rgba(28,27,46,.08))',
         background: '#e8e8e8',
         boxShadow: '0 1px 4px rgba(0,0,0,.06)',
+        height: 420,
       }}>
-        {cargando && (
-          <div style={{ height: 420, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#888', fontSize: 14 }}>
+        <div ref={mapContainer} style={{ height: '100%', width: '100%' }} />
+
+        {/* Overlay de carga encima del mapa (no oculta el contenedor) */}
+        {!listo && !error && (
+          <div style={{
+            position: 'absolute', inset: 0, zIndex: 1000,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: '#e8e8e8', color: '#888', fontSize: 14,
+          }}>
             Cargando mapa…
           </div>
         )}
         {error && (
-          <div style={{ padding: 16, color: '#DC2626', fontSize: 13 }}>⚠️ {error}</div>
+          <div style={{
+            position: 'absolute', inset: 0, zIndex: 1000,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: '#fff5f5', color: '#DC2626', fontSize: 13, padding: 16, textAlign: 'center',
+          }}>
+            ⚠️ {error}
+          </div>
         )}
-        <div ref={mapContainer} style={{ height: 420, width: '100%', display: cargando ? 'none' : 'block' }} />
       </div>
 
       {/* Estado de transmisión */}
-      {!cargando && ubicaciones.length === 0 && (
+      {listo && ubicaciones.length === 0 && (
         <div style={{
           background: 'var(--p-card, #fff)',
           border: '1px solid var(--p-sep, rgba(28,27,46,.08))',
@@ -191,11 +207,11 @@ export default function MapaUbicaciones({ opId, buses: busesProp = null, filtrar
         </div>
       )}
 
-      {!cargando && ubicaciones.length > 0 && (
+      {listo && ubicaciones.length > 0 && (
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
           {ubicaciones.map(ub => {
-            const bus   = buses.find(b => b.id === ub.id) || {};
-            const ts    = ub.ts?.seconds ? new Date(ub.ts.seconds * 1000) : null;
+            const bus      = buses.find(b => b.id === ub.id) || {};
+            const ts       = ub.ts?.seconds ? new Date(ub.ts.seconds * 1000) : null;
             const busColor = colorBus(bus) || '#7C3AED';
             return (
               <div key={ub.id} style={{
