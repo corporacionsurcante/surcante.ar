@@ -442,6 +442,7 @@ function GestionCoordinadores({ agenciaId, usuarios }) {
   const [nombre, setNombre] = useState('');
   const [email, setEmail] = useState('');
   const [guardando, setGuardando] = useState(false);
+  const [eliminando, setEliminando] = useState(null); // email en proceso
   const [error, setError] = useState('');
   const [ok, setOk] = useState('');
 
@@ -458,6 +459,25 @@ function GestionCoordinadores({ agenciaId, usuarios }) {
       console.error(e); setError('No se pudo guardar. Revisá la conexión.');
     }
     setGuardando(false);
+  }
+
+  async function eliminar(emailCoord) {
+    if (!window.confirm(`¿Eliminar el acceso de ${emailCoord}?`)) return;
+    setEliminando(emailCoord); setError(''); setOk('');
+    try {
+      const idToken = await auth.currentUser.getIdToken();
+      const resp = await fetch('/api/agencia-coordinadores', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
+        body: JSON.stringify({ email: emailCoord }),
+      });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error || 'Error al eliminar');
+      setOk(`✓ ${emailCoord} eliminado.`);
+    } catch (e) {
+      console.error(e); setError(e.message || 'No se pudo eliminar.');
+    }
+    setEliminando(null);
   }
 
   return (
@@ -479,6 +499,15 @@ function GestionCoordinadores({ agenciaId, usuarios }) {
                 <span style={{ fontSize: 11, fontWeight: 700, background: u.activa !== false ? 'rgba(16,185,129,.12)' : 'rgba(239,68,68,.10)', color: u.activa !== false ? '#059669' : '#DC2626', padding: '2px 8px', borderRadius: 20 }}>
                   {u.activa !== false ? 'Activo' : 'Inactivo'}
                 </span>
+                <button
+                  className="ag-btn ag-btn-ghost ag-btn-sm"
+                  onClick={() => eliminar(u.id)}
+                  disabled={eliminando === u.id}
+                  title="Eliminar acceso"
+                  style={{ color: 'var(--ag-error, #DC2626)', padding: '4px 8px', flexShrink: 0 }}
+                >
+                  {eliminando === u.id ? '…' : '×'}
+                </button>
               </div>
             ))}
           </div>
