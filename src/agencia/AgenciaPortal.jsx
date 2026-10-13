@@ -12,7 +12,7 @@ import {
 } from '../admin/egresados/utils';
 import {
   guardarPasajerosMasivo, crearOperativo, importarMaestro, crearEnSub,
-  actualizarEnSub, eliminarEnSub, eliminarStaff, eliminarPasajerosMasivo,
+  actualizarEnSub, eliminarStaff, eliminarPasajerosMasivo,
   generarAccesos, actualizarOperativo,
 } from '../firebase/egresadosService';
 import { parsearExcelMaestro } from '../admin/egresados/ImportarMaestro';
