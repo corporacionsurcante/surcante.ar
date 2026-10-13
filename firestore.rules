@@ -133,10 +133,12 @@ service cloud.firestore {
       // Agencias pueden listar/leer solo sus propios operativos (campo agenciaId)
       allow read: if isAdmin() || portalEnOp(opId)
         || (isAgenciaUser() && resource.data.agenciaId == request.auth.token.agenciaId);
-      // Agencias pueden crear operativos propios; solo admin puede modificar o borrar
+      // Agencias pueden crear y actualizar sus propios operativos; solo admin puede borrar
       allow create: if isAdmin()
         || (isAgenciaUser() && request.resource.data.agenciaId == request.auth.token.agenciaId);
-      allow update, delete: if isAdmin();
+      allow update: if isAdmin()
+        || (isAgenciaUser() && resource.data.agenciaId == request.auth.token.agenciaId);
+      allow delete: if isAdmin();
 
       match /buses/{busId} {
         allow read: if isAdmin() || portalEnOp(opId) || agenciaEnOp(opId);
@@ -213,7 +215,13 @@ service cloud.firestore {
     }
 
     match /accesos/{token} {
-      allow read, write: if isAdmin();
+      allow read, update: if isAdmin();
+      // Agencias pueden crear accesos para sus propios operativos
+      allow create: if isAdmin()
+        || (isAgenciaUser() && request.resource.data.agenciaId == request.auth.token.agenciaId);
+      // Agencias pueden eliminar accesos de sus propios operativos (para regenerar)
+      allow delete: if isAdmin()
+        || (isAgenciaUser() && resource.data.agenciaId == request.auth.token.agenciaId);
     }
 
     // Códigos de acceso de un solo uso para el portal de agencias.
