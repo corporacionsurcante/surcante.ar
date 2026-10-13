@@ -204,7 +204,6 @@ function OperativoCard({ op, hoy, onClick, pasado }) {
 function OnboardingAgencia({ sesion, onOperativoCreado }) {
   const [tab, setTab] = useState('bienvenida'); // bienvenida | viaje | coordinadores
   const [usuarios, setUsuarios] = useState([]);
-  const [modalViaje, setModalViaje] = useState(false);
 
   useEffect(() => suscribirAgenciaUsers(sesion.agenciaId, setUsuarios, console.error), [sesion.agenciaId]);
 
