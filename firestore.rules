@@ -133,21 +133,24 @@ service cloud.firestore {
       // Agencias pueden listar/leer solo sus propios operativos (campo agenciaId)
       allow read: if isAdmin() || portalEnOp(opId)
         || (isAgenciaUser() && resource.data.agenciaId == request.auth.token.agenciaId);
-      allow write: if isAdmin();
+      // Agencias pueden crear operativos propios; solo admin puede modificar o borrar
+      allow create: if isAdmin()
+        || (isAgenciaUser() && request.resource.data.agenciaId == request.auth.token.agenciaId);
+      allow update, delete: if isAdmin();
 
       match /buses/{busId} {
         allow read: if isAdmin() || portalEnOp(opId) || agenciaEnOp(opId);
-        allow write: if isAdmin();
+        allow write: if isAdmin() || agenciaEnOp(opId);
       }
 
       match /staff/{staffId} {
         allow read: if isAdmin() || portalEnOp(opId) || agenciaEnOp(opId);
-        allow write: if isAdmin();
+        allow write: if isAdmin() || agenciaEnOp(opId);
       }
 
       match /itinerario/{dia} {
         allow read: if isAdmin() || portalEnOp(opId) || agenciaEnOp(opId);
-        allow write: if isAdmin();
+        allow write: if isAdmin() || agenciaEnOp(opId);
       }
 
       match /avisos/{avisId} {
@@ -156,12 +159,12 @@ service cloud.firestore {
       }
 
       match /pasajeros/{paxId} {
-        // Conductores y coordinadores ven todos; pasajero solo su propio doc; agencias ven todos (read-only)
+        // Conductores y coordinadores ven todos; pasajero solo su propio doc; agencias ven todos
         allow read: if isAdmin()
           || (portalEnOp(opId) && request.auth.token.rol in ['conductor', 'coordinador'])
           || (portalEnOp(opId) && request.auth.token.rol == 'pasajero' && request.auth.token.refId == paxId)
           || agenciaEnOp(opId);
-        allow write: if isAdmin();
+        allow write: if isAdmin() || agenciaEnOp(opId);
       }
 
       match /ubicaciones/{busId} {

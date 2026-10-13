@@ -257,7 +257,9 @@ export async function importarMaestro(opId, datos, { buses: busesExistentes = []
       return batch => batch.set(doc(sub(opId, 'staff')), { ...data, creadoEn: serverTimestamp() });
     }));
     for (const c of conductores) {
-      if (c.dni) await upsertConductor(c);
+      if (c.dni) {
+        try { await upsertConductor(c); } catch (_) { /* agencias no tienen permiso en el padrón global */ }
+      }
     }
   }
 
