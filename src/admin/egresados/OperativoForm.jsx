@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Modal, Campo, Input, TextArea } from './ui';
-import { crearOperativo, actualizarOperativo } from '../../firebase/egresadosService';
+import { crearOperativo, actualizarOperativo, importarMaestro } from '../../firebase/egresadosService';
 import { COLORES_BUS, ESTADOS_OPERATIVO } from './utils';
+import { parsearExcelMaestro } from './ImportarMaestro';
 
 function aForm(op) {
   const s = op?.salida || {};
@@ -40,10 +41,32 @@ export default function OperativoForm({ agencia, operativo, onClose, onCreado })
   const [form, setForm] = useState(() => aForm(operativo));
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState('');
+  const [modo, setModo] = useState('manual');
+  const [excelDatos, setExcelDatos] = useState(null);
+  const [cargandoExcel, setCargandoExcel] = useState(false);
+  const [excelError, setExcelError] = useState('');
+  const inputExcelRef = useRef(null);
+
+  async function abrirExcel(file) {
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) { setExcelError('El archivo supera 10 MB.'); return; }
+    setCargandoExcel(true); setExcelError('');
+    try {
+      const d = await parsearExcelMaestro(file);
+      setExcelDatos(d);
+      if (d.itinerario?.length > 0) {
+        const fechas = d.itinerario.map(i => i.fecha).filter(Boolean).sort();
+        if (fechas.length > 0) setForm(f => ({ ...f, fechaInicio: f.fechaInicio || fechas[0] }));
+        if (fechas.length > 1) setForm(f => ({ ...f, fechaFin: f.fechaFin || fechas[fechas.length - 1] }));
+      }
+    } catch (e) { setExcelError(e.message || 'No se pudo leer el archivo.'); }
+    setCargandoExcel(false);
+  }
 
   async function guardar() {
     if (!form.nombre.trim()) { setError('Poné un nombre al operativo (ej: Bariloche 2026 · Colegio San José).'); return; }
     if (form.fechaInicio && form.fechaFin && form.fechaFin < form.fechaInicio) { setError('La fecha de fin es anterior a la de inicio.'); return; }
+    if (esNuevo && modo === 'excel' && !excelDatos) { setError('Subí el archivo Excel Maestro antes de continuar.'); return; }
     setGuardando(true);
     setError('');
     const t = v => String(v ?? '').trim();
@@ -76,18 +99,26 @@ export default function OperativoForm({ agencia, operativo, onClose, onCreado })
     };
     try {
       if (esNuevo) {
-        const n = Math.max(0, Math.min(40, parseInt(form.cantidadBuses, 10) || 0));
-        const cap = parseInt(form.capacidadDefault, 10) || 60;
-        const pref = t(form.prefijoBus) || 'Bus';
-        const buses = Array.from({ length: n }, (_, i) => ({
-          codigo: `${pref} ${i + 1}`,
-          orden: i + 1,
-          capacidad: cap,
-          color: COLORES_BUS[i % COLORES_BUS.length].id,
-          unidadId: null, interno: '', patente: '', empresa: 'SURCANTE', tipo: '',
-          presentacion: '', notas: '',
-        }));
+        let buses;
+        if (modo === 'excel') {
+          buses = [];
+        } else {
+          const n = Math.max(0, Math.min(40, parseInt(form.cantidadBuses, 10) || 0));
+          const cap = parseInt(form.capacidadDefault, 10) || 60;
+          const pref = t(form.prefijoBus) || 'Bus';
+          buses = Array.from({ length: n }, (_, i) => ({
+            codigo: `${pref} ${i + 1}`,
+            orden: i + 1,
+            capacidad: cap,
+            color: COLORES_BUS[i % COLORES_BUS.length].id,
+            unidadId: null, interno: '', patente: '', empresa: 'SURCANTE', tipo: '',
+            presentacion: '', notas: '',
+          }));
+        }
         const ref = await crearOperativo({ ...data, agenciaId: agencia.id, agenciaNombre: agencia.nombre }, buses);
+        if (modo === 'excel' && excelDatos) {
+          await importarMaestro(ref.id, excelDatos, {});
+        }
         onCreado?.(ref.id);
       } else {
         await actualizarOperativo(operativo.id, data);
@@ -109,9 +140,21 @@ export default function OperativoForm({ agencia, operativo, onClose, onCreado })
       footer={<>
         <button className="eg-btn eg-btn-ghost" onClick={onClose}>Cancelar</button>
         <button className="eg-btn eg-btn-primary" onClick={guardar} disabled={guardando}>
-          {guardando ? 'Guardando...' : esNuevo ? '✓ Crear operativo' : '✓ Guardar cambios'}
+          {guardando ? (modo === 'excel' ? 'Creando e importando...' : 'Guardando...') : esNuevo ? (modo === 'excel' ? '✓ Crear e importar' : '✓ Crear operativo') : '✓ Guardar cambios'}
         </button>
       </>}>
+      {esNuevo && (
+        <div style={{ display: 'flex', gap: 4, marginBottom: 20, background: 'var(--eg-bg-2,rgba(255,255,255,.06))', padding: 4, borderRadius: 10 }}>
+          {[['manual', '✍️ Manual'], ['excel', '📊 Desde Excel']].map(([m, label]) => (
+            <button key={m} onClick={() => { setModo(m); if (m === 'manual') { setExcelDatos(null); setExcelError(''); } }}
+              style={{ flex: 1, padding: '8px 0', borderRadius: 8, border: 'none', fontWeight: 700, fontSize: 13, cursor: 'pointer',
+                background: modo === m ? 'var(--eg-accent,#7c3aed)' : 'transparent',
+                color: modo === m ? '#fff' : 'var(--eg-text-2,#94a3b8)', transition: 'all .15s' }}>
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
       <div className="eg-form-grid">
         <div className="eg-form-section full">Viaje</div>
         <Campo label="Nombre del operativo *" full hint="Así lo ven conductores, coordinadores y pasajeros.">
@@ -128,13 +171,49 @@ export default function OperativoForm({ agencia, operativo, onClose, onCreado })
         <Campo label="Colegios / grupos"><Input {...F} campo="colegios" placeholder="ej: Esc. N°53, Colegio San José" /></Campo>
         <Campo label="Pasajeros estimados"><Input {...F} campo="pasajerosEstimados" type="number" min="0" /></Campo>
 
-        {esNuevo && <>
+        {esNuevo && modo === 'manual' && <>
           <div className="eg-form-section full">Ómnibus (se pueden editar después)</div>
           <Campo label="Cantidad de ómnibus"><Input {...F} campo="cantidadBuses" type="number" min="0" max="40" /></Campo>
           <Campo label="Capacidad de cada uno"><Input {...F} campo="capacidadDefault" type="number" min="1" /></Campo>
           <Campo label="Identificación" hint={`Quedan como "${form.prefijoBus || 'Bus'} 1", "${form.prefijoBus || 'Bus'} 2"... cada uno con un color distinto.`} full>
             <Input {...F} campo="prefijoBus" placeholder="Bus" />
           </Campo>
+        </>}
+        {esNuevo && modo === 'excel' && <>
+          <div className="eg-form-section full">Excel Maestro</div>
+          <div className="full">
+            <div
+              style={{ border: `2px dashed ${excelDatos ? 'var(--eg-accent,#7c3aed)' : 'var(--eg-sep,rgba(255,255,255,.12))'}`,
+                borderRadius: 12, padding: '20px 16px', textAlign: 'center', cursor: 'pointer',
+                background: excelDatos ? 'rgba(124,58,237,.07)' : 'transparent', transition: 'all .15s' }}
+              onClick={() => inputExcelRef.current?.click()}
+              onDragOver={e => e.preventDefault()}
+              onDrop={e => { e.preventDefault(); abrirExcel(e.dataTransfer.files?.[0]); }}>
+              <div style={{ fontSize: 28 }}>{cargandoExcel ? '⏳' : excelDatos ? '✅' : '📊'}</div>
+              <div style={{ fontWeight: 700, marginTop: 6, fontSize: 14, color: 'var(--eg-text)' }}>
+                {cargandoExcel ? 'Leyendo archivo...' : excelDatos ? 'Excel cargado — tocá para cambiar' : 'Subí el Excel Maestro de Surcante'}
+              </div>
+              {!excelDatos && !cargandoExcel && (
+                <div style={{ fontSize: 12, color: 'var(--eg-text-2)', marginTop: 4 }}>
+                  Arrastrá o tocá para elegir el .xlsx — buses, conductores, coordinadores, pasajeros e itinerario se importan solos.
+                </div>
+              )}
+              {excelDatos && (
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'center', marginTop: 10 }}>
+                  {[['buses','🚌','Ómnibus'],['conductores','🧑‍✈️','Conductores'],['coordinadores','📋','Coordinadores'],['pasajeros','🎒','Pasajeros'],['itinerario','🗓️','Días']].map(([k,icon,label]) =>
+                    excelDatos[k].length > 0 && (
+                      <span key={k} className="eg-chip eg-chip-green" style={{ fontSize: 12 }}>
+                        {icon} {excelDatos[k].length} {label}
+                      </span>
+                    )
+                  )}
+                </div>
+              )}
+              <input ref={inputExcelRef} type="file" accept=".xlsx,.xls" style={{ display: 'none' }}
+                onChange={e => { abrirExcel(e.target.files?.[0]); e.target.value = ''; }} />
+            </div>
+            {excelError && <div className="eg-alert eg-alert-error" style={{ marginTop: 8 }}>{excelError}</div>}
+          </div>
         </>}
 
         <div className="eg-form-section full">Salida</div>

@@ -12,8 +12,9 @@ import {
 } from '../admin/egresados/utils';
 import {
   guardarPasajerosMasivo, crearOperativo,
-  suscribirAgenciaUsers, crearAgenciaUser,
+  suscribirAgenciaUsers, crearAgenciaUser, importarMaestro,
 } from '../firebase/egresadosService';
+import { parsearExcelMaestro } from '../admin/egresados/ImportarMaestro';
 import './agencia.css';
 
 const ESTADOS = {
@@ -374,21 +375,49 @@ function OnboardingAgencia({ sesion, onOperativoCreado }) {
 
 // ---- Formulario crear primer viaje ----
 function CrearViajeForm({ agenciaId, agenciaNombre, onCreado }) {
+  const [modo, setModo] = useState('manual');
   const [form, setForm] = useState({ nombre: '', destino: '', fechaInicio: '', fechaFin: '', cantBuses: 1 });
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState('');
+  const [excelDatos, setExcelDatos] = useState(null);
+  const [cargandoExcel, setCargandoExcel] = useState(false);
+  const [excelError, setExcelError] = useState('');
+  const inputExcelRef = useRef(null);
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
+  async function abrirExcel(file) {
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) { setExcelError('El archivo supera 10 MB.'); return; }
+    setCargandoExcel(true); setExcelError('');
+    try {
+      const d = await parsearExcelMaestro(file);
+      setExcelDatos(d);
+      if (d.itinerario?.length > 0) {
+        const fechas = d.itinerario.map(i => i.fecha).filter(Boolean).sort();
+        if (fechas.length > 0) setForm(f => ({ ...f, fechaInicio: f.fechaInicio || fechas[0] }));
+        if (fechas.length > 1) setForm(f => ({ ...f, fechaFin: f.fechaFin || fechas[fechas.length - 1] }));
+      }
+    } catch (e) { setExcelError(e.message || 'No se pudo leer el archivo.'); }
+    setCargandoExcel(false);
+  }
+
   async function handleCrear() {
-    if (!form.nombre.trim() || !form.destino.trim() || !form.fechaInicio || !form.fechaFin) {
+    if (!form.nombre.trim()) { setError('Completá el nombre del viaje.'); return; }
+    if (modo === 'manual' && (!form.destino.trim() || !form.fechaInicio || !form.fechaFin)) {
       setError('Completá nombre, destino y fechas.'); return;
     }
+    if (modo === 'excel' && !excelDatos) { setError('Subí el archivo Excel Maestro antes de continuar.'); return; }
     setGuardando(true); setError('');
     try {
-      const buses = Array.from({ length: Math.max(1, Number(form.cantBuses) || 1) }, (_, i) => ({
-        nombre: `Bus ${i + 1}`, numero: i + 1,
-      }));
+      let buses;
+      if (modo === 'excel') {
+        buses = [];
+      } else {
+        buses = Array.from({ length: Math.max(1, Number(form.cantBuses) || 1) }, (_, i) => ({
+          nombre: `Bus ${i + 1}`, numero: i + 1,
+        }));
+      }
       const ref = await crearOperativo({
         nombre: form.nombre.trim(),
         destino: form.destino.trim(),
@@ -398,6 +427,9 @@ function CrearViajeForm({ agenciaId, agenciaNombre, onCreado }) {
         agenciaNombre: agenciaNombre || '',
         estado: 'planificacion',
       }, buses);
+      if (modo === 'excel' && excelDatos) {
+        await importarMaestro(ref.id, excelDatos, {});
+      }
       onCreado({ id: ref.id, nombre: form.nombre.trim(), destino: form.destino.trim(), fechaInicio: form.fechaInicio, fechaFin: form.fechaFin, agenciaId, estado: 'planificacion' });
     } catch (e) {
       console.error(e); setError('No se pudo crear el viaje. Revisá la conexión.');
@@ -407,31 +439,103 @@ function CrearViajeForm({ agenciaId, agenciaNombre, onCreado }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-      {[
-        { label: 'Nombre del viaje', key: 'nombre', type: 'text', placeholder: 'ej: Egresados CENS 35 — 2025' },
-        { label: 'Destino',          key: 'destino', type: 'text', placeholder: 'ej: Bariloche' },
-        { label: 'Fecha de inicio',  key: 'fechaInicio', type: 'date', placeholder: '' },
-        { label: 'Fecha de fin',     key: 'fechaFin',    type: 'date', placeholder: '' },
-      ].map(f => (
-        <div key={f.key}>
-          <label className="ag-label">{f.label}</label>
-          <input className="ag-input" type={f.type} placeholder={f.placeholder}
-            value={form[f.key]} onChange={e => set(f.key, e.target.value)} />
-        </div>
-      ))}
-      <div>
-        <label className="ag-label">Cantidad de ómnibus</label>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <button className="ag-btn ag-btn-ghost ag-btn-sm"
-            onClick={() => set('cantBuses', Math.max(1, form.cantBuses - 1))}>−</button>
-          <span style={{ fontWeight: 700, fontSize: 18, minWidth: 24, textAlign: 'center', color: 'var(--ag-text)' }}>{form.cantBuses}</span>
-          <button className="ag-btn ag-btn-ghost ag-btn-sm"
-            onClick={() => set('cantBuses', form.cantBuses + 1)}>+</button>
-        </div>
+      {/* Selector de modo */}
+      <div style={{ display: 'flex', gap: 4, background: 'var(--ag-bg-2,rgba(255,255,255,.06))', padding: 4, borderRadius: 10 }}>
+        {[['manual', '✍️ Manual'], ['excel', '📊 Desde Excel']].map(([m, label]) => (
+          <button key={m} onClick={() => { setModo(m); if (m === 'manual') { setExcelDatos(null); setExcelError(''); } }}
+            style={{ flex: 1, padding: '8px 0', borderRadius: 8, border: 'none', fontWeight: 700, fontSize: 13, cursor: 'pointer',
+              background: modo === m ? 'var(--ag-accent,#7c3aed)' : 'transparent',
+              color: modo === m ? '#fff' : 'var(--ag-text-2,#94a3b8)', transition: 'all .15s' }}>
+            {label}
+          </button>
+        ))}
       </div>
+
+      <div>
+        <label className="ag-label">Nombre del viaje *</label>
+        <input className="ag-input" type="text" placeholder="ej: Egresados CENS 35 — 2025"
+          value={form.nombre} onChange={e => set('nombre', e.target.value)} />
+      </div>
+
+      {modo === 'manual' && <>
+        {[
+          { label: 'Destino', key: 'destino', type: 'text', placeholder: 'ej: Bariloche' },
+          { label: 'Fecha de inicio', key: 'fechaInicio', type: 'date', placeholder: '' },
+          { label: 'Fecha de fin',    key: 'fechaFin',    type: 'date', placeholder: '' },
+        ].map(f => (
+          <div key={f.key}>
+            <label className="ag-label">{f.label}</label>
+            <input className="ag-input" type={f.type} placeholder={f.placeholder}
+              value={form[f.key]} onChange={e => set(f.key, e.target.value)} />
+          </div>
+        ))}
+        <div>
+          <label className="ag-label">Cantidad de ómnibus</label>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <button className="ag-btn ag-btn-ghost ag-btn-sm"
+              onClick={() => set('cantBuses', Math.max(1, form.cantBuses - 1))}>−</button>
+            <span style={{ fontWeight: 700, fontSize: 18, minWidth: 24, textAlign: 'center', color: 'var(--ag-text)' }}>{form.cantBuses}</span>
+            <button className="ag-btn ag-btn-ghost ag-btn-sm"
+              onClick={() => set('cantBuses', form.cantBuses + 1)}>+</button>
+          </div>
+        </div>
+      </>}
+
+      {modo === 'excel' && (
+        <>
+          <div
+            style={{ border: `2px dashed ${excelDatos ? 'var(--ag-accent,#7c3aed)' : 'rgba(255,255,255,.18)'}`,
+              borderRadius: 12, padding: '20px 16px', textAlign: 'center', cursor: 'pointer',
+              background: excelDatos ? 'rgba(124,58,237,.07)' : 'transparent', transition: 'all .15s' }}
+            onClick={() => inputExcelRef.current?.click()}
+            onDragOver={e => e.preventDefault()}
+            onDrop={e => { e.preventDefault(); abrirExcel(e.dataTransfer.files?.[0]); }}>
+            <div style={{ fontSize: 28 }}>{cargandoExcel ? '⏳' : excelDatos ? '✅' : '📊'}</div>
+            <div style={{ fontWeight: 700, marginTop: 6, fontSize: 14, color: 'var(--ag-text)' }}>
+              {cargandoExcel ? 'Leyendo archivo...' : excelDatos ? 'Excel cargado — tocá para cambiar' : 'Subí el Excel Maestro'}
+            </div>
+            {!excelDatos && !cargandoExcel && (
+              <div style={{ fontSize: 12, color: 'var(--ag-text-2,#94a3b8)', marginTop: 4 }}>
+                Arrastrá o tocá para elegir el .xlsx — buses, conductores, coordinadores, pasajeros e itinerario se importan solos.
+              </div>
+            )}
+            {excelDatos && (
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'center', marginTop: 10 }}>
+                {[['buses','🚌','Ómnibus'],['conductores','🧑‍✈️','Conductores'],['coordinadores','📋','Coordinadores'],['pasajeros','🎒','Pasajeros'],['itinerario','🗓️','Días']].map(([k,icon,label]) =>
+                  excelDatos[k].length > 0 && (
+                    <span key={k} style={{ display:'inline-flex', alignItems:'center', gap:4, fontSize:12, fontWeight:700,
+                      background:'rgba(34,197,94,.15)', color:'#22c55e', borderRadius:6, padding:'3px 8px' }}>
+                      {icon} {excelDatos[k].length} {label}
+                    </span>
+                  )
+                )}
+              </div>
+            )}
+            <input ref={inputExcelRef} type="file" accept=".xlsx,.xls" style={{ display: 'none' }}
+              onChange={e => { abrirExcel(e.target.files?.[0]); e.target.value = ''; }} />
+          </div>
+          {excelDatos && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {[
+                { label: 'Destino (opcional)', key: 'destino', type: 'text', placeholder: 'ej: Bariloche' },
+                { label: 'Fecha de inicio (opcional, se detecta del itinerario)', key: 'fechaInicio', type: 'date' },
+                { label: 'Fecha de fin (opcional)', key: 'fechaFin', type: 'date' },
+              ].map(f => (
+                <div key={f.key}>
+                  <label className="ag-label">{f.label}</label>
+                  <input className="ag-input" type={f.type} placeholder={f.placeholder || ''}
+                    value={form[f.key]} onChange={e => set(f.key, e.target.value)} />
+                </div>
+              ))}
+            </div>
+          )}
+          {excelError && <div className="ag-alert ag-alert-error">{excelError}</div>}
+        </>
+      )}
+
       {error && <div className="ag-alert ag-alert-error">{error}</div>}
       <button className="ag-btn ag-btn-primary" onClick={handleCrear} disabled={guardando}>
-        {guardando ? 'Creando...' : '✓ Crear viaje y continuar'}
+        {guardando ? (modo === 'excel' ? 'Creando e importando...' : 'Creando...') : (modo === 'excel' ? '✓ Crear e importar datos' : '✓ Crear viaje y continuar')}
       </button>
     </div>
   );
