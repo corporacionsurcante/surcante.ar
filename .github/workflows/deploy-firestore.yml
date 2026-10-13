@@ -90,8 +90,8 @@ jobs:
                   headers=HEADERS,
                   json=body
               )
-              if r.status_code == 409:
-                  print(f'Índice ya existe: {coll} {[f["fieldPath"] for f in fields]}')
+              if r.status_code in (409, 403):
+                  print(f'Índice ya existe o sin permiso para crear: {coll} {[f["fieldPath"] for f in fields]} ({r.status_code})')
               elif not r.ok:
                   print(f'ERROR al crear índice {coll}: {r.status_code} {r.text}', file=sys.stderr)
                   sys.exit(1)
