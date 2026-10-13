@@ -324,3 +324,39 @@ export function actualizarAgenciaUser(email, data) {
 export function eliminarAgenciaUser(email) {
   return deleteDoc(doc(db, 'agencia_users', email.trim().toLowerCase()));
 }
+
+// ---------------- CÓDIGOS DE ACCESO DE AGENCIA ----------------
+const ALPHABET_CODIGO = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+
+function generarCodigoAcceso() {
+  return Array.from({ length: 8 }, () => ALPHABET_CODIGO[Math.floor(Math.random() * ALPHABET_CODIGO.length)]).join('');
+}
+
+export function suscribirAgenciaCodigos(agenciaId, cb, onError) {
+  return onSnapshot(
+    query(collection(db, 'agencia_codigos'), where('agenciaId', '==', agenciaId), orderBy('creadoEn', 'desc')),
+    snap => cb(mapDocs(snap)),
+    onError,
+  );
+}
+
+export async function crearAgenciaCodigo(agenciaId, creadoPor) {
+  const codigo = generarCodigoAcceso();
+  const expira = new Date();
+  expira.setDate(expira.getDate() + 7);
+  await setDoc(doc(db, 'agencia_codigos', codigo), {
+    agenciaId,
+    creadoPor: creadoPor || '',
+    creadoEn: serverTimestamp(),
+    expira: expira.toISOString(),
+    activo: true,
+    usado: false,
+    usadoEn: null,
+    dispositivoId: null,
+  });
+  return codigo;
+}
+
+export function desactivarAgenciaCodigo(codigo) {
+  return updateDoc(doc(db, 'agencia_codigos', codigo), { activo: false });
+}

@@ -213,6 +213,12 @@ service cloud.firestore {
       allow read, write: if isAdmin();
     }
 
+    // Códigos de acceso de un solo uso para el portal de agencias.
+    // La validación se hace server-side; el cliente solo puede listar los suyos (admin).
+    match /agencia_codigos/{codigo} {
+      allow read, write: if isAdmin();
+    }
+
     // Todo lo no listado queda cerrado
     match /{document=**} {
       allow read, write: if false;
