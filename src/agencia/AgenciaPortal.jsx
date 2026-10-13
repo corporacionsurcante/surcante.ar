@@ -30,26 +30,94 @@ function EstadoBadge({ estado }) {
 }
 
 // ---- Pantalla login ----
-function LoginScreen({ onLoginOk, cargando, error }) {
+function LoginScreen({ onLoginOk, onLoginCodigo, cargando, error }) {
+  const [modo, setModo] = useState('google');
+  const [codigoInput, setCodigoInput] = useState('');
+
+  function handleSubmitCodigo(e) {
+    e.preventDefault();
+    const limpio = codigoInput.replace(/[-\s]/g, '');
+    if (limpio.length >= 4) onLoginCodigo(codigoInput);
+  }
+
+  function formatCodigo(val) {
+    const raw = val.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8);
+    return raw.length > 4 ? raw.slice(0, 4) + '-' + raw.slice(4) : raw;
+  }
+
   return (
     <div className="ag-login-wrap">
       <div className="ag-login-card">
         <div className="ag-login-logo">🎓</div>
         <div className="ag-login-title">Portal de agencias</div>
-        <div className="ag-login-sub">
-          Ingresá con la cuenta de Google habilitada por Surcante para ver tus operativos.
-        </div>
-        {error && <div className="ag-alert ag-alert-error" style={{ marginBottom: 14 }}>{error}</div>}
-        <button
-          className="ag-btn ag-btn-google"
-          onClick={onLoginOk}
-          disabled={cargando}
-        >
-          {cargando
-            ? <><span className="ag-spinner" style={{ width: 18, height: 18, borderWidth: 2 }} /> Verificando...</>
-            : <><GoogleIcon /> Continuar con Google</>
-          }
-        </button>
+
+        {modo === 'google' && (
+          <>
+            <div className="ag-login-sub">
+              Ingresá con la cuenta de Google habilitada por Surcante para ver tus operativos.
+            </div>
+            {error && <div className="ag-alert ag-alert-error" style={{ marginBottom: 14 }}>{error}</div>}
+            <button className="ag-btn ag-btn-google" onClick={onLoginOk} disabled={cargando}>
+              {cargando
+                ? <><span className="ag-spinner" style={{ width: 18, height: 18, borderWidth: 2 }} /> Verificando...</>
+                : <><GoogleIcon /> Continuar con Google</>}
+            </button>
+            <button
+              className="ag-btn ag-btn-ghost"
+              style={{ marginTop: 10, width: '100%', fontSize: 13 }}
+              onClick={() => { setModo('codigo'); }}
+              disabled={cargando}
+            >
+              🔑 Tengo un código de acceso
+            </button>
+          </>
+        )}
+
+        {modo === 'codigo' && (
+          <>
+            <div className="ag-login-sub">
+              Ingresá el código de 8 caracteres que te envió Surcante.
+            </div>
+            {error && <div className="ag-alert ag-alert-error" style={{ marginBottom: 14 }}>{error}</div>}
+            <form onSubmit={handleSubmitCodigo} style={{ width: '100%' }}>
+              <input
+                type="text"
+                placeholder="XXXX-XXXX"
+                value={codigoInput}
+                onChange={e => setCodigoInput(formatCodigo(e.target.value))}
+                style={{
+                  width: '100%', boxSizing: 'border-box',
+                  textAlign: 'center', letterSpacing: 6, fontSize: 24, fontFamily: 'monospace',
+                  padding: '12px 16px', marginBottom: 12, borderRadius: 10,
+                  border: '1.5px solid var(--ag-sep)', background: 'var(--ag-bg-2)',
+                  color: 'var(--ag-text-1)', outline: 'none',
+                }}
+                autoFocus
+                autoComplete="off"
+                disabled={cargando}
+              />
+              <button
+                type="submit"
+                className="ag-btn ag-btn-primary"
+                style={{ width: '100%' }}
+                disabled={cargando || codigoInput.replace(/[-\s]/g, '').length < 8}
+              >
+                {cargando
+                  ? <><span className="ag-spinner" style={{ width: 18, height: 18, borderWidth: 2 }} /> Verificando...</>
+                  : '→ Ingresar con código'}
+              </button>
+            </form>
+            <button
+              className="ag-btn ag-btn-ghost"
+              style={{ marginTop: 10, width: '100%', fontSize: 13 }}
+              onClick={() => { setModo('google'); setCodigoInput(''); }}
+              disabled={cargando}
+            >
+              ← Ingresar con Google
+            </button>
+          </>
+        )}
+
         <div style={{ marginTop: 18, fontSize: 11, color: 'var(--ag-text-3)' }}>
           surcante.com — Sistema de gestión de egresados
         </div>
@@ -1034,6 +1102,50 @@ export default function AgenciaPortal() {
     return unsub;
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const handleLoginCodigo = useCallback(async (codigoInput) => {
+    loginInProgressRef.current = true;
+    setEstado('cargando');
+    setErrorMsg('');
+    try {
+      let dispositivoId;
+      try {
+        dispositivoId = localStorage.getItem('surcante_ag_dispositivo');
+        if (!dispositivoId) {
+          dispositivoId = (crypto.randomUUID?.() ?? Math.random().toString(36).slice(2) + Date.now().toString(36));
+          localStorage.setItem('surcante_ag_dispositivo', dispositivoId);
+        }
+      } catch (_) {
+        dispositivoId = 'unknown_' + Date.now();
+      }
+
+      const resp = await fetch('/api/agencia-codigo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ codigo: codigoInput, dispositivoId }),
+      });
+      const data = await resp.json();
+      if (data.error) throw new Error(data.error);
+
+      await signOut(auth).catch(() => {});
+      await signInWithCustomToken(auth, data.customToken);
+
+      setSesion({
+        uid: auth.currentUser?.uid || `agencia_${data.agenciaId}`,
+        agenciaId: data.agenciaId,
+        nombre: data.agenciaNombre || '',
+        agenciaNombre: data.agenciaNombre || '',
+      });
+      setEstado('ok');
+    } catch (e) {
+      console.error(e);
+      try { await signOut(auth); } catch (_) { /* noop */ }
+      setErrorMsg(e.message || 'Código inválido.');
+      setEstado('login');
+    } finally {
+      loginInProgressRef.current = false;
+    }
+  }, []);
+
   const handleLogin = useCallback(async () => {
     loginInProgressRef.current = true;
     setEstado('cargando');
@@ -1090,6 +1202,7 @@ export default function AgenciaPortal() {
     return (
       <LoginScreen
         onLoginOk={handleLogin}
+        onLoginCodigo={handleLoginCodigo}
         cargando={estado === 'cargando'}
         error={errorMsg}
       />

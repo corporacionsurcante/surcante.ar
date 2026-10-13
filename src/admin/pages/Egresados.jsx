@@ -1,7 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { auth } from '../../firebase/config';
 import {
   suscribirAgencias, suscribirTodosOperativos, eliminarAgencia,
   suscribirAgenciaUsers, crearAgenciaUser, actualizarAgenciaUser, eliminarAgenciaUser,
+  suscribirAgenciaCodigos, crearAgenciaCodigo, desactivarAgenciaCodigo,
 } from '../../firebase/egresadosService';
 import AgenciaForm from '../egresados/AgenciaForm';
 import OperativoForm from '../egresados/OperativoForm';
@@ -223,11 +225,12 @@ function AgenciaDetalle({ agencia, operativos, onVolver, onAbrirOperativo }) {
         </div>
       </div>
 
-      {/* Tabs: Operativos / Usuarios */}
+      {/* Tabs: Operativos / Usuarios / Códigos */}
       <div className="eg-tabs" style={{ marginBottom: 16 }}>
         {[
           { id: 'operativos', label: `🚌 Operativos (${operativos.length})` },
           { id: 'usuarios', label: '👥 Usuarios del portal' },
+          { id: 'codigos', label: '🔑 Códigos de acceso' },
         ].map(t => (
           <button
             key={t.id}
@@ -270,6 +273,10 @@ function AgenciaDetalle({ agencia, operativos, onVolver, onAbrirOperativo }) {
 
       {tab === 'usuarios' && (
         <AgenciaUsuarios agenciaId={agencia.id} />
+      )}
+
+      {tab === 'codigos' && (
+        <AgenciaCodigos agenciaId={agencia.id} />
       )}
 
       <div style={{ marginTop: 28, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
@@ -428,6 +435,142 @@ function AgenciaUsuarios({ agenciaId }) {
                 </td>
               </tr>
             ))}
+          </tbody>
+        </table>
+      )}
+    </div>
+  );
+}
+
+// ---------------- Códigos de acceso de agencia ----------------
+function AgenciaCodigos({ agenciaId }) {
+  const [codigos, setCodigos] = useState([]);
+  const [cargando, setCargando] = useState(true);
+  const [generando, setGenerando] = useState(false);
+  const [error, setError] = useState('');
+  const [ok, setOk] = useState('');
+  const [copiado, setCopiado] = useState('');
+
+  useEffect(() => {
+    const unsub = suscribirAgenciaCodigos(
+      agenciaId,
+      lista => { setCodigos(lista); setCargando(false); setError(''); },
+      err => {
+        console.error(err);
+        setCargando(false);
+        if (err?.code === 'permission-denied') {
+          setError('Las reglas de Firestore aún no se desplegaron. Hacé merge a main para activar esta funcionalidad.');
+        } else {
+          setError(err?.message || 'No se pudieron cargar los códigos.');
+        }
+      },
+    );
+    return unsub;
+  }, [agenciaId]);
+
+  async function generarCodigo() {
+    setGenerando(true);
+    setError('');
+    setOk('');
+    try {
+      const adminEmail = auth.currentUser?.email || 'admin';
+      const codigo = await crearAgenciaCodigo(agenciaId, adminEmail);
+      setOk(`✅ Código generado: ${codigo.slice(0, 4)}-${codigo.slice(4)}`);
+      setTimeout(() => setOk(''), 8000);
+    } catch (err) {
+      if (err?.code === 'permission-denied') {
+        setError('Las reglas de Firestore aún no se desplegaron. Hacé merge a main para activar esta funcionalidad.');
+      } else {
+        setError(err.message || 'No se pudo generar el código.');
+      }
+    } finally {
+      setGenerando(false);
+    }
+  }
+
+  async function desactivar(codigo) {
+    try {
+      await desactivarAgenciaCodigo(codigo);
+    } catch (err) {
+      setError(err.message || 'No se pudo desactivar.');
+    }
+  }
+
+  function copiar(codigo) {
+    const texto = `${codigo.slice(0, 4)}-${codigo.slice(4)}`;
+    navigator.clipboard?.writeText(texto).then(() => {
+      setCopiado(codigo);
+      setTimeout(() => setCopiado(''), 2000);
+    }).catch(() => {});
+  }
+
+  function formatExpira(iso) {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    return d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: '2-digit' });
+  }
+
+  if (cargando) return <div style={{ color: 'var(--eg-text-3)', fontSize: 13 }}>Cargando códigos...</div>;
+
+  return (
+    <div className="eg-section">
+      <div className="eg-section-title">
+        Códigos de acceso de un solo uso
+        <button className="eg-btn eg-btn-primary eg-btn-sm" onClick={generarCodigo} disabled={generando}>
+          {generando ? 'Generando...' : '+ Generar código'}
+        </button>
+      </div>
+
+      <div style={{ fontSize: 12, color: 'var(--eg-text-3)', marginBottom: 14, lineHeight: 1.55 }}>
+        Generá un código para que la agencia ingrese al portal sin cuenta de Google. Cada código es de un solo uso y expira en 7 días.
+      </div>
+
+      {ok && <div className="eg-alert" style={{ background: 'rgba(16,185,129,0.12)', color: '#10B981', border: '1px solid rgba(16,185,129,0.25)', borderRadius: 8, padding: '8px 12px', fontSize: 13, marginBottom: 10 }}>{ok}</div>}
+      {error && <div className="eg-alert eg-alert-error">{error}</div>}
+
+      {codigos.length === 0 ? (
+        <div style={{ color: 'var(--eg-text-3)', fontSize: 13, textAlign: 'center', padding: '12px 0' }}>
+          No hay códigos generados todavía.
+        </div>
+      ) : (
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+          <thead>
+            <tr>
+              {['Código', 'Estado', 'Expira', 'Creado por', ''].map((h, i) => (
+                <th key={i} style={{ textAlign: 'left', fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--eg-text-3)', padding: '0 6px 8px' }}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {codigos.map(c => {
+              const mostrar = `${c.id.slice(0, 4)}-${c.id.slice(4)}`;
+              const estado = !c.activo ? 'desactivado' : c.usado ? 'usado' : 'disponible';
+              const chipCls = estado === 'disponible' ? 'eg-chip-green' : estado === 'usado' ? 'eg-chip-purple' : 'eg-chip-red';
+              return (
+                <tr key={c.id} style={{ borderTop: '1px solid var(--eg-sep)' }}>
+                  <td style={{ padding: '8px 6px', fontFamily: 'monospace', fontSize: 15, letterSpacing: 2 }}>
+                    {mostrar}
+                  </td>
+                  <td style={{ padding: '8px 6px' }}>
+                    <span className={`eg-chip ${chipCls}`}>{estado}</span>
+                  </td>
+                  <td style={{ padding: '8px 6px', color: 'var(--eg-text-3)' }}>{formatExpira(c.expira)}</td>
+                  <td style={{ padding: '8px 6px', color: 'var(--eg-text-3)' }}>{c.creadoPor || '—'}</td>
+                  <td style={{ padding: '8px 0', display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+                    {estado === 'disponible' && (
+                      <>
+                        <button className="eg-btn eg-btn-ghost eg-btn-sm" onClick={() => copiar(c.id)}>
+                          {copiado === c.id ? '✅ Copiado' : '📋 Copiar'}
+                        </button>
+                        <button className="eg-btn eg-btn-danger eg-btn-sm" onClick={() => desactivar(c.id)}>
+                          🗑 Desactivar
+                        </button>
+                      </>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       )}
