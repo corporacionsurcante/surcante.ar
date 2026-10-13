@@ -529,28 +529,55 @@ function CrearViajeForm({ agenciaId, agenciaNombre, onCreado }) {
 
 // ---- Modal edición de datos del operativo ----
 function EditarOperativoModal({ op, onClose, onGuardado }) {
+  const s = op?.salida || {};
+  const r = op?.regreso || {};
   const [form, setForm] = useState({
     nombre: op.nombre || '',
     destino: op.destino || '',
     fechaInicio: op.fechaInicio || '',
     fechaFin: op.fechaFin || '',
+    salidaFecha: s.fecha || '',
+    salidaHora: s.hora || '',
+    salidaPresentacion: s.presentacion || '',
+    salidaLugar: s.lugar || '',
+    salidaDireccion: s.direccion || '',
+    salidaIndicaciones: s.indicaciones || '',
+    regresoFecha: r.fecha || '',
+    regresoHora: r.hora || '',
+    regresoLugar: r.lugar || '',
   });
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState('');
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+  const iw = { width: '100%', boxSizing: 'border-box' };
 
   async function guardar(e) {
     e.preventDefault();
     if (!form.nombre.trim()) { setError('El nombre es obligatorio.'); return; }
     setGuardando(true); setError('');
+    const t = k => form[k].trim?.() ?? form[k];
     try {
-      await actualizarOperativo(op.id, {
-        nombre: form.nombre.trim(),
-        destino: form.destino.trim(),
+      const datos = {
+        nombre: t('nombre'),
+        destino: t('destino'),
         fechaInicio: form.fechaInicio,
         fechaFin: form.fechaFin,
-      });
-      onGuardado({ ...op, ...form });
+        salida: {
+          lugar: t('salidaLugar'),
+          direccion: t('salidaDireccion'),
+          fecha: form.salidaFecha || form.fechaInicio,
+          hora: form.salidaHora,
+          presentacion: form.salidaPresentacion,
+          indicaciones: t('salidaIndicaciones'),
+        },
+        regreso: {
+          fecha: form.regresoFecha || form.fechaFin,
+          hora: form.regresoHora,
+          lugar: t('regresoLugar'),
+        },
+      };
+      await actualizarOperativo(op.id, datos);
+      onGuardado({ ...op, ...datos });
       onClose();
     } catch (e) {
       setError(e?.code === 'permission-denied' ? 'Sin permisos para editar.' : (e.message || 'Error al guardar.'));
@@ -558,36 +585,97 @@ function EditarOperativoModal({ op, onClose, onGuardado }) {
     setGuardando(false);
   }
 
+  const Sec = ({ titulo }) => (
+    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--ag-text-3)', textTransform: 'uppercase', letterSpacing: .6, marginTop: 8, paddingTop: 12, borderTop: '1px solid var(--ag-sep)' }}>
+      {titulo}
+    </div>
+  );
+
   return (
     <div className="ag-modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
-      <div className="ag-modal">
+      <div className="ag-modal" style={{ maxWidth: 560 }}>
         <div className="ag-modal-head">
           <div className="ag-modal-title">✏️ Editar datos del viaje</div>
           <button className="ag-modal-close" onClick={onClose}>✕</button>
         </div>
-        <div className="ag-modal-body">
-          <form onSubmit={guardar} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {[
-              { label: 'Nombre del viaje *', key: 'nombre', type: 'text', placeholder: 'Egresados CENS 35' },
-              { label: 'Destino', key: 'destino', type: 'text', placeholder: 'Bariloche' },
-              { label: 'Fecha de inicio', key: 'fechaInicio', type: 'date' },
-              { label: 'Fecha de fin', key: 'fechaFin', type: 'date' },
-            ].map(f => (
-              <div key={f.key}>
-                <label className="ag-label">{f.label}</label>
-                <input className="ag-input" type={f.type} placeholder={f.placeholder || ''}
-                  value={form[f.key]} onChange={e => set(f.key, e.target.value)} />
+        <form onSubmit={guardar}>
+          <div className="ag-modal-body" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {/* Datos generales */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              <div style={{ gridColumn: '1/-1' }}>
+                <label className="ag-label">Nombre del viaje *</label>
+                <input className="ag-input" style={iw} type="text" placeholder="Egresados CENS 35" value={form.nombre} onChange={e => set('nombre', e.target.value)} autoFocus />
               </div>
-            ))}
-            {error && <div className="ag-alert ag-alert-error">{error}</div>}
-            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 4 }}>
-              <button type="button" className="ag-btn ag-btn-ghost ag-btn-sm" onClick={onClose}>Cancelar</button>
-              <button type="submit" className="ag-btn ag-btn-primary ag-btn-sm" disabled={guardando}>
-                {guardando ? 'Guardando…' : '✓ Guardar cambios'}
-              </button>
+              <div style={{ gridColumn: '1/-1' }}>
+                <label className="ag-label">Destino</label>
+                <input className="ag-input" style={iw} type="text" placeholder="Bariloche" value={form.destino} onChange={e => set('destino', e.target.value)} />
+              </div>
+              <div>
+                <label className="ag-label">Fecha de inicio</label>
+                <input className="ag-input" style={iw} type="date" value={form.fechaInicio} onChange={e => set('fechaInicio', e.target.value)} />
+              </div>
+              <div>
+                <label className="ag-label">Fecha de fin</label>
+                <input className="ag-input" style={iw} type="date" value={form.fechaFin} onChange={e => set('fechaFin', e.target.value)} />
+              </div>
             </div>
-          </form>
-        </div>
+
+            {/* Salida */}
+            <Sec titulo="🚏 Salida" />
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              <div>
+                <label className="ag-label">Fecha de salida</label>
+                <input className="ag-input" style={iw} type="date" value={form.salidaFecha} onChange={e => set('salidaFecha', e.target.value)} />
+              </div>
+              <div>
+                <label className="ag-label">Hora de salida</label>
+                <input className="ag-input" style={iw} type="time" value={form.salidaHora} onChange={e => set('salidaHora', e.target.value)} />
+              </div>
+              <div>
+                <label className="ag-label">Hora de presentación</label>
+                <input className="ag-input" style={iw} type="time" value={form.salidaPresentacion} onChange={e => set('salidaPresentacion', e.target.value)} />
+              </div>
+              <div>
+                <label className="ag-label">Lugar de salida</label>
+                <input className="ag-input" style={iw} type="text" placeholder="ej: Puerta del colegio" value={form.salidaLugar} onChange={e => set('salidaLugar', e.target.value)} />
+              </div>
+              <div style={{ gridColumn: '1/-1' }}>
+                <label className="ag-label">Dirección</label>
+                <input className="ag-input" style={iw} type="text" placeholder="Calle 123, Ciudad" value={form.salidaDireccion} onChange={e => set('salidaDireccion', e.target.value)} />
+              </div>
+              <div style={{ gridColumn: '1/-1' }}>
+                <label className="ag-label">Indicaciones de salida</label>
+                <textarea className="ag-input" style={iw} rows={2} placeholder="ej: Presentarse con DNI, valija de hasta 20 kg + bolso de mano"
+                  value={form.salidaIndicaciones} onChange={e => set('salidaIndicaciones', e.target.value)} />
+              </div>
+            </div>
+
+            {/* Regreso */}
+            <Sec titulo="🏁 Regreso" />
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              <div>
+                <label className="ag-label">Fecha de regreso</label>
+                <input className="ag-input" style={iw} type="date" value={form.regresoFecha} onChange={e => set('regresoFecha', e.target.value)} />
+              </div>
+              <div>
+                <label className="ag-label">Hora estimada de llegada</label>
+                <input className="ag-input" style={iw} type="time" value={form.regresoHora} onChange={e => set('regresoHora', e.target.value)} />
+              </div>
+              <div style={{ gridColumn: '1/-1' }}>
+                <label className="ag-label">Lugar de llegada</label>
+                <input className="ag-input" style={iw} type="text" placeholder="ej: Puerta del colegio" value={form.regresoLugar} onChange={e => set('regresoLugar', e.target.value)} />
+              </div>
+            </div>
+
+            {error && <div className="ag-alert ag-alert-error">{error}</div>}
+          </div>
+          <div className="ag-modal-foot">
+            <button type="button" className="ag-btn ag-btn-ghost ag-btn-sm" onClick={onClose}>Cancelar</button>
+            <button type="submit" className="ag-btn ag-btn-primary ag-btn-sm" disabled={guardando}>
+              {guardando ? 'Guardando…' : '✓ Guardar cambios'}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );
