@@ -58,10 +58,10 @@ jobs:
               f'https://firebaserules.googleapis.com/v1/projects/{PROJECT}/releases/cloud.firestore',
               headers=HEADERS,
               params={'updateMask': 'rulesetName'},
-              json={
+              json={'release': {
                   'name': f'projects/{PROJECT}/releases/cloud.firestore',
                   'rulesetName': ruleset_name
-              }
+              }}
           )
           if not r.ok:
               print(f'ERROR al actualizar release: {r.status_code} {r.text}', file=sys.stderr)
