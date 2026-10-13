@@ -45,17 +45,19 @@ function leerAccesoGuardado() {
 
 function CotizadorApp() {
   const [isAdmin, setIsAdmin] = useState(false);
+  const [authResuelto, setAuthResuelto] = useState(false);
   const [tipoServicio, setTipoServicio] = useState(null);
   const [accesoCliente, setAccesoCliente] = useState(() => leerAccesoGuardado());
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async u => {
-      if (!u) { setIsAdmin(false); return; }
+      if (!u) { setIsAdmin(false); setAuthResuelto(true); return; }
       try {
         setIsAdmin(await isAdminAutorizado(u.email));
       } catch (_) {
         setIsAdmin(false);
       }
+      setAuthResuelto(true);
     });
     return unsub;
   }, []); // null | 'charter' | 'receptivo'
@@ -73,7 +75,9 @@ function CotizadorApp() {
     try { window.localStorage.setItem(ACCESO_STORAGE_KEY, JSON.stringify(withTs)); } catch (_) { /* modo privado */ }
   }
 
-  if (!accesoCliente) {
+  if (!accesoCliente && !isAdmin) {
+    // Mientras Firebase resuelve la sesión, no mostrar el gate (evita parpadeo para admins)
+    if (!authResuelto) return null;
     return (
       <>
         <BgOverlay />
