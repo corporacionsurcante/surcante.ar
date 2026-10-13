@@ -17,6 +17,13 @@ export function generarToken(largo = 22) {
   return out.join('');
 }
 
+// PIN de 6 dígitos para conductor y coordinador
+export function generarPin() {
+  const bytes = new Uint8Array(6);
+  window.crypto.getRandomValues(bytes);
+  return Array.from(bytes).map(b => b % 10).join('');
+}
+
 export function limpiarDni(v) {
   return String(v ?? '').replace(/\D/g, '');
 }
@@ -174,15 +181,16 @@ export const ROLES = {
   coordinador: { label: 'Coordinador', plural: 'Coordinadores', icon: '📋' },
 };
 
-export function mensajeAcceso({ rol, nombre, operativo, bus, link }) {
+export function mensajeAcceso({ rol, nombre, operativo, bus, link, pin }) {
   const saludo = `Hola ${nombre || ''}!`.replace(' !', '!');
   const viaje = operativo?.nombre ? `*${operativo.nombre}*` : 'tu viaje';
   const busTxt = bus ? ` (${bus.codigo})` : '';
+  const codigoPart = pin ? `\n\n🔐 Código de acceso: *${pin}*\n_(Lo vas a necesitar para ingresar)_` : '';
   if (rol === 'conductor') {
-    return `${saludo} 🚌 Este es tu acceso de CONDUCTOR para ${viaje}${busTxt} con Surcante.\n\nAbrilo cuando estés en la unidad y tocá "Iniciar servicio" para ponerte en línea. Ahí vas a recibir las indicaciones y avisos en tiempo real, y podés cargar reportes y fotos de la unidad.\n\n${link}\n\nEs personal, no lo compartas.`;
+    return `${saludo} 🚌 Este es tu acceso de CONDUCTOR para ${viaje}${busTxt} con Surcante.${codigoPart}\n\nAbrilo cuando estés en la unidad y tocá "Iniciar servicio" para ponerte en línea. Ahí vas a recibir las indicaciones y avisos en tiempo real, y podés cargar reportes y fotos de la unidad.\n\n${link}\n\nEs personal, no lo compartas.`;
   }
   if (rol === 'coordinador') {
-    return `${saludo} 📋 Este es tu acceso de COORDINADOR para ${viaje}${busTxt} con Surcante.\n\nVas a ver el diagrama del día, los datos de tu ómnibus y conductor, y vas a poder escanear el QR de los pasajeros para verificar ómnibus, hotel y coordinador responsable.\n\n${link}\n\nEs personal, no lo compartas.`;
+    return `${saludo} 📋 Este es tu acceso de COORDINADOR para ${viaje}${busTxt} con Surcante.${codigoPart}\n\nVas a ver el diagrama del día, los datos de tu ómnibus y conductor, y vas a poder escanear el QR de los pasajeros para verificar ómnibus, hotel y coordinador responsable.\n\n${link}\n\nEs personal, no lo compartas.`;
   }
   return `${saludo} 🎒 Este es tu acceso personal para ${viaje} con Surcante.\n\nAhí vas a ver tu ómnibus${busTxt ? ` ${busTxt.trim()}` : ''}, dónde está en tiempo real, los datos de tu coordinador y conductor, y la agenda de cada día con sugerencias.\n\n${link}\n\nEs personal, no lo compartas.`;
 }

@@ -137,7 +137,7 @@ export default function TabAccesos({ opId, op, buses, staff, pasajeros, accesos 
     if (!acc) return null;
     const link = linkAcceso(acc.id);
     const bus = buses.find(b => b.id === p.busId);
-    const texto = mensajeAcceso({ rol: p.rol, nombre: p.nombre, operativo: op, bus, link });
+    const texto = mensajeAcceso({ rol: p.rol, nombre: p.nombre, operativo: op, bus, link, pin: acc.pin });
     return { acc, link, texto };
   };
 
@@ -249,6 +249,7 @@ export default function TabAccesos({ opId, op, buses, staff, pasajeros, accesos 
                         : d.acc.ultimoAcceso ? <span className="eg-chip eg-chip-green">✓ Ingresó</span>
                           : d.acc.enviadoEn ? <span className="eg-chip eg-chip-purple">Enviado</span>
                             : <span className="eg-chip">Generado</span>}
+                      {d?.acc.pin && <span className="eg-chip eg-chip-amber" title={`PIN: ${d.acc.pin}`} style={{ marginLeft: 4, fontFamily: 'monospace', letterSpacing: 1 }}>🔐 {d.acc.pin}</span>}
                     </td>
                     <td>
                       {!d ? (

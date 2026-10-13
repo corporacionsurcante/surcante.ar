@@ -37,7 +37,7 @@ export default async function handler(req, res) {
   } catch (_) {
     return res.status(400).json({ error: 'Body inválido' });
   }
-  const token = body.token;
+  const { token, pin } = body;
 
   if (!token || typeof token !== 'string' || token.length < 10 || token.length > 64) {
     return res.status(400).json({ error: 'Token inválido' });
@@ -56,6 +56,13 @@ export default async function handler(req, res) {
 
     if (!acceso.activo) {
       return res.status(403).json({ error: 'Este link fue revocado. Pedile uno nuevo a tu agencia.' });
+    }
+
+    if (acceso.pin) {
+      if (!pin) return res.status(200).json({ requiresPin: true, rol: acceso.rol });
+      if (String(pin).trim() !== String(acceso.pin)) {
+        return res.status(403).json({ error: 'Código de acceso incorrecto. Verificá con tu agencia.' });
+      }
     }
 
     const { opId, rol, refId, nombre = '' } = acceso;

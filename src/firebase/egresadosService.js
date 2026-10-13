@@ -14,7 +14,7 @@ import {
   onSnapshot, query, where, orderBy, serverTimestamp, writeBatch,
 } from 'firebase/firestore';
 import { db } from './config';
-import { generarToken, limpiarDni, normalizarTexto } from '../admin/egresados/utils';
+import { generarToken, generarPin, limpiarDni, normalizarTexto } from '../admin/egresados/utils';
 
 const SUBCOLECCIONES = ['buses', 'staff', 'pasajeros', 'itinerario', 'avisos', 'reportes', 'ubicaciones', 'checkins'];
 const LOTE = 400; // Firestore permite 500 operaciones por batch
@@ -185,10 +185,11 @@ export async function generarAccesos(opId, personas) {
   const creados = [];
   await commitEnLotes(personas.map(p => batch => {
     const token = generarToken();
-    creados.push({ id: token, ...p });
-    batch.set(doc(db, 'accesos', token), {
-      opId, rol: p.rol, refId: p.refId, nombre: p.nombre || '', activo: true, creadoEn: serverTimestamp(),
-    });
+    const pin = (p.rol === 'conductor' || p.rol === 'coordinador') ? generarPin() : null;
+    creados.push({ id: token, ...p, ...(pin ? { pin } : {}) });
+    const data = { opId, rol: p.rol, refId: p.refId, nombre: p.nombre || '', activo: true, creadoEn: serverTimestamp() };
+    if (pin) data.pin = pin;
+    batch.set(doc(db, 'accesos', token), data);
   }));
   return creados;
 }
@@ -205,13 +206,16 @@ export function eliminarAcceso(token) {
 export async function regenerarAcceso(opId, accesoViejo) {
   const batch = writeBatch(db);
   const token = generarToken();
-  batch.delete(doc(db, 'accesos', accesoViejo.id));
-  batch.set(doc(db, 'accesos', token), {
+  const pin = (accesoViejo.rol === 'conductor' || accesoViejo.rol === 'coordinador') ? generarPin() : null;
+  const data = {
     opId, rol: accesoViejo.rol, refId: accesoViejo.refId, nombre: accesoViejo.nombre || '',
     activo: true, creadoEn: serverTimestamp(),
-  });
+  };
+  if (pin) data.pin = pin;
+  batch.delete(doc(db, 'accesos', accesoViejo.id));
+  batch.set(doc(db, 'accesos', token), data);
   await batch.commit();
-  return token;
+  return { token, pin };
 }
 
 // ---------------- IMPORTACIÓN MAESTRO ----------------

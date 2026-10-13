@@ -303,7 +303,7 @@ function OnboardingAgencia({ sesion, onOperativoCreado }) {
         {[
           { id: 'bienvenida', label: '👋 Bienvenida' },
           { id: 'viaje',      label: '📋 Primer viaje' },
-          { id: 'coordinadores', label: '👥 Coordinadores' },
+          { id: 'coordinadores', label: '👥 Co-gerentes' },
         ].map(t => (
           <button key={t.id} onClick={() => setTab(t.id)}
             className={`ag-btn ag-btn-ghost${tab === t.id ? ' ag-btn-active' : ''}`}
@@ -330,7 +330,7 @@ function OnboardingAgencia({ sesion, onOperativoCreado }) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {[
               { n: '1', title: 'Creás tu primer viaje', desc: 'Completás los datos básicos del viaje (nombre, destino, fechas) e importás los pasajeros desde Excel.' },
-              { n: '2', title: 'Sumás coordinadores', desc: 'Invitás a los coordinadores de tu agencia por email. Van a tener acceso al portal en tiempo real.' },
+              { n: '2', title: 'Sumás co-gerentes', desc: 'Invitás a co-gerentes de tu agencia por email. Tienen acceso completo al portal para gestionar operativos.' },
               { n: '3', title: 'Los pasajeros se conectan', desc: 'Cada pasajero recibe un acceso único para ver su lugar, ómnibus y toda la info del viaje.' },
             ].map(s => (
               <div key={s.n} style={{ display: 'flex', gap: 14, alignItems: 'flex-start', background: 'var(--ag-card-2)', borderRadius: 10, padding: '14px 16px' }}>
@@ -344,7 +344,7 @@ function OnboardingAgencia({ sesion, onOperativoCreado }) {
           </div>
           <div style={{ display: 'flex', gap: 10, marginTop: 24 }}>
             <button className="ag-btn ag-btn-primary" onClick={() => setTab('viaje')}>Crear mi primer viaje →</button>
-            <button className="ag-btn ag-btn-ghost" onClick={() => setTab('coordinadores')}>Gestionar coordinadores</button>
+            <button className="ag-btn ag-btn-ghost" onClick={() => setTab('coordinadores')}>Gestionar co-gerentes</button>
           </div>
         </div>
       )}
@@ -361,9 +361,9 @@ function OnboardingAgencia({ sesion, onOperativoCreado }) {
 
       {tab === 'coordinadores' && (
         <div className="ag-section" style={{ maxWidth: 560 }}>
-          <div style={{ fontWeight: 700, fontSize: 16, color: 'var(--ag-text)', marginBottom: 4 }}>Coordinadores de la agencia</div>
+          <div style={{ fontWeight: 700, fontSize: 16, color: 'var(--ag-text)', marginBottom: 4 }}>Co-gerentes de la agencia</div>
           <p style={{ fontSize: 13, color: 'var(--ag-text-3)', marginBottom: 20 }}>
-            Los coordinadores pueden acceder al portal de seguimiento en tiempo real.
+            Los co-gerentes tienen acceso completo al portal de agencia para gestionar operativos y pasajeros.
           </p>
           <GestionCoordinadores agenciaId={sesion.agenciaId} usuarios={usuarios} />
         </div>
@@ -485,7 +485,7 @@ function GestionCoordinadores({ agenciaId, usuarios }) {
       {/* Lista actual */}
       {usuarios.length > 0 && (
         <div>
-          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--ag-text-3)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Coordinadores actuales</div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--ag-text-3)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Co-gerentes actuales</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {usuarios.map(u => (
               <div key={u.id} style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--ag-card-2)', borderRadius: 8, padding: '10px 14px' }}>
@@ -516,7 +516,7 @@ function GestionCoordinadores({ agenciaId, usuarios }) {
 
       {/* Agregar nuevo */}
       <div>
-        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--ag-text-3)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 10 }}>Agregar coordinador</div>
+        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--ag-text-3)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 10 }}>Agregar co-gerente</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           <div>
             <label className="ag-label">Nombre completo</label>
@@ -530,11 +530,11 @@ function GestionCoordinadores({ agenciaId, usuarios }) {
           {error && <div className="ag-alert ag-alert-error">{error}</div>}
           {ok    && <div style={{ background: 'rgba(16,185,129,.10)', color: '#059669', borderRadius: 8, padding: '8px 12px', fontSize: 13, fontWeight: 600 }}>{ok}</div>}
           <button className="ag-btn ag-btn-primary" onClick={agregar} disabled={guardando}>
-            {guardando ? 'Guardando...' : '+ Agregar coordinador'}
+            {guardando ? 'Guardando...' : '+ Agregar co-gerente'}
           </button>
         </div>
         <p style={{ fontSize: 12, color: 'var(--ag-text-3)', marginTop: 10, lineHeight: 1.5 }}>
-          El coordinador podrá ingresar con su cuenta de Google usando este email. Le avisale para que acceda a <strong>surcante.ar/agencia</strong>.
+          El co-gerente podrá ingresar con su cuenta de Google usando este email. Avisale para que acceda a <strong>surcante.ar/agencia</strong>. Los coordinadores operativos se gestionan desde cada operativo.
         </p>
       </div>
     </div>
