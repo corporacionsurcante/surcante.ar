@@ -1126,7 +1126,9 @@ function TabPasajeros({ pasajeros, buses, staff, opId, agenciaId }) {
     if (!confirmElim) return;
     setEliminando(true);
     try {
-      await eliminarPasajerosMasivo(opId, [confirmElim.id], []);
+      const idElim = confirmElim.id;
+      await eliminarPasajerosMasivo(opId, [idElim], []);
+      setLinksGenerados(prev => { const next = { ...prev }; delete next[idElim]; return next; });
       setConfirmElim(null);
     } catch (e) {
       alert(e?.code === 'permission-denied' ? 'Sin permisos para eliminar.' : (e.message || 'Error al eliminar.'));
