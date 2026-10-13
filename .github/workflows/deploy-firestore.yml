@@ -1,6 +1,7 @@
 name: Deploy Firestore Rules & Indexes
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
