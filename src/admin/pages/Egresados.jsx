@@ -454,8 +454,16 @@ function AgenciaCodigos({ agenciaId }) {
   useEffect(() => {
     const unsub = suscribirAgenciaCodigos(
       agenciaId,
-      lista => { setCodigos(lista); setCargando(false); },
-      err => { console.error(err); setCargando(false); },
+      lista => { setCodigos(lista); setCargando(false); setError(''); },
+      err => {
+        console.error(err);
+        setCargando(false);
+        if (err?.code === 'permission-denied') {
+          setError('Las reglas de Firestore aún no se desplegaron. Hacé merge a main para activar esta funcionalidad.');
+        } else {
+          setError(err?.message || 'No se pudieron cargar los códigos.');
+        }
+      },
     );
     return unsub;
   }, [agenciaId]);
@@ -470,7 +478,11 @@ function AgenciaCodigos({ agenciaId }) {
       setOk(`✅ Código generado: ${codigo.slice(0, 4)}-${codigo.slice(4)}`);
       setTimeout(() => setOk(''), 8000);
     } catch (err) {
-      setError(err.message || 'No se pudo generar el código.');
+      if (err?.code === 'permission-denied') {
+        setError('Las reglas de Firestore aún no se desplegaron. Hacé merge a main para activar esta funcionalidad.');
+      } else {
+        setError(err.message || 'No se pudo generar el código.');
+      }
     } finally {
       setGenerando(false);
     }
