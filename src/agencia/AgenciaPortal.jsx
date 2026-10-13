@@ -11,9 +11,9 @@ import {
   CAMPOS_PASAJERO, detectarEncabezados, filasAPasajeros, leerArchivoPlanilla, parsearTexto, apellidoNombre,
 } from '../admin/egresados/utils';
 import {
-  guardarPasajerosMasivo, crearOperativo,
-  suscribirAgenciaUsers, crearAgenciaUser,
+  guardarPasajerosMasivo, crearOperativo, importarMaestro,
 } from '../firebase/egresadosService';
+import { parsearExcelMaestro } from '../admin/egresados/ImportarMaestro';
 import './agencia.css';
 
 const ESTADOS = {
@@ -291,10 +291,7 @@ function OperativoCard({ op, hoy, onClick, pasado }) {
 
 // ---- Onboarding para agencia nueva (sin operativos) ----
 function OnboardingAgencia({ sesion, onOperativoCreado }) {
-  const [tab, setTab] = useState('bienvenida'); // bienvenida | viaje | coordinadores
-  const [usuarios, setUsuarios] = useState([]);
-
-  useEffect(() => suscribirAgenciaUsers(sesion.agenciaId, setUsuarios, console.error), [sesion.agenciaId]);
+  const [tab, setTab] = useState('bienvenida'); // bienvenida | viaje
 
   return (
     <div>
@@ -303,7 +300,6 @@ function OnboardingAgencia({ sesion, onOperativoCreado }) {
         {[
           { id: 'bienvenida', label: '👋 Bienvenida' },
           { id: 'viaje',      label: '📋 Primer viaje' },
-          { id: 'coordinadores', label: '👥 Co-gerentes' },
         ].map(t => (
           <button key={t.id} onClick={() => setTab(t.id)}
             className={`ag-btn ag-btn-ghost${tab === t.id ? ' ag-btn-active' : ''}`}
@@ -330,7 +326,7 @@ function OnboardingAgencia({ sesion, onOperativoCreado }) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {[
               { n: '1', title: 'Creás tu primer viaje', desc: 'Completás los datos básicos del viaje (nombre, destino, fechas) e importás los pasajeros desde Excel.' },
-              { n: '2', title: 'Sumás co-gerentes', desc: 'Invitás a co-gerentes de tu agencia por email. Tienen acceso completo al portal para gestionar operativos.' },
+              { n: '2', title: 'Surcante activa tu equipo', desc: 'El equipo de Surcante habilita a los co-gerentes de tu agencia para que puedan acceder al portal.' },
               { n: '3', title: 'Los pasajeros se conectan', desc: 'Cada pasajero recibe un acceso único para ver su lugar, ómnibus y toda la info del viaje.' },
             ].map(s => (
               <div key={s.n} style={{ display: 'flex', gap: 14, alignItems: 'flex-start', background: 'var(--ag-card-2)', borderRadius: 10, padding: '14px 16px' }}>
@@ -344,7 +340,6 @@ function OnboardingAgencia({ sesion, onOperativoCreado }) {
           </div>
           <div style={{ display: 'flex', gap: 10, marginTop: 24 }}>
             <button className="ag-btn ag-btn-primary" onClick={() => setTab('viaje')}>Crear mi primer viaje →</button>
-            <button className="ag-btn ag-btn-ghost" onClick={() => setTab('coordinadores')}>Gestionar co-gerentes</button>
           </div>
         </div>
       )}
@@ -358,37 +353,55 @@ function OnboardingAgencia({ sesion, onOperativoCreado }) {
           <CrearViajeForm agenciaId={sesion.agenciaId} agenciaNombre={sesion.agenciaNombre} onCreado={onOperativoCreado} />
         </div>
       )}
-
-      {tab === 'coordinadores' && (
-        <div className="ag-section" style={{ maxWidth: 560 }}>
-          <div style={{ fontWeight: 700, fontSize: 16, color: 'var(--ag-text)', marginBottom: 4 }}>Co-gerentes de la agencia</div>
-          <p style={{ fontSize: 13, color: 'var(--ag-text-3)', marginBottom: 20 }}>
-            Los co-gerentes tienen acceso completo al portal de agencia para gestionar operativos y pasajeros.
-          </p>
-          <GestionCoordinadores agenciaId={sesion.agenciaId} usuarios={usuarios} />
-        </div>
-      )}
     </div>
   );
 }
 
 // ---- Formulario crear primer viaje ----
 function CrearViajeForm({ agenciaId, agenciaNombre, onCreado }) {
+  const [modo, setModo] = useState('manual');
   const [form, setForm] = useState({ nombre: '', destino: '', fechaInicio: '', fechaFin: '', cantBuses: 1 });
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState('');
+  const [excelDatos, setExcelDatos] = useState(null);
+  const [cargandoExcel, setCargandoExcel] = useState(false);
+  const [excelError, setExcelError] = useState('');
+  const inputExcelRef = useRef(null);
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
+  async function abrirExcel(file) {
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) { setExcelError('El archivo supera 10 MB.'); return; }
+    setCargandoExcel(true); setExcelError('');
+    try {
+      const d = await parsearExcelMaestro(file);
+      setExcelDatos(d);
+      if (d.itinerario?.length > 0) {
+        const fechas = d.itinerario.map(i => i.fecha).filter(Boolean).sort();
+        if (fechas.length > 0) setForm(f => ({ ...f, fechaInicio: f.fechaInicio || fechas[0] }));
+        if (fechas.length > 1) setForm(f => ({ ...f, fechaFin: f.fechaFin || fechas[fechas.length - 1] }));
+      }
+    } catch (e) { setExcelError(e.message || 'No se pudo leer el archivo.'); }
+    setCargandoExcel(false);
+  }
+
   async function handleCrear() {
-    if (!form.nombre.trim() || !form.destino.trim() || !form.fechaInicio || !form.fechaFin) {
+    if (!form.nombre.trim()) { setError('Completá el nombre del viaje.'); return; }
+    if (modo === 'manual' && (!form.destino.trim() || !form.fechaInicio || !form.fechaFin)) {
       setError('Completá nombre, destino y fechas.'); return;
     }
+    if (modo === 'excel' && !excelDatos) { setError('Subí el archivo Excel Maestro antes de continuar.'); return; }
     setGuardando(true); setError('');
     try {
-      const buses = Array.from({ length: Math.max(1, Number(form.cantBuses) || 1) }, (_, i) => ({
-        nombre: `Bus ${i + 1}`, numero: i + 1,
-      }));
+      let buses;
+      if (modo === 'excel') {
+        buses = [];
+      } else {
+        buses = Array.from({ length: Math.max(1, Number(form.cantBuses) || 1) }, (_, i) => ({
+          nombre: `Bus ${i + 1}`, numero: i + 1,
+        }));
+      }
       const ref = await crearOperativo({
         nombre: form.nombre.trim(),
         destino: form.destino.trim(),
@@ -398,6 +411,9 @@ function CrearViajeForm({ agenciaId, agenciaNombre, onCreado }) {
         agenciaNombre: agenciaNombre || '',
         estado: 'planificacion',
       }, buses);
+      if (modo === 'excel' && excelDatos) {
+        await importarMaestro(ref.id, excelDatos, {});
+      }
       onCreado({ id: ref.id, nombre: form.nombre.trim(), destino: form.destino.trim(), fechaInicio: form.fechaInicio, fechaFin: form.fechaFin, agenciaId, estado: 'planificacion' });
     } catch (e) {
       console.error(e); setError('No se pudo crear el viaje. Revisá la conexión.');
@@ -407,136 +423,104 @@ function CrearViajeForm({ agenciaId, agenciaNombre, onCreado }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-      {[
-        { label: 'Nombre del viaje', key: 'nombre', type: 'text', placeholder: 'ej: Egresados CENS 35 — 2025' },
-        { label: 'Destino',          key: 'destino', type: 'text', placeholder: 'ej: Bariloche' },
-        { label: 'Fecha de inicio',  key: 'fechaInicio', type: 'date', placeholder: '' },
-        { label: 'Fecha de fin',     key: 'fechaFin',    type: 'date', placeholder: '' },
-      ].map(f => (
-        <div key={f.key}>
-          <label className="ag-label">{f.label}</label>
-          <input className="ag-input" type={f.type} placeholder={f.placeholder}
-            value={form[f.key]} onChange={e => set(f.key, e.target.value)} />
-        </div>
-      ))}
-      <div>
-        <label className="ag-label">Cantidad de ómnibus</label>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <button className="ag-btn ag-btn-ghost ag-btn-sm"
-            onClick={() => set('cantBuses', Math.max(1, form.cantBuses - 1))}>−</button>
-          <span style={{ fontWeight: 700, fontSize: 18, minWidth: 24, textAlign: 'center', color: 'var(--ag-text)' }}>{form.cantBuses}</span>
-          <button className="ag-btn ag-btn-ghost ag-btn-sm"
-            onClick={() => set('cantBuses', form.cantBuses + 1)}>+</button>
-        </div>
+      {/* Selector de modo */}
+      <div style={{ display: 'flex', gap: 4, background: 'var(--ag-bg-2,rgba(255,255,255,.06))', padding: 4, borderRadius: 10 }}>
+        {[['manual', '✍️ Manual'], ['excel', '📊 Desde Excel']].map(([m, label]) => (
+          <button key={m} onClick={() => { setModo(m); if (m === 'manual') { setExcelDatos(null); setExcelError(''); } }}
+            style={{ flex: 1, padding: '8px 0', borderRadius: 8, border: 'none', fontWeight: 700, fontSize: 13, cursor: 'pointer',
+              background: modo === m ? 'var(--ag-accent,#7c3aed)' : 'transparent',
+              color: modo === m ? '#fff' : 'var(--ag-text-2,#94a3b8)', transition: 'all .15s' }}>
+            {label}
+          </button>
+        ))}
       </div>
-      {error && <div className="ag-alert ag-alert-error">{error}</div>}
-      <button className="ag-btn ag-btn-primary" onClick={handleCrear} disabled={guardando}>
-        {guardando ? 'Creando...' : '✓ Crear viaje y continuar'}
-      </button>
-    </div>
-  );
-}
 
-// ---- Gestión de coordinadores ----
-function GestionCoordinadores({ agenciaId, usuarios }) {
-  const [nombre, setNombre] = useState('');
-  const [email, setEmail] = useState('');
-  const [guardando, setGuardando] = useState(false);
-  const [eliminando, setEliminando] = useState(null); // email en proceso
-  const [error, setError] = useState('');
-  const [ok, setOk] = useState('');
+      <div>
+        <label className="ag-label">Nombre del viaje *</label>
+        <input className="ag-input" type="text" placeholder="ej: Egresados CENS 35 — 2025"
+          value={form.nombre} onChange={e => set('nombre', e.target.value)} />
+      </div>
 
-  async function agregar() {
-    if (!email.trim() || !nombre.trim()) { setError('Completá nombre y email.'); return; }
-    const emailLower = email.trim().toLowerCase();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailLower)) { setError('Email no válido.'); return; }
-    setGuardando(true); setError(''); setOk('');
-    try {
-      await crearAgenciaUser(emailLower, agenciaId, nombre.trim());
-      setNombre(''); setEmail('');
-      setOk(`✓ ${emailLower} agregado correctamente.`);
-    } catch (e) {
-      console.error(e); setError('No se pudo guardar. Revisá la conexión.');
-    }
-    setGuardando(false);
-  }
-
-  async function eliminar(emailCoord) {
-    if (!window.confirm(`¿Eliminar el acceso de ${emailCoord}?`)) return;
-    setEliminando(emailCoord); setError(''); setOk('');
-    try {
-      const idToken = await auth.currentUser.getIdToken();
-      const resp = await fetch('/api/agencia-coordinadores', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
-        body: JSON.stringify({ email: emailCoord }),
-      });
-      const data = await resp.json();
-      if (!resp.ok) throw new Error(data.error || 'Error al eliminar');
-      setOk(`✓ ${emailCoord} eliminado.`);
-    } catch (e) {
-      console.error(e); setError(e.message || 'No se pudo eliminar.');
-    }
-    setEliminando(null);
-  }
-
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-      {/* Lista actual */}
-      {usuarios.length > 0 && (
+      {modo === 'manual' && <>
+        {[
+          { label: 'Destino', key: 'destino', type: 'text', placeholder: 'ej: Bariloche' },
+          { label: 'Fecha de inicio', key: 'fechaInicio', type: 'date', placeholder: '' },
+          { label: 'Fecha de fin',    key: 'fechaFin',    type: 'date', placeholder: '' },
+        ].map(f => (
+          <div key={f.key}>
+            <label className="ag-label">{f.label}</label>
+            <input className="ag-input" type={f.type} placeholder={f.placeholder}
+              value={form[f.key]} onChange={e => set(f.key, e.target.value)} />
+          </div>
+        ))}
         <div>
-          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--ag-text-3)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Co-gerentes actuales</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {usuarios.map(u => (
-              <div key={u.id} style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--ag-card-2)', borderRadius: 8, padding: '10px 14px' }}>
-                <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(var(--ag-accent-rgb),.15)', color: 'var(--ag-accent)', fontWeight: 800, fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  {(u.nombre || u.id)[0].toUpperCase()}
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontWeight: 600, color: 'var(--ag-text)', fontSize: 14 }}>{u.nombre || '—'}</div>
-                  <div style={{ fontSize: 12, color: 'var(--ag-text-3)' }}>{u.id}</div>
-                </div>
-                <span style={{ fontSize: 11, fontWeight: 700, background: u.activa !== false ? 'rgba(16,185,129,.12)' : 'rgba(239,68,68,.10)', color: u.activa !== false ? '#059669' : '#DC2626', padding: '2px 8px', borderRadius: 20 }}>
-                  {u.activa !== false ? 'Activo' : 'Inactivo'}
-                </span>
-                <button
-                  className="ag-btn ag-btn-ghost ag-btn-sm"
-                  onClick={() => eliminar(u.id)}
-                  disabled={eliminando === u.id}
-                  title="Eliminar acceso"
-                  style={{ color: 'var(--ag-error, #DC2626)', padding: '4px 8px', flexShrink: 0 }}
-                >
-                  {eliminando === u.id ? '…' : '×'}
-                </button>
-              </div>
-            ))}
+          <label className="ag-label">Cantidad de ómnibus</label>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <button className="ag-btn ag-btn-ghost ag-btn-sm"
+              onClick={() => set('cantBuses', Math.max(1, form.cantBuses - 1))}>−</button>
+            <span style={{ fontWeight: 700, fontSize: 18, minWidth: 24, textAlign: 'center', color: 'var(--ag-text)' }}>{form.cantBuses}</span>
+            <button className="ag-btn ag-btn-ghost ag-btn-sm"
+              onClick={() => set('cantBuses', form.cantBuses + 1)}>+</button>
           </div>
         </div>
+      </>}
+
+      {modo === 'excel' && (
+        <>
+          <div
+            style={{ border: `2px dashed ${excelDatos ? 'var(--ag-accent,#7c3aed)' : 'rgba(255,255,255,.18)'}`,
+              borderRadius: 12, padding: '20px 16px', textAlign: 'center', cursor: 'pointer',
+              background: excelDatos ? 'rgba(124,58,237,.07)' : 'transparent', transition: 'all .15s' }}
+            onClick={() => inputExcelRef.current?.click()}
+            onDragOver={e => e.preventDefault()}
+            onDrop={e => { e.preventDefault(); abrirExcel(e.dataTransfer.files?.[0]); }}>
+            <div style={{ fontSize: 28 }}>{cargandoExcel ? '⏳' : excelDatos ? '✅' : '📊'}</div>
+            <div style={{ fontWeight: 700, marginTop: 6, fontSize: 14, color: 'var(--ag-text)' }}>
+              {cargandoExcel ? 'Leyendo archivo...' : excelDatos ? 'Excel cargado — tocá para cambiar' : 'Subí el Excel Maestro'}
+            </div>
+            {!excelDatos && !cargandoExcel && (
+              <div style={{ fontSize: 12, color: 'var(--ag-text-2,#94a3b8)', marginTop: 4 }}>
+                Arrastrá o tocá para elegir el .xlsx — buses, conductores, coordinadores, pasajeros e itinerario se importan solos.
+              </div>
+            )}
+            {excelDatos && (
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'center', marginTop: 10 }}>
+                {[['buses','🚌','Ómnibus'],['conductores','🧑‍✈️','Conductores'],['coordinadores','📋','Coordinadores'],['pasajeros','🎒','Pasajeros'],['itinerario','🗓️','Días']].map(([k,icon,label]) =>
+                  excelDatos[k].length > 0 && (
+                    <span key={k} style={{ display:'inline-flex', alignItems:'center', gap:4, fontSize:12, fontWeight:700,
+                      background:'rgba(34,197,94,.15)', color:'#22c55e', borderRadius:6, padding:'3px 8px' }}>
+                      {icon} {excelDatos[k].length} {label}
+                    </span>
+                  )
+                )}
+              </div>
+            )}
+            <input ref={inputExcelRef} type="file" accept=".xlsx,.xls" style={{ display: 'none' }}
+              onChange={e => { abrirExcel(e.target.files?.[0]); e.target.value = ''; }} />
+          </div>
+          {excelDatos && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {[
+                { label: 'Destino (opcional)', key: 'destino', type: 'text', placeholder: 'ej: Bariloche' },
+                { label: 'Fecha de inicio (opcional, se detecta del itinerario)', key: 'fechaInicio', type: 'date' },
+                { label: 'Fecha de fin (opcional)', key: 'fechaFin', type: 'date' },
+              ].map(f => (
+                <div key={f.key}>
+                  <label className="ag-label">{f.label}</label>
+                  <input className="ag-input" type={f.type} placeholder={f.placeholder || ''}
+                    value={form[f.key]} onChange={e => set(f.key, e.target.value)} />
+                </div>
+              ))}
+            </div>
+          )}
+          {excelError && <div className="ag-alert ag-alert-error">{excelError}</div>}
+        </>
       )}
 
-      {/* Agregar nuevo */}
-      <div>
-        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--ag-text-3)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 10 }}>Agregar co-gerente</div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <div>
-            <label className="ag-label">Nombre completo</label>
-            <input className="ag-input" type="text" placeholder="ej: Ana García" value={nombre} onChange={e => setNombre(e.target.value)} />
-          </div>
-          <div>
-            <label className="ag-label">Email</label>
-            <input className="ag-input" type="email" placeholder="ej: ana@miagencia.com" value={email} onChange={e => setEmail(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && agregar()} />
-          </div>
-          {error && <div className="ag-alert ag-alert-error">{error}</div>}
-          {ok    && <div style={{ background: 'rgba(16,185,129,.10)', color: '#059669', borderRadius: 8, padding: '8px 12px', fontSize: 13, fontWeight: 600 }}>{ok}</div>}
-          <button className="ag-btn ag-btn-primary" onClick={agregar} disabled={guardando}>
-            {guardando ? 'Guardando...' : '+ Agregar co-gerente'}
-          </button>
-        </div>
-        <p style={{ fontSize: 12, color: 'var(--ag-text-3)', marginTop: 10, lineHeight: 1.5 }}>
-          El co-gerente podrá ingresar con su cuenta de Google usando este email. Avisale para que acceda a <strong>surcante.ar/agencia</strong>. Los coordinadores operativos se gestionan desde cada operativo.
-        </p>
-      </div>
+      {error && <div className="ag-alert ag-alert-error">{error}</div>}
+      <button className="ag-btn ag-btn-primary" onClick={handleCrear} disabled={guardando}>
+        {guardando ? (modo === 'excel' ? 'Creando e importando...' : 'Creando...') : (modo === 'excel' ? '✓ Crear e importar datos' : '✓ Crear viaje y continuar')}
+      </button>
     </div>
   );
 }

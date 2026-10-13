@@ -238,6 +238,20 @@ function parsearItinerario(filas) {
   return [...porFecha.entries()].map(([fecha, d]) => ({ fecha, ...d }));
 }
 
+// ---- Export para uso en flujo de creación ----
+export async function parsearExcelMaestro(file) {
+  const lb = await leerArchivoPlanilla(file);
+  const hojas = detectarHojas(lb.hojas);
+  const leer = h => (h ? lb.leer(h) : []);
+  return {
+    buses:         parsearBuses(leer(hojas.buses)),
+    conductores:   parsearStaff(leer(hojas.conductores), 'conductor'),
+    coordinadores: parsearStaff(leer(hojas.coordinadores), 'coordinador'),
+    pasajeros:     parsearPasajeros(leer(hojas.pasajeros)),
+    itinerario:    parsearItinerario(leer(hojas.itinerario)),
+  };
+}
+
 // ---- Componente ----
 export default function ImportarMaestro({ opId, buses, staff, pasajeros, onClose }) {
   const [paso, setPaso] = useState('archivo');
