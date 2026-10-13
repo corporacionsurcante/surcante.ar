@@ -568,7 +568,7 @@ function AgenciaCodigos({ agenciaId }) {
         console.error(err);
         setCargando(false);
         if (err?.code === 'permission-denied') {
-          setError('Las reglas de Firestore aún no se desplegaron. Hacé merge a main para activar esta funcionalidad.');
+          setError('Sin permisos para cargar los códigos. Verificá que las reglas de Firestore estén desplegadas.');
         } else {
           setError(err?.message || 'No se pudieron cargar los códigos.');
         }
@@ -588,7 +588,7 @@ function AgenciaCodigos({ agenciaId }) {
       setTimeout(() => setOk(''), 8000);
     } catch (err) {
       if (err?.code === 'permission-denied') {
-        setError('Las reglas de Firestore aún no se desplegaron. Hacé merge a main para activar esta funcionalidad.');
+        setError('Sin permisos para generar el código. Verificá que las reglas de Firestore estén desplegadas.');
       } else {
         setError(err.message || 'No se pudo generar el código.');
       }

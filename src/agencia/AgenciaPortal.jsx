@@ -11,7 +11,7 @@ import {
   CAMPOS_PASAJERO, detectarEncabezados, filasAPasajeros, leerArchivoPlanilla, parsearTexto, apellidoNombre,
 } from '../admin/egresados/utils';
 import {
-  guardarPasajerosMasivo, crearOperativo, importarMaestro,
+  guardarPasajerosMasivo, crearOperativo, importarMaestro, crearEnSub,
 } from '../firebase/egresadosService';
 import { parsearExcelMaestro } from '../admin/egresados/ImportarMaestro';
 import './agencia.css';
@@ -611,7 +611,7 @@ function DetalleOperativo({ operativo: op, agenciaId, onVolver }) {
         ) : (
           <>
             {tab === 'buses' && <TabBuses buses={buses} staff={staff} pasajeros={pasajeros} />}
-            {tab === 'personal' && <TabPersonal conductores={conductores} coordinadores={coordinadores} buses={buses} />}
+            {tab === 'personal' && <TabPersonal conductores={conductores} coordinadores={coordinadores} buses={buses} opId={op.id} />}
             {tab === 'pasajeros' && (
               <TabPasajeros
                 pasajeros={pasajeros}
@@ -663,41 +663,121 @@ function TabBuses({ buses, staff, pasajeros }) {
   );
 }
 
-function TabPersonal({ conductores, coordinadores, buses }) {
+const FORM_COORD_VACIO = { apellido: '', nombre: '', dni: '', telefono: '', email: '', busId: '', grupo: '' };
+
+function TabPersonal({ conductores, coordinadores, buses, opId }) {
+  const [mostrarForm, setMostrarForm] = useState(false);
+  const [form, setForm] = useState(FORM_COORD_VACIO);
+  const [guardando, setGuardando] = useState(false);
+  const [error, setError] = useState('');
+
   function busLabel(busId) {
     return busNombre(buses.find(b => b.id === busId));
   }
-  function filaPersona(p, rol) {
-    return (
-      <tr key={p.id}>
-        <td>{p.apellido}, {p.nombre}</td>
-        <td><span className={`ag-chip ${rol === 'conductor' ? 'ag-chip-blue' : 'ag-chip-amber'}`}>{rol === 'conductor' ? 'Conductor' : 'Coordinador'}</span></td>
-        <td>{p.busId ? busLabel(p.busId) : '—'}</td>
-        <td>{p.telefono || '—'}</td>
-      </tr>
-    );
+
+  async function guardarCoordinador(e) {
+    e.preventDefault();
+    if (!form.apellido.trim() && !form.nombre.trim()) { setError('Completá al menos el apellido o el nombre.'); return; }
+    setGuardando(true); setError('');
+    try {
+      await crearEnSub(opId, 'staff', {
+        rol: 'coordinador',
+        apellido: form.apellido.trim(),
+        nombre: form.nombre.trim(),
+        dni: form.dni.trim(),
+        telefono: form.telefono.trim(),
+        email: form.email.trim().toLowerCase(),
+        busId: form.busId || null,
+        grupo: form.grupo.trim(),
+      });
+      setForm(FORM_COORD_VACIO);
+      setMostrarForm(false);
+    } catch (e) {
+      setError(e?.code === 'permission-denied' ? 'Sin permisos. Verificá que las reglas de Firestore estén desplegadas.' : (e.message || 'Error al guardar.'));
+    }
+    setGuardando(false);
   }
+
   const todos = [
     ...conductores.map(p => ({ ...p, _rol: 'conductor' })),
     ...coordinadores.map(p => ({ ...p, _rol: 'coordinador' })),
   ].sort((a, b) => (a.apellido || '').localeCompare(b.apellido || ''));
 
-  if (todos.length === 0) {
-    return <div className="ag-section" style={{ color: 'var(--ag-text-3)', textAlign: 'center', fontSize: 13 }}>No hay personal cargado.</div>;
-  }
   return (
-    <div className="ag-section" style={{ overflowX: 'auto' }}>
-      <table className="ag-table">
-        <thead>
-          <tr>
-            <th>Apellido y nombre</th>
-            <th>Rol</th>
-            <th>Bus</th>
-            <th>Teléfono</th>
-          </tr>
-        </thead>
-        <tbody>{todos.map(p => filaPersona(p, p._rol))}</tbody>
-      </table>
+    <div className="ag-section">
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 10 }}>
+        <button className="ag-btn ag-btn-primary ag-btn-sm" onClick={() => { setMostrarForm(v => !v); setError(''); }}>
+          {mostrarForm ? '✕ Cancelar' : '+ Agregar coordinador'}
+        </button>
+      </div>
+
+      {mostrarForm && (
+        <form onSubmit={guardarCoordinador} style={{ background: 'var(--ag-bg-2,rgba(255,255,255,.06))', borderRadius: 10, padding: '14px 16px', marginBottom: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 2 }}>Nuevo coordinador</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            <div>
+              <div style={{ fontSize: 11, color: 'var(--ag-text-3)', marginBottom: 3 }}>Apellido *</div>
+              <input className="ag-input" value={form.apellido} onChange={e => setForm(f => ({ ...f, apellido: e.target.value }))} placeholder="García" />
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: 'var(--ag-text-3)', marginBottom: 3 }}>Nombre *</div>
+              <input className="ag-input" value={form.nombre} onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))} placeholder="Ana" />
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: 'var(--ag-text-3)', marginBottom: 3 }}>DNI</div>
+              <input className="ag-input" value={form.dni} onChange={e => setForm(f => ({ ...f, dni: e.target.value }))} placeholder="30123456" />
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: 'var(--ag-text-3)', marginBottom: 3 }}>Teléfono</div>
+              <input className="ag-input" value={form.telefono} onChange={e => setForm(f => ({ ...f, telefono: e.target.value }))} placeholder="1144441234" />
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: 'var(--ag-text-3)', marginBottom: 3 }}>Bus asignado</div>
+              <select className="ag-input" value={form.busId} onChange={e => setForm(f => ({ ...f, busId: e.target.value }))}>
+                <option value="">— Sin asignar —</option>
+                {buses.map(b => <option key={b.id} value={b.id}>{b.codigo || b.nombre || `Bus ${b.orden || ''}`}</option>)}
+              </select>
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: 'var(--ag-text-3)', marginBottom: 3 }}>Grupo / Colegio</div>
+              <input className="ag-input" value={form.grupo} onChange={e => setForm(f => ({ ...f, grupo: e.target.value }))} placeholder="Colegio San Martín" />
+            </div>
+          </div>
+          {error && <div style={{ color: 'var(--ag-red,#ef4444)', fontSize: 12 }}>{error}</div>}
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <button type="submit" className="ag-btn ag-btn-primary ag-btn-sm" disabled={guardando}>
+              {guardando ? 'Guardando…' : '✓ Guardar coordinador'}
+            </button>
+          </div>
+        </form>
+      )}
+
+      {todos.length === 0 ? (
+        <div style={{ color: 'var(--ag-text-3)', textAlign: 'center', fontSize: 13, paddingTop: 8 }}>No hay personal cargado.</div>
+      ) : (
+        <div style={{ overflowX: 'auto' }}>
+          <table className="ag-table">
+            <thead>
+              <tr>
+                <th>Apellido y nombre</th>
+                <th>Rol</th>
+                <th>Bus</th>
+                <th>Teléfono</th>
+              </tr>
+            </thead>
+            <tbody>
+              {todos.map(p => (
+                <tr key={p.id}>
+                  <td>{p.apellido}, {p.nombre}</td>
+                  <td><span className={`ag-chip ${p._rol === 'conductor' ? 'ag-chip-blue' : 'ag-chip-amber'}`}>{p._rol === 'conductor' ? 'Conductor' : 'Coordinador'}</span></td>
+                  <td>{p.busId ? busLabel(p.busId) : '—'}</td>
+                  <td>{p.telefono || '—'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
