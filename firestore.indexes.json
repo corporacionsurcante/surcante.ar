@@ -9,6 +9,14 @@
       ]
     },
     {
+      "collectionGroup": "agencia_codigos",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "agenciaId", "order": "ASCENDING" },
+        { "fieldPath": "creadoEn", "order": "DESCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "operativos",
       "queryScope": "COLLECTION",
       "fields": [
