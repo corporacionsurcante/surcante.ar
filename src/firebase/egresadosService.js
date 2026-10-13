@@ -180,14 +180,14 @@ export function suscribirAccesos(opId, cb, onError) {
   return onSnapshot(query(collection(db, 'accesos'), where('opId', '==', opId)), snap => cb(mapDocs(snap)), onError);
 }
 
-// personas: [{ rol, refId, nombre }]
-export async function generarAccesos(opId, personas) {
+// personas: [{ rol, refId, nombre }], extras: campos adicionales (ej: agenciaId)
+export async function generarAccesos(opId, personas, extras = {}) {
   const creados = [];
   await commitEnLotes(personas.map(p => batch => {
     const token = generarToken();
     const pin = (p.rol === 'conductor' || p.rol === 'coordinador') ? generarPin() : null;
     creados.push({ id: token, ...p, ...(pin ? { pin } : {}) });
-    const data = { opId, rol: p.rol, refId: p.refId, nombre: p.nombre || '', activo: true, creadoEn: serverTimestamp() };
+    const data = { opId, rol: p.rol, refId: p.refId, nombre: p.nombre || '', activo: true, creadoEn: serverTimestamp(), ...extras };
     if (pin) data.pin = pin;
     batch.set(doc(db, 'accesos', token), data);
   }));

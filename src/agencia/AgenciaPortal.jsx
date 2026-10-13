@@ -12,6 +12,8 @@ import {
 } from '../admin/egresados/utils';
 import {
   guardarPasajerosMasivo, crearOperativo, importarMaestro, crearEnSub,
+  actualizarEnSub, eliminarEnSub, eliminarStaff, eliminarPasajerosMasivo,
+  generarAccesos, actualizarOperativo,
 } from '../firebase/egresadosService';
 import { parsearExcelMaestro } from '../admin/egresados/ImportarMaestro';
 import './agencia.css';
@@ -326,7 +328,7 @@ function OnboardingAgencia({ sesion, onOperativoCreado }) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {[
               { n: '1', title: 'Creás tu primer viaje', desc: 'Completás los datos básicos del viaje (nombre, destino, fechas) e importás los pasajeros desde Excel.' },
-              { n: '2', title: 'Surcante activa tu equipo', desc: 'El equipo de Surcante habilita a los co-gerentes de tu agencia para que puedan acceder al portal.' },
+              { n: '2', title: 'Surcante activa tu equipo', desc: 'El equipo de Surcante habilita a los gerentes de agencia para que puedan acceder al portal.' },
               { n: '3', title: 'Los pasajeros se conectan', desc: 'Cada pasajero recibe un acceso único para ver su lugar, ómnibus y toda la info del viaje.' },
             ].map(s => (
               <div key={s.n} style={{ display: 'flex', gap: 14, alignItems: 'flex-start', background: 'var(--ag-card-2)', borderRadius: 10, padding: '14px 16px' }}>
@@ -525,14 +527,82 @@ function CrearViajeForm({ agenciaId, agenciaNombre, onCreado }) {
   );
 }
 
+// ---- Modal edición de datos del operativo ----
+function EditarOperativoModal({ op, onClose, onGuardado }) {
+  const [form, setForm] = useState({
+    nombre: op.nombre || '',
+    destino: op.destino || '',
+    fechaInicio: op.fechaInicio || '',
+    fechaFin: op.fechaFin || '',
+  });
+  const [guardando, setGuardando] = useState(false);
+  const [error, setError] = useState('');
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+  async function guardar(e) {
+    e.preventDefault();
+    if (!form.nombre.trim()) { setError('El nombre es obligatorio.'); return; }
+    setGuardando(true); setError('');
+    try {
+      await actualizarOperativo(op.id, {
+        nombre: form.nombre.trim(),
+        destino: form.destino.trim(),
+        fechaInicio: form.fechaInicio,
+        fechaFin: form.fechaFin,
+      });
+      onGuardado({ ...op, ...form });
+      onClose();
+    } catch (e) {
+      setError(e?.code === 'permission-denied' ? 'Sin permisos para editar.' : (e.message || 'Error al guardar.'));
+    }
+    setGuardando(false);
+  }
+
+  return (
+    <div className="ag-modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="ag-modal">
+        <div className="ag-modal-head">
+          <div className="ag-modal-title">✏️ Editar datos del viaje</div>
+          <button className="ag-modal-close" onClick={onClose}>✕</button>
+        </div>
+        <div className="ag-modal-body">
+          <form onSubmit={guardar} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {[
+              { label: 'Nombre del viaje *', key: 'nombre', type: 'text', placeholder: 'Egresados CENS 35' },
+              { label: 'Destino', key: 'destino', type: 'text', placeholder: 'Bariloche' },
+              { label: 'Fecha de inicio', key: 'fechaInicio', type: 'date' },
+              { label: 'Fecha de fin', key: 'fechaFin', type: 'date' },
+            ].map(f => (
+              <div key={f.key}>
+                <label className="ag-label">{f.label}</label>
+                <input className="ag-input" type={f.type} placeholder={f.placeholder || ''}
+                  value={form[f.key]} onChange={e => set(f.key, e.target.value)} />
+              </div>
+            ))}
+            {error && <div className="ag-alert ag-alert-error">{error}</div>}
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 4 }}>
+              <button type="button" className="ag-btn ag-btn-ghost ag-btn-sm" onClick={onClose}>Cancelar</button>
+              <button type="submit" className="ag-btn ag-btn-primary ag-btn-sm" disabled={guardando}>
+                {guardando ? 'Guardando…' : '✓ Guardar cambios'}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ---- Detalle de operativo ----
-function DetalleOperativo({ operativo: op, agenciaId, onVolver }) {
+function DetalleOperativo({ operativo: opInicial, agenciaId, onVolver }) {
+  const [op, setOp] = useState(opInicial);
   const [tab, setTab] = useState('buses');
   const [buses, setBuses] = useState([]);
   const [staff, setStaff] = useState([]);
   const [pasajeros, setPasajeros] = useState([]);
   const [itinerario, setItinerario] = useState([]);
   const [cargando, setCargando] = useState(true);
+  const [editarOp, setEditarOp] = useState(false);
 
   useEffect(() => {
     let pendientes = 4;
@@ -562,6 +632,13 @@ function DetalleOperativo({ operativo: op, agenciaId, onVolver }) {
 
   return (
     <div className="ag-shell">
+      {editarOp && (
+        <EditarOperativoModal
+          op={op}
+          onClose={() => setEditarOp(false)}
+          onGuardado={opActualizado => setOp(opActualizado)}
+        />
+      )}
       <header className="ag-topbar">
         <div className="ag-topbar-brand">🎓 {op.agenciaNombre || 'Portal de agencias'}</div>
         <div className="ag-topbar-right">
@@ -577,7 +654,14 @@ function DetalleOperativo({ operativo: op, agenciaId, onVolver }) {
 
         <div className="ag-head" style={{ marginBottom: 14 }}>
           <div>
-            <div className="ag-title">{op.nombre}</div>
+            <div className="ag-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              {op.nombre}
+              <button
+                className="ag-btn ag-btn-ghost ag-btn-sm"
+                style={{ fontSize: 12, padding: '2px 8px' }}
+                onClick={() => setEditarOp(true)}
+              >✏️ Editar</button>
+            </div>
             <div className="ag-sub">
               {op.destino && `${op.destino} · `}
               {fechaCorta(op.fechaInicio)} → {fechaCorta(op.fechaFin)}
@@ -611,13 +695,22 @@ function DetalleOperativo({ operativo: op, agenciaId, onVolver }) {
         ) : (
           <>
             {tab === 'buses' && <TabBuses buses={buses} staff={staff} pasajeros={pasajeros} />}
-            {tab === 'personal' && <TabPersonal conductores={conductores} coordinadores={coordinadores} buses={buses} opId={op.id} />}
+            {tab === 'personal' && (
+              <TabPersonal
+                conductores={conductores}
+                coordinadores={coordinadores}
+                buses={buses}
+                opId={op.id}
+                pasajeros={pasajeros}
+              />
+            )}
             {tab === 'pasajeros' && (
               <TabPasajeros
                 pasajeros={pasajeros}
                 buses={buses}
                 staff={staff}
                 opId={op.id}
+                agenciaId={agenciaId}
               />
             )}
             {tab === 'itinerario' && <TabItinerario itinerario={itinerario} />}
@@ -663,19 +756,25 @@ function TabBuses({ buses, staff, pasajeros }) {
   );
 }
 
-const FORM_COORD_VACIO = { apellido: '', nombre: '', dni: '', telefono: '', email: '', busId: '', grupo: '' };
+const FORM_STAFF_VACIO = { apellido: '', nombre: '', dni: '', telefono: '', email: '', busId: '', grupo: '' };
 
-function TabPersonal({ conductores, coordinadores, buses, opId }) {
+function TabPersonal({ conductores, coordinadores, buses, opId, pasajeros }) {
   const [mostrarForm, setMostrarForm] = useState(false);
-  const [form, setForm] = useState(FORM_COORD_VACIO);
+  const [form, setForm] = useState(FORM_STAFF_VACIO);
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState('');
+  const [editandoId, setEditandoId] = useState(null);
+  const [editForm, setEditForm] = useState(FORM_STAFF_VACIO);
+  const [guardandoEdit, setGuardandoEdit] = useState(false);
+  const [errorEdit, setErrorEdit] = useState('');
+  const [eliminando, setEliminando] = useState(null);
+  const [confirmElim, setConfirmElim] = useState(null);
 
   function busLabel(busId) {
     return busNombre(buses.find(b => b.id === busId));
   }
 
-  async function guardarCoordinador(e) {
+  async function guardarNuevo(e) {
     e.preventDefault();
     if (!form.apellido.trim() && !form.nombre.trim()) { setError('Completá al menos el apellido o el nombre.'); return; }
     setGuardando(true); setError('');
@@ -690,12 +789,59 @@ function TabPersonal({ conductores, coordinadores, buses, opId }) {
         busId: form.busId || null,
         grupo: form.grupo.trim(),
       });
-      setForm(FORM_COORD_VACIO);
+      setForm(FORM_STAFF_VACIO);
       setMostrarForm(false);
     } catch (e) {
-      setError(e?.code === 'permission-denied' ? 'Sin permisos. Verificá que las reglas de Firestore estén desplegadas.' : (e.message || 'Error al guardar.'));
+      setError(e?.code === 'permission-denied' ? 'Sin permisos.' : (e.message || 'Error al guardar.'));
     }
     setGuardando(false);
+  }
+
+  function iniciarEdicion(p) {
+    setEditandoId(p.id);
+    setEditForm({
+      apellido: p.apellido || '',
+      nombre: p.nombre || '',
+      dni: p.dni || '',
+      telefono: p.telefono || '',
+      email: p.email || '',
+      busId: p.busId || '',
+      grupo: p.grupo || '',
+    });
+    setErrorEdit('');
+  }
+
+  async function guardarEdicion(e) {
+    e.preventDefault();
+    if (!editForm.apellido.trim() && !editForm.nombre.trim()) { setErrorEdit('Completá apellido o nombre.'); return; }
+    setGuardandoEdit(true); setErrorEdit('');
+    try {
+      await actualizarEnSub(opId, 'staff', editandoId, {
+        apellido: editForm.apellido.trim(),
+        nombre: editForm.nombre.trim(),
+        dni: editForm.dni.trim(),
+        telefono: editForm.telefono.trim(),
+        email: editForm.email.trim().toLowerCase(),
+        busId: editForm.busId || null,
+        grupo: editForm.grupo.trim(),
+      });
+      setEditandoId(null);
+    } catch (e) {
+      setErrorEdit(e?.code === 'permission-denied' ? 'Sin permisos.' : (e.message || 'Error al guardar.'));
+    }
+    setGuardandoEdit(false);
+  }
+
+  async function confirmarEliminacion() {
+    if (!confirmElim) return;
+    setEliminando(confirmElim.id);
+    try {
+      await eliminarStaff(opId, confirmElim.id, pasajeros || [], []);
+    } catch (e) {
+      alert(e?.code === 'permission-denied' ? 'Sin permisos para eliminar.' : (e.message || 'Error al eliminar.'));
+    }
+    setEliminando(null);
+    setConfirmElim(null);
   }
 
   const todos = [
@@ -703,46 +849,68 @@ function TabPersonal({ conductores, coordinadores, buses, opId }) {
     ...coordinadores.map(p => ({ ...p, _rol: 'coordinador' })),
   ].sort((a, b) => (a.apellido || '').localeCompare(b.apellido || ''));
 
+  const camposStaff = (form, setForm) => (
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+      {[
+        { key: 'apellido', label: 'Apellido *', placeholder: 'García' },
+        { key: 'nombre', label: 'Nombre *', placeholder: 'Ana' },
+        { key: 'dni', label: 'DNI', placeholder: '30123456' },
+        { key: 'telefono', label: 'Teléfono', placeholder: '1144441234' },
+      ].map(f => (
+        <div key={f.key}>
+          <div style={{ fontSize: 11, color: 'var(--ag-text-3)', marginBottom: 3 }}>{f.label}</div>
+          <input className="ag-input" value={form[f.key]} onChange={e => setForm(p => ({ ...p, [f.key]: e.target.value }))} placeholder={f.placeholder} />
+        </div>
+      ))}
+      <div>
+        <div style={{ fontSize: 11, color: 'var(--ag-text-3)', marginBottom: 3 }}>Bus asignado</div>
+        <select className="ag-input" value={form.busId} onChange={e => setForm(p => ({ ...p, busId: e.target.value }))}>
+          <option value="">— Sin asignar —</option>
+          {buses.map(b => <option key={b.id} value={b.id}>{busNombre(b)}</option>)}
+        </select>
+      </div>
+      <div>
+        <div style={{ fontSize: 11, color: 'var(--ag-text-3)', marginBottom: 3 }}>Grupo / Colegio</div>
+        <input className="ag-input" value={form.grupo} onChange={e => setForm(p => ({ ...p, grupo: e.target.value }))} placeholder="Colegio San Martín" />
+      </div>
+    </div>
+  );
+
   return (
     <div className="ag-section">
+      {/* Modal confirmar eliminación */}
+      {confirmElim && (
+        <div className="ag-modal-overlay" onClick={e => e.target === e.currentTarget && setConfirmElim(null)}>
+          <div className="ag-modal" style={{ maxWidth: 380 }}>
+            <div className="ag-modal-head">
+              <div className="ag-modal-title">🗑️ Eliminar personal</div>
+              <button className="ag-modal-close" onClick={() => setConfirmElim(null)}>✕</button>
+            </div>
+            <div className="ag-modal-body">
+              <p>¿Eliminás a <strong>{confirmElim.apellido} {confirmElim.nombre}</strong>?<br />
+              <span style={{ fontSize: 12, color: 'var(--ag-text-3)' }}>Esta acción no se puede deshacer.</span></p>
+            </div>
+            <div className="ag-modal-foot">
+              <button className="ag-btn ag-btn-ghost ag-btn-sm" onClick={() => setConfirmElim(null)}>Cancelar</button>
+              <button className="ag-btn ag-btn-sm" style={{ background: 'var(--ag-red,#ef4444)', color: '#fff' }}
+                onClick={confirmarEliminacion} disabled={!!eliminando}>
+                {eliminando ? 'Eliminando…' : 'Sí, eliminar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 10 }}>
-        <button className="ag-btn ag-btn-primary ag-btn-sm" onClick={() => { setMostrarForm(v => !v); setError(''); }}>
+        <button className="ag-btn ag-btn-primary ag-btn-sm" onClick={() => { setMostrarForm(v => !v); setError(''); setEditandoId(null); }}>
           {mostrarForm ? '✕ Cancelar' : '+ Agregar coordinador'}
         </button>
       </div>
 
       {mostrarForm && (
-        <form onSubmit={guardarCoordinador} style={{ background: 'var(--ag-bg-2,rgba(255,255,255,.06))', borderRadius: 10, padding: '14px 16px', marginBottom: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <form onSubmit={guardarNuevo} style={{ background: 'var(--ag-bg-2,rgba(255,255,255,.06))', borderRadius: 10, padding: '14px 16px', marginBottom: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
           <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 2 }}>Nuevo coordinador</div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-            <div>
-              <div style={{ fontSize: 11, color: 'var(--ag-text-3)', marginBottom: 3 }}>Apellido *</div>
-              <input className="ag-input" value={form.apellido} onChange={e => setForm(f => ({ ...f, apellido: e.target.value }))} placeholder="García" />
-            </div>
-            <div>
-              <div style={{ fontSize: 11, color: 'var(--ag-text-3)', marginBottom: 3 }}>Nombre *</div>
-              <input className="ag-input" value={form.nombre} onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))} placeholder="Ana" />
-            </div>
-            <div>
-              <div style={{ fontSize: 11, color: 'var(--ag-text-3)', marginBottom: 3 }}>DNI</div>
-              <input className="ag-input" value={form.dni} onChange={e => setForm(f => ({ ...f, dni: e.target.value }))} placeholder="30123456" />
-            </div>
-            <div>
-              <div style={{ fontSize: 11, color: 'var(--ag-text-3)', marginBottom: 3 }}>Teléfono</div>
-              <input className="ag-input" value={form.telefono} onChange={e => setForm(f => ({ ...f, telefono: e.target.value }))} placeholder="1144441234" />
-            </div>
-            <div>
-              <div style={{ fontSize: 11, color: 'var(--ag-text-3)', marginBottom: 3 }}>Bus asignado</div>
-              <select className="ag-input" value={form.busId} onChange={e => setForm(f => ({ ...f, busId: e.target.value }))}>
-                <option value="">— Sin asignar —</option>
-                {buses.map(b => <option key={b.id} value={b.id}>{b.codigo || b.nombre || `Bus ${b.orden || ''}`}</option>)}
-              </select>
-            </div>
-            <div>
-              <div style={{ fontSize: 11, color: 'var(--ag-text-3)', marginBottom: 3 }}>Grupo / Colegio</div>
-              <input className="ag-input" value={form.grupo} onChange={e => setForm(f => ({ ...f, grupo: e.target.value }))} placeholder="Colegio San Martín" />
-            </div>
-          </div>
+          {camposStaff(form, setForm)}
           {error && <div style={{ color: 'var(--ag-red,#ef4444)', fontSize: 12 }}>{error}</div>}
           <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
             <button type="submit" className="ag-btn ag-btn-primary ag-btn-sm" disabled={guardando}>
@@ -763,16 +931,41 @@ function TabPersonal({ conductores, coordinadores, buses, opId }) {
                 <th>Rol</th>
                 <th>Bus</th>
                 <th>Teléfono</th>
+                <th style={{ width: 90 }}></th>
               </tr>
             </thead>
             <tbody>
               {todos.map(p => (
-                <tr key={p.id}>
-                  <td>{p.apellido}, {p.nombre}</td>
-                  <td><span className={`ag-chip ${p._rol === 'conductor' ? 'ag-chip-blue' : 'ag-chip-amber'}`}>{p._rol === 'conductor' ? 'Conductor' : 'Coordinador'}</span></td>
-                  <td>{p.busId ? busLabel(p.busId) : '—'}</td>
-                  <td>{p.telefono || '—'}</td>
-                </tr>
+                editandoId === p.id ? (
+                  <tr key={p.id} style={{ background: 'rgba(124,58,237,.07)' }}>
+                    <td colSpan={5}>
+                      <form onSubmit={guardarEdicion} style={{ padding: '8px 0', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        {camposStaff(editForm, setEditForm)}
+                        {errorEdit && <div style={{ color: 'var(--ag-red,#ef4444)', fontSize: 12 }}>{errorEdit}</div>}
+                        <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+                          <button type="button" className="ag-btn ag-btn-ghost ag-btn-sm" onClick={() => setEditandoId(null)}>Cancelar</button>
+                          <button type="submit" className="ag-btn ag-btn-primary ag-btn-sm" disabled={guardandoEdit}>
+                            {guardandoEdit ? 'Guardando…' : '✓ Guardar'}
+                          </button>
+                        </div>
+                      </form>
+                    </td>
+                  </tr>
+                ) : (
+                  <tr key={p.id}>
+                    <td>{p.apellido}, {p.nombre}</td>
+                    <td><span className={`ag-chip ${p._rol === 'conductor' ? 'ag-chip-blue' : 'ag-chip-amber'}`}>{p._rol === 'conductor' ? 'Conductor' : 'Coordinador'}</span></td>
+                    <td>{p.busId ? busLabel(p.busId) : '—'}</td>
+                    <td>{p.telefono || '—'}</td>
+                    <td>
+                      <div style={{ display: 'flex', gap: 4 }}>
+                        <button className="ag-btn ag-btn-ghost ag-btn-sm" style={{ fontSize: 11 }} onClick={() => iniciarEdicion(p)}>✏️</button>
+                        <button className="ag-btn ag-btn-ghost ag-btn-sm" style={{ fontSize: 11, color: 'var(--ag-red,#ef4444)' }}
+                          onClick={() => setConfirmElim(p)} disabled={eliminando === p.id}>🗑️</button>
+                      </div>
+                    </td>
+                  </tr>
+                )
               ))}
             </tbody>
           </table>
@@ -782,21 +975,168 @@ function TabPersonal({ conductores, coordinadores, buses, opId }) {
   );
 }
 
-function TabPasajeros({ pasajeros, buses, staff, opId }) {
+const FORM_PAX_VACIO = { apellido: '', nombre: '', dni: '', telefono: '', email: '', busId: '', asiento: '', habitacion: '' };
+
+function TabPasajeros({ pasajeros, buses, staff, opId, agenciaId }) {
   const [busca, setBusca] = useState('');
   const [mostrarImport, setMostrarImport] = useState(false);
+  const [editandoId, setEditandoId] = useState(null);
+  const [editForm, setEditForm] = useState(FORM_PAX_VACIO);
+  const [guardandoEdit, setGuardandoEdit] = useState(false);
+  const [errorEdit, setErrorEdit] = useState('');
+  const [confirmElim, setConfirmElim] = useState(null);
+  const [eliminando, setEliminando] = useState(false);
+  const [linksGenerados, setLinksGenerados] = useState({}); // refId → token
+  const [generandoLinks, setGenerandoLinks] = useState(false);
+  const [copiado, setCopiado] = useState(null);
 
-  function busLabel(busId) {
-    return busNombre(buses.find(b => b.id === busId));
-  }
+  function busLabel(busId) { return busNombre(buses.find(b => b.id === busId)); }
 
   const filtrados = busca.trim()
     ? pasajeros.filter(p =>
-        [p.apellido, p.nombre, p.dni, p.localidad].join(' ').toLowerCase().includes(busca.toLowerCase()))
+        [p.apellido, p.nombre, p.dni].join(' ').toLowerCase().includes(busca.toLowerCase()))
     : pasajeros;
+
+  function iniciarEdicion(p) {
+    setEditandoId(p.id);
+    setEditForm({
+      apellido: p.apellido || '',
+      nombre: p.nombre || '',
+      dni: p.dni || '',
+      telefono: p.telefono || '',
+      email: p.email || '',
+      busId: p.busId || '',
+      asiento: p.asiento || '',
+      habitacion: p.habitacion || '',
+    });
+    setErrorEdit('');
+  }
+
+  async function guardarEdicion(e) {
+    e.preventDefault();
+    if (!editForm.apellido.trim() && !editForm.nombre.trim()) { setErrorEdit('Completá apellido o nombre.'); return; }
+    setGuardandoEdit(true); setErrorEdit('');
+    try {
+      await actualizarEnSub(opId, 'pasajeros', editandoId, {
+        apellido: editForm.apellido.trim(),
+        nombre: editForm.nombre.trim(),
+        dni: editForm.dni.trim(),
+        telefono: editForm.telefono.trim(),
+        email: editForm.email.trim().toLowerCase(),
+        busId: editForm.busId || null,
+        asiento: editForm.asiento.trim(),
+        habitacion: editForm.habitacion.trim(),
+      });
+      setEditandoId(null);
+    } catch (e) {
+      setErrorEdit(e?.code === 'permission-denied' ? 'Sin permisos.' : (e.message || 'Error al guardar.'));
+    }
+    setGuardandoEdit(false);
+  }
+
+  async function confirmarEliminacion() {
+    if (!confirmElim) return;
+    setEliminando(true);
+    try {
+      await eliminarPasajerosMasivo(opId, [confirmElim.id], []);
+      setConfirmElim(null);
+    } catch (e) {
+      alert(e?.code === 'permission-denied' ? 'Sin permisos para eliminar.' : (e.message || 'Error al eliminar.'));
+    }
+    setEliminando(false);
+  }
+
+  async function generarLinkPasajero(p) {
+    try {
+      const [creado] = await generarAccesos(opId, [{ rol: 'pasajero', refId: p.id, nombre: `${p.apellido || ''} ${p.nombre || ''}`.trim() }], { agenciaId });
+      setLinksGenerados(prev => ({ ...prev, [p.id]: creado.id }));
+    } catch (e) {
+      alert(e?.code === 'permission-denied' ? 'Sin permisos para generar links. Verificá las reglas de Firestore.' : (e.message || 'Error al generar link.'));
+    }
+  }
+
+  async function generarTodosLosLinks() {
+    const sinLink = pasajeros.filter(p => !linksGenerados[p.id]);
+    if (sinLink.length === 0) return;
+    setGenerandoLinks(true);
+    try {
+      const creados = await generarAccesos(
+        opId,
+        sinLink.map(p => ({ rol: 'pasajero', refId: p.id, nombre: `${p.apellido || ''} ${p.nombre || ''}`.trim() })),
+        { agenciaId },
+      );
+      const nuevos = {};
+      creados.forEach((c, i) => { nuevos[sinLink[i].id] = c.id; });
+      setLinksGenerados(prev => ({ ...prev, ...nuevos }));
+    } catch (e) {
+      alert(e?.code === 'permission-denied' ? 'Sin permisos para generar links.' : (e.message || 'Error al generar links.'));
+    }
+    setGenerandoLinks(false);
+  }
+
+  function linkUrl(token) {
+    return `${window.location.origin}/v/${token}`;
+  }
+
+  function copiarLink(token, paxId) {
+    navigator.clipboard.writeText(linkUrl(token)).catch(() => {});
+    setCopiado(paxId);
+    setTimeout(() => setCopiado(c => c === paxId ? null : c), 2000);
+  }
+
+  const camposPax = (form, setForm) => (
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+      {[
+        { key: 'apellido', label: 'Apellido *', placeholder: 'Pérez' },
+        { key: 'nombre', label: 'Nombre *', placeholder: 'Juan' },
+        { key: 'dni', label: 'DNI', placeholder: '44000001' },
+        { key: 'telefono', label: 'Teléfono', placeholder: '1166661111' },
+        { key: 'asiento', label: 'Asiento', placeholder: '12' },
+        { key: 'habitacion', label: 'Habitación', placeholder: '101' },
+      ].map(f => (
+        <div key={f.key}>
+          <div style={{ fontSize: 11, color: 'var(--ag-text-3)', marginBottom: 3 }}>{f.label}</div>
+          <input className="ag-input" value={form[f.key]} onChange={e => setForm(p => ({ ...p, [f.key]: e.target.value }))} placeholder={f.placeholder} />
+        </div>
+      ))}
+      <div>
+        <div style={{ fontSize: 11, color: 'var(--ag-text-3)', marginBottom: 3 }}>Bus</div>
+        <select className="ag-input" value={form.busId} onChange={e => setForm(p => ({ ...p, busId: e.target.value }))}>
+          <option value="">— Sin asignar —</option>
+          {buses.map(b => <option key={b.id} value={b.id}>{busNombre(b)}</option>)}
+        </select>
+      </div>
+      <div>
+        <div style={{ fontSize: 11, color: 'var(--ag-text-3)', marginBottom: 3 }}>Email</div>
+        <input className="ag-input" type="email" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} placeholder="juan@mail.com" />
+      </div>
+    </div>
+  );
 
   return (
     <>
+      {confirmElim && (
+        <div className="ag-modal-overlay" onClick={e => e.target === e.currentTarget && setConfirmElim(null)}>
+          <div className="ag-modal" style={{ maxWidth: 380 }}>
+            <div className="ag-modal-head">
+              <div className="ag-modal-title">🗑️ Eliminar pasajero</div>
+              <button className="ag-modal-close" onClick={() => setConfirmElim(null)}>✕</button>
+            </div>
+            <div className="ag-modal-body">
+              <p>¿Eliminás a <strong>{confirmElim.apellido} {confirmElim.nombre}</strong>?<br />
+              <span style={{ fontSize: 12, color: 'var(--ag-text-3)' }}>Esta acción no se puede deshacer.</span></p>
+            </div>
+            <div className="ag-modal-foot">
+              <button className="ag-btn ag-btn-ghost ag-btn-sm" onClick={() => setConfirmElim(null)}>Cancelar</button>
+              <button className="ag-btn ag-btn-sm" style={{ background: 'var(--ag-red,#ef4444)', color: '#fff' }}
+                onClick={confirmarEliminacion} disabled={eliminando}>
+                {eliminando ? 'Eliminando…' : 'Sí, eliminar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {mostrarImport && (
         <ImportarPasajerosAgencia
           opId={opId}
@@ -804,7 +1144,7 @@ function TabPasajeros({ pasajeros, buses, staff, opId }) {
           staff={staff}
           pasajeros={pasajeros}
           onClose={() => setMostrarImport(false)}
-          onListo={n => setMostrarImport(false)}
+          onListo={() => setMostrarImport(false)}
         />
       )}
 
@@ -812,9 +1152,20 @@ function TabPasajeros({ pasajeros, buses, staff, opId }) {
         <div style={{ fontSize: 13, color: 'var(--ag-text-3)' }}>
           {pasajeros.length === 0 ? 'Sin pasajeros cargados' : `${pasajeros.length} pasajero${pasajeros.length !== 1 ? 's' : ''}`}
         </div>
-        <button className="ag-btn ag-btn-primary ag-btn-sm" onClick={() => setMostrarImport(true)}>
-          📥 Importar desde Excel
-        </button>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          {pasajeros.length > 0 && (
+            <button
+              className="ag-btn ag-btn-ghost ag-btn-sm"
+              onClick={generarTodosLosLinks}
+              disabled={generandoLinks || pasajeros.every(p => linksGenerados[p.id])}
+            >
+              {generandoLinks ? '⏳ Generando…' : `🔗 Generar links para todos (${pasajeros.filter(p => !linksGenerados[p.id]).length} sin link)`}
+            </button>
+          )}
+          <button className="ag-btn ag-btn-primary ag-btn-sm" onClick={() => setMostrarImport(true)}>
+            📥 Importar desde Excel
+          </button>
+        </div>
       </div>
 
       {pasajeros.length === 0 ? (
@@ -840,17 +1191,62 @@ function TabPasajeros({ pasajeros, buses, staff, opId }) {
                 <th>#</th>
                 <th>Apellido y nombre</th>
                 <th>DNI</th>
-                <th>Bus</th>
+                <th>Bus / Asiento</th>
+                <th>Link</th>
+                <th style={{ width: 70 }}></th>
               </tr>
             </thead>
             <tbody>
               {filtrados.map((p, i) => (
-                <tr key={p.id}>
-                  <td style={{ color: 'var(--ag-text-3)' }}>{i + 1}</td>
-                  <td>{p.apellido}, {p.nombre}</td>
-                  <td>{p.dni || '—'}</td>
-                  <td>{p.busId ? busLabel(p.busId) : '—'}</td>
-                </tr>
+                editandoId === p.id ? (
+                  <tr key={p.id} style={{ background: 'rgba(124,58,237,.07)' }}>
+                    <td colSpan={6}>
+                      <form onSubmit={guardarEdicion} style={{ padding: '8px 0', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        {camposPax(editForm, setEditForm)}
+                        {errorEdit && <div style={{ color: 'var(--ag-red,#ef4444)', fontSize: 12 }}>{errorEdit}</div>}
+                        <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+                          <button type="button" className="ag-btn ag-btn-ghost ag-btn-sm" onClick={() => setEditandoId(null)}>Cancelar</button>
+                          <button type="submit" className="ag-btn ag-btn-primary ag-btn-sm" disabled={guardandoEdit}>
+                            {guardandoEdit ? 'Guardando…' : '✓ Guardar'}
+                          </button>
+                        </div>
+                      </form>
+                    </td>
+                  </tr>
+                ) : (
+                  <tr key={p.id}>
+                    <td style={{ color: 'var(--ag-text-3)' }}>{i + 1}</td>
+                    <td>{p.apellido}, {p.nombre}</td>
+                    <td>{p.dni || '—'}</td>
+                    <td>{p.busId ? busLabel(p.busId) : '—'}{p.asiento ? ` · #${p.asiento}` : ''}</td>
+                    <td>
+                      {linksGenerados[p.id] ? (
+                        <button
+                          className="ag-btn ag-btn-ghost ag-btn-sm"
+                          style={{ fontSize: 11, color: 'var(--ag-accent)' }}
+                          onClick={() => copiarLink(linksGenerados[p.id], p.id)}
+                        >
+                          {copiado === p.id ? '✓ Copiado' : '📋 Copiar link'}
+                        </button>
+                      ) : (
+                        <button
+                          className="ag-btn ag-btn-ghost ag-btn-sm"
+                          style={{ fontSize: 11 }}
+                          onClick={() => generarLinkPasajero(p)}
+                        >
+                          🔗 Generar
+                        </button>
+                      )}
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', gap: 4 }}>
+                        <button className="ag-btn ag-btn-ghost ag-btn-sm" style={{ fontSize: 11 }} onClick={() => iniciarEdicion(p)}>✏️</button>
+                        <button className="ag-btn ag-btn-ghost ag-btn-sm" style={{ fontSize: 11, color: 'var(--ag-red,#ef4444)' }}
+                          onClick={() => setConfirmElim(p)}>🗑️</button>
+                      </div>
+                    </td>
+                  </tr>
+                )
               ))}
             </tbody>
           </table>
