@@ -86,6 +86,7 @@ export default function Egresados() {
 function AgenciasLista({ agencias, operativos, onAbrir }) {
   const [modal, setModal] = useState(false);
   const [busqueda, setBusqueda] = useState('');
+  const [mant, setMant] = useState(false);
 
   const statsPorAgencia = useMemo(() => {
     const m = {};
@@ -170,8 +171,116 @@ function AgenciasLista({ agencias, operativos, onAbrir }) {
         </div>
       )}
 
+      <div style={{ marginTop: 32, display: 'flex', justifyContent: 'flex-end' }}>
+        <button className="eg-btn eg-btn-ghost eg-btn-sm" style={{ fontSize: 12, color: '#9CA3AF' }} onClick={() => setMant(v => !v)}>
+          {mant ? '▲ Ocultar mantenimiento' : '⚙️ Mantenimiento'}
+        </button>
+      </div>
+      {mant && <PanelMantenimiento />}
+
       {modal && <AgenciaForm onClose={() => setModal(false)} onGuardada={id => onAbrir(id)} />}
     </>
+  );
+}
+
+// ---------------- Panel de mantenimiento ----------------
+function PanelMantenimiento() {
+  const [preview, setPreview] = useState(null);
+  const [cargando, setCargando] = useState(false);
+  const [resultado, setResultado] = useState('');
+  const [error, setError] = useState('');
+
+  async function getIdToken() {
+    return auth.currentUser?.getIdToken();
+  }
+
+  async function cargarPreview() {
+    setCargando(true); setError(''); setResultado('');
+    try {
+      const idToken = await getIdToken();
+      const resp = await fetch('/api/admin-cleanup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
+        body: JSON.stringify({ accion: 'preview' }),
+      });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error);
+      setPreview(data);
+    } catch (e) {
+      setError(e.message || 'Error al cargar preview');
+    }
+    setCargando(false);
+  }
+
+  async function ejecutar(accion, descripcion) {
+    if (!window.confirm(`¿Confirmar: ${descripcion}? Esta acción no se puede deshacer.`)) return;
+    setCargando(true); setError(''); setResultado('');
+    try {
+      const idToken = await getIdToken();
+      const resp = await fetch('/api/admin-cleanup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
+        body: JSON.stringify({ accion, confirmar: true }),
+      });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error);
+      setResultado(data.message || 'Listo.');
+      setPreview(null);
+    } catch (e) {
+      setError(e.message || 'Error al ejecutar');
+    }
+    setCargando(false);
+  }
+
+  return (
+    <div className="eg-section" style={{ borderColor: '#FCA5A5', background: 'rgba(254,242,242,.4)', marginTop: 8 }}>
+      <div className="eg-section-title" style={{ color: '#DC2626' }}>⚙️ Mantenimiento de datos</div>
+      <p style={{ fontSize: 13, color: '#7A7A96', marginBottom: 12 }}>
+        Limpiá datos de prueba o huérfanos que quedaron en Firestore.
+        Hacé Preview primero para ver qué se va a borrar antes de confirmar.
+      </p>
+
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
+        <button className="eg-btn eg-btn-ghost eg-btn-sm" onClick={cargarPreview} disabled={cargando}>
+          {cargando ? '…' : '🔍 Preview'}
+        </button>
+        <button className="eg-btn eg-btn-ghost eg-btn-sm" style={{ color: '#DC2626' }}
+          onClick={() => ejecutar('limpiar_todo', 'Eliminar usuarios huérfanos y códigos obsoletos')} disabled={cargando}>
+          🧹 Limpiar huérfanos + códigos usados
+        </button>
+        <button className="eg-btn eg-btn-ghost eg-btn-sm" style={{ color: '#DC2626', fontWeight: 700 }}
+          onClick={() => ejecutar('reset_egresados', 'BORRAR TODOS los operativos, agencias, usuarios y códigos')} disabled={cargando}>
+          ⚠️ Reset completo (borra TODO)
+        </button>
+      </div>
+
+      {error && <div className="eg-alert eg-alert-error">{error}</div>}
+      {resultado && <div className="eg-alert eg-alert-success">{resultado}</div>}
+
+      {preview && (
+        <div style={{ fontSize: 12, lineHeight: 1.8 }}>
+          <strong>Agencias activas:</strong> {preview.agencias}<br />
+          <strong>Usuarios huérfanos:</strong> {preview.huerfanos.length}
+          {preview.huerfanos.length > 0 && (
+            <ul style={{ margin: '4px 0 8px 16px', color: '#7A7A96' }}>
+              {preview.huerfanos.map(u => <li key={u.id}>{u.id} (agenciaId: {u.agenciaId})</li>)}
+            </ul>
+          )}
+          <strong>Códigos obsoletos (usados/inactivos):</strong> {preview.codigosObsoletos.length}
+          {preview.codigosObsoletos.length > 0 && (
+            <ul style={{ margin: '4px 0 8px 16px', color: '#7A7A96' }}>
+              {preview.codigosObsoletos.map(c => <li key={c.id}>{c.id} · agencia: {c.agenciaId} · usado: {String(c.usado)}</li>)}
+            </ul>
+          )}
+          <strong>Operativos totales:</strong> {preview.operativos.length}
+          {preview.operativos.length > 0 && (
+            <ul style={{ margin: '4px 0 8px 16px', color: '#7A7A96' }}>
+              {preview.operativos.map(o => <li key={o.id}>{o.nombre} · {o.agenciaId} · estado: {o.estado}</li>)}
+            </ul>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 
