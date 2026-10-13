@@ -7,13 +7,13 @@ import {
 } from 'firebase/firestore';
 import { auth, db, googleProvider } from '../firebase/config';
 import {
-  fechaCorta, hoyISO,
+  fechaCorta, hoyISO, rangoFechas, labelFecha, generarToken,
   CAMPOS_PASAJERO, detectarEncabezados, filasAPasajeros, leerArchivoPlanilla, parsearTexto, apellidoNombre,
 } from '../admin/egresados/utils';
 import {
   guardarPasajerosMasivo, crearOperativo, importarMaestro, crearEnSub,
   actualizarEnSub, eliminarStaff, eliminarPasajerosMasivo,
-  generarAccesos, actualizarOperativo,
+  generarAccesos, actualizarOperativo, guardarEnSub, eliminarEnSub,
 } from '../firebase/egresadosService';
 import { parsearExcelMaestro } from '../admin/egresados/ImportarMaestro';
 import './agencia.css';
@@ -713,7 +713,7 @@ function DetalleOperativo({ operativo: opInicial, agenciaId, onVolver }) {
                 agenciaId={agenciaId}
               />
             )}
-            {tab === 'itinerario' && <TabItinerario itinerario={itinerario} />}
+            {tab === 'itinerario' && <TabItinerario itinerario={itinerario} op={op} buses={buses} opId={op.id} />}
           </>
         )}
       </div>
@@ -1542,42 +1542,363 @@ function ajustarLargo(m, largo) {
   return arr;
 }
 
-function TabItinerario({ itinerario }) {
-  if (itinerario.length === 0) {
+const ACT_VACIA = { hora: '', horaFin: '', titulo: '', lugar: '', direccion: '', buses: [], soloStaff: false, paraPasajeros: '', paraConductores: '', paraCoordinadores: '' };
+const DIA_VACIO = { titulo: '', resumen: '', sugerencias: '', notasConductores: '', notasCoordinadores: '' };
+const porHora = (a, b) => String(a.hora || '99:99').localeCompare(String(b.hora || '99:99'));
+
+function TabItinerario({ itinerario, op, buses, opId }) {
+  const [abiertos, setAbiertos] = useState(() => new Set());
+  const [editAct, setEditAct] = useState(null);   // { fecha, act? }
+  const [editDia, setEditDia] = useState(null);    // fecha
+  const [eliminandoAct, setEliminandoAct] = useState(null); // { fecha, actId }
+
+  const porFecha = useMemo(() => {
+    const m = {};
+    itinerario.forEach(d => { m[d.fecha || d.id] = d; });
+    return m;
+  }, [itinerario]);
+
+  const fechasViaje = rangoFechas(op?.fechaInicio, op?.fechaFin);
+  const fechas = [...new Set([...fechasViaje, ...Object.keys(porFecha)])].sort();
+  const hoy = hoyISO();
+
+  function toggle(f) {
+    setAbiertos(prev => { const n = new Set(prev); if (n.has(f)) n.delete(f); else n.add(f); return n; });
+  }
+
+  async function guardarActividad(fecha, act) {
+    const dia = porFecha[fecha] || {};
+    const lista = [...(dia.actividades || [])];
+    const i = lista.findIndex(a => a.id === act.id);
+    if (i >= 0) lista[i] = act; else lista.push(act);
+    lista.sort(porHora);
+    await guardarEnSub(opId, 'itinerario', fecha, { fecha, actividades: lista });
+    setAbiertos(prev => new Set(prev).add(fecha));
+  }
+
+  async function borrarActividad(fecha, actId) {
+    const dia = porFecha[fecha] || {};
+    await guardarEnSub(opId, 'itinerario', fecha, { fecha, actividades: (dia.actividades || []).filter(a => a.id !== actId) });
+    setEliminandoAct(null);
+  }
+
+  if (!op?.fechaInicio) {
+    return <div className="ag-section" style={{ color: 'var(--ag-text-3)', textAlign: 'center', fontSize: 13 }}>Cargá las fechas del viaje para armar el itinerario.</div>;
+  }
+
+  if (fechas.length === 0) {
     return <div className="ag-section" style={{ color: 'var(--ag-text-3)', textAlign: 'center', fontSize: 13 }}>No hay itinerario cargado.</div>;
   }
-  const hoy = hoyISO();
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-      {itinerario.map(dia => (
-        <div
-          key={dia.id}
-          className="ag-section"
-          style={dia.id === hoy ? { boxShadow: '0 0 0 2px var(--ag-accent), var(--ag-shadow-card)' } : {}}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-            <div style={{ fontSize: 13, fontWeight: 800 }}>{formatFechaDia(dia.id)}</div>
-            {dia.id === hoy && <span className="ag-chip ag-chip-green">Hoy</span>}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 4 }}>
+        <button className="ag-btn ag-btn-ghost ag-btn-sm" onClick={() => setAbiertos(abiertos.size ? new Set() : new Set(fechas))}>
+          {abiertos.size ? 'Contraer todo' : 'Expandir todo'}
+        </button>
+      </div>
+
+      {fechas.map(fecha => {
+        const dia = porFecha[fecha] || {};
+        const acts = [...(dia.actividades || [])].sort(porHora);
+        const nroDia = fechasViaje.indexOf(fecha) + 1;
+        const abierto = abiertos.has(fecha);
+        return (
+          <div key={fecha} className="ag-section" style={{ padding: 0, overflow: 'hidden', ...(fecha === hoy ? { boxShadow: '0 0 0 2px var(--ag-accent)' } : {}) }}>
+            {/* cabecera del día */}
+            <div
+              onClick={() => toggle(fecha)}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', cursor: 'pointer', userSelect: 'none' }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ minWidth: 36, textAlign: 'center', background: 'var(--ag-bg-3,rgba(255,255,255,.04))', borderRadius: 8, padding: '2px 0', fontSize: 11, fontWeight: 800, lineHeight: 1.3 }}>
+                  <div>{nroDia > 0 ? nroDia : '·'}</div><div style={{ fontWeight: 400, opacity: .7 }}>DÍA</div>
+                </div>
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: 13 }}>{labelFecha(fecha, { largo: true })}{dia.titulo ? ` · ${dia.titulo}` : ''}</div>
+                  <div style={{ fontSize: 11.5, color: 'var(--ag-text-3)', marginTop: 1 }}>
+                    {acts.length ? `${acts.length} actividad${acts.length === 1 ? '' : 'es'}` : 'Sin actividades'}
+                    {fecha === hoy && <span className="ag-chip ag-chip-green" style={{ marginLeft: 6, fontSize: 10 }}>Hoy</span>}
+                  </div>
+                </div>
+              </div>
+              <span style={{ color: 'var(--ag-text-3)', fontSize: 13 }}>{abierto ? '▲' : '▼'}</span>
+            </div>
+
+            {abierto && (
+              <div style={{ borderTop: '1px solid var(--ag-sep)', padding: '12px 16px' }}>
+                {/* notas del día */}
+                {(dia.resumen || dia.sugerencias || dia.notasConductores || dia.notasCoordinadores) && (
+                  <div style={{ marginBottom: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    {dia.resumen && <div style={{ fontSize: 12.5, color: 'var(--ag-text-2)', background: 'rgba(99,102,241,.08)', borderRadius: 6, padding: '6px 10px' }}><b>Resumen:</b> {dia.resumen}</div>}
+                    {dia.sugerencias && <div style={{ fontSize: 12.5, color: 'var(--ag-text-2)', background: 'rgba(99,102,241,.08)', borderRadius: 6, padding: '6px 10px' }}><b>💡 Sugerencias:</b> {dia.sugerencias}</div>}
+                    {dia.notasConductores && <div style={{ fontSize: 12.5, color: 'var(--ag-text-2)', background: 'rgba(45,212,191,.08)', borderRadius: 6, padding: '6px 10px' }}><b>🧑‍✈️ Conductores:</b> {dia.notasConductores}</div>}
+                    {dia.notasCoordinadores && <div style={{ fontSize: 12.5, color: 'var(--ag-text-2)', background: 'rgba(16,185,129,.08)', borderRadius: 6, padding: '6px 10px' }}><b>📋 Coordinadores:</b> {dia.notasCoordinadores}</div>}
+                  </div>
+                )}
+
+                {/* actividades */}
+                {acts.length === 0 && <div style={{ fontSize: 12.5, color: 'var(--ag-text-3)', paddingBottom: 8 }}>Todavía no hay actividades este día.</div>}
+                {acts.map(a => (
+                  <div key={a.id} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', padding: '8px 0', borderBottom: '1px solid var(--ag-sep)' }}>
+                    <div style={{ minWidth: 48, fontSize: 12, fontWeight: 700, color: 'var(--ag-text-3)', paddingTop: 1 }}>
+                      {a.hora || '--:--'}{a.horaFin && <div style={{ fontWeight: 400, fontSize: 10.5 }}>↓{a.horaFin}</div>}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 600, fontSize: 13 }}>{a.titulo || 'Actividad'} {a.soloStaff && <span className="ag-chip ag-chip-amber" style={{ fontSize: 10 }}>Solo staff</span>}</div>
+                      {(a.lugar || a.direccion) && <div style={{ fontSize: 12, color: 'var(--ag-text-3)', marginTop: 2 }}>📍 {[a.lugar, a.direccion].filter(Boolean).join(' · ')}</div>}
+                      {(a.paraPasajeros || a.paraConductores || a.paraCoordinadores) && (
+                        <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', gap: 3 }}>
+                          {a.paraPasajeros && !a.soloStaff && <div style={{ fontSize: 12, background: 'rgba(99,102,241,.08)', borderRadius: 4, padding: '3px 7px' }}>🎒 {a.paraPasajeros}</div>}
+                          {a.paraConductores && <div style={{ fontSize: 12, background: 'rgba(45,212,191,.08)', borderRadius: 4, padding: '3px 7px' }}>🧑‍✈️ {a.paraConductores}</div>}
+                          {a.paraCoordinadores && <div style={{ fontSize: 12, background: 'rgba(16,185,129,.08)', borderRadius: 4, padding: '3px 7px' }}>📋 {a.paraCoordinadores}</div>}
+                        </div>
+                      )}
+                    </div>
+                    <div style={{ display: 'flex', gap: 4 }}>
+                      <button className="ag-btn ag-btn-ghost ag-btn-sm" style={{ fontSize: 11 }} onClick={() => setEditAct({ fecha, act: a })}>✏️</button>
+                      <button className="ag-btn ag-btn-ghost ag-btn-sm" style={{ fontSize: 11, color: 'var(--ag-red,#ef4444)' }} onClick={() => setEliminandoAct({ fecha, actId: a.id, titulo: a.titulo })}>🗑️</button>
+                    </div>
+                  </div>
+                ))}
+
+                {/* acciones del día */}
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 12 }}>
+                  <button className="ag-btn ag-btn-primary ag-btn-sm" onClick={() => setEditAct({ fecha })}>+ Actividad</button>
+                  <button className="ag-btn ag-btn-ghost ag-btn-sm" onClick={() => setEditDia(fecha)}>📝 Notas del día</button>
+                  {porFecha[fecha] && (
+                    <button className="ag-btn ag-btn-ghost ag-btn-sm" style={{ color: 'var(--ag-red,#ef4444)', marginLeft: 'auto' }}
+                      onClick={async () => { if (window.confirm('¿Vaciar todas las actividades de este día?')) await eliminarEnSub(opId, 'itinerario', fecha); }}>
+                      Vaciar día
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
-          {dia.resumen && <div style={{ fontSize: 13, color: 'var(--ag-text-2)', lineHeight: 1.6 }}>{dia.resumen}</div>}
-          {dia.actividades?.length > 0 && (
-            <ul style={{ margin: '8px 0 0 14px', fontSize: 12.5, color: 'var(--ag-text-2)', lineHeight: 1.7 }}>
-              {dia.actividades.map((a, i) => <li key={i}>{a.hora ? `${a.hora} — ` : ''}{a.texto}</li>)}
-            </ul>
-          )}
+        );
+      })}
+
+      {/* Modal confirmar eliminar actividad */}
+      {eliminandoAct && (
+        <div className="ag-modal-overlay" onClick={e => e.target === e.currentTarget && setEliminandoAct(null)}>
+          <div className="ag-modal" style={{ maxWidth: 360 }}>
+            <div className="ag-modal-head">
+              <div className="ag-modal-title">🗑️ Eliminar actividad</div>
+              <button className="ag-modal-close" onClick={() => setEliminandoAct(null)}>✕</button>
+            </div>
+            <div className="ag-modal-body">
+              <p>¿Eliminás <strong>{eliminandoAct.titulo || 'esta actividad'}</strong>?</p>
+            </div>
+            <div className="ag-modal-foot">
+              <button className="ag-btn ag-btn-ghost ag-btn-sm" onClick={() => setEliminandoAct(null)}>Cancelar</button>
+              <button className="ag-btn ag-btn-sm" style={{ background: 'var(--ag-red,#ef4444)', color: '#fff' }}
+                onClick={() => borrarActividad(eliminandoAct.fecha, eliminandoAct.actId)}>
+                Sí, eliminar
+              </button>
+            </div>
+          </div>
         </div>
-      ))}
+      )}
+
+      {/* Modal editar/crear actividad */}
+      {editAct && (
+        <ActividadFormAgencia
+          fecha={editAct.fecha}
+          act={editAct.act}
+          buses={buses}
+          onClose={() => setEditAct(null)}
+          onGuardar={async act => { await guardarActividad(editAct.fecha, act); setEditAct(null); }}
+        />
+      )}
+
+      {/* Modal notas del día */}
+      {editDia && (
+        <DiaFormAgencia
+          fecha={editDia}
+          dia={porFecha[editDia]}
+          onClose={() => setEditDia(null)}
+          onGuardar={async data => { await guardarEnSub(opId, 'itinerario', editDia, { fecha: editDia, ...(porFecha[editDia] || {}), ...data }); setEditDia(null); }}
+        />
+      )}
     </div>
   );
 }
 
-function formatFechaDia(iso) {
-  if (!iso) return '—';
-  const [y, m, d] = iso.split('-');
-  const dias = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
-  const meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
-  const fecha = new Date(Number(y), Number(m) - 1, Number(d));
-  return `${dias[fecha.getDay()]} ${Number(d)} de ${meses[Number(m) - 1]} de ${y}`;
+function ActividadFormAgencia({ fecha, act, buses, onClose, onGuardar }) {
+  const [form, setForm] = useState(() => ({ ...ACT_VACIA, ...(act || {}), buses: act?.buses || [] }));
+  const [guardando, setGuardando] = useState(false);
+  const [error, setError] = useState('');
+
+  function toggleBus(id) {
+    setForm(f => ({ ...f, buses: f.buses.includes(id) ? f.buses.filter(x => x !== id) : [...f.buses, id] }));
+  }
+
+  async function guardar(e) {
+    e.preventDefault();
+    if (!form.titulo.trim()) { setError('Poné un título a la actividad.'); return; }
+    setGuardando(true);
+    try {
+      const t = v => String(v ?? '').trim();
+      await onGuardar({
+        id: act?.id || generarToken(8),
+        hora: form.hora, horaFin: form.horaFin,
+        titulo: t(form.titulo), lugar: t(form.lugar), direccion: t(form.direccion),
+        buses: form.buses.filter(id => buses.some(b => b.id === id)),
+        soloStaff: !!form.soloStaff,
+        paraPasajeros: t(form.paraPasajeros),
+        paraConductores: t(form.paraConductores),
+        paraCoordinadores: t(form.paraCoordinadores),
+      });
+    } catch (e) {
+      setError(e?.code === 'permission-denied' ? 'Sin permisos.' : (e.message || 'Error al guardar.'));
+      setGuardando(false);
+    }
+  }
+
+  const F = k => ({ value: form[k], onChange: e => setForm(f => ({ ...f, [k]: e.target.value })) });
+  const inputStyle = { width: '100%', boxSizing: 'border-box' };
+
+  return (
+    <div className="ag-modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="ag-modal" style={{ maxWidth: 560 }}>
+        <div className="ag-modal-head">
+          <div className="ag-modal-title">{act ? 'Editar actividad' : 'Nueva actividad'} · {labelFecha(fecha, { largo: true })}</div>
+          <button className="ag-modal-close" onClick={onClose}>✕</button>
+        </div>
+        <form onSubmit={guardar}>
+          <div className="ag-modal-body" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              <div>
+                <div style={{ fontSize: 11, color: 'var(--ag-text-3)', marginBottom: 3 }}>Hora</div>
+                <input className="ag-input" type="time" style={inputStyle} {...F('hora')} />
+              </div>
+              <div>
+                <div style={{ fontSize: 11, color: 'var(--ag-text-3)', marginBottom: 3 }}>Hasta (opcional)</div>
+                <input className="ag-input" type="time" style={inputStyle} {...F('horaFin')} />
+              </div>
+              <div style={{ gridColumn: '1/-1' }}>
+                <div style={{ fontSize: 11, color: 'var(--ag-text-3)', marginBottom: 3 }}>Actividad *</div>
+                <input className="ag-input" style={inputStyle} placeholder="ej: Excursión Cerro Catedral" autoFocus {...F('titulo')} />
+              </div>
+              <div>
+                <div style={{ fontSize: 11, color: 'var(--ag-text-3)', marginBottom: 3 }}>Lugar</div>
+                <input className="ag-input" style={inputStyle} placeholder="ej: Base Cerro Catedral" {...F('lugar')} />
+              </div>
+              <div>
+                <div style={{ fontSize: 11, color: 'var(--ag-text-3)', marginBottom: 3 }}>Dirección (para el mapa)</div>
+                <input className="ag-input" style={inputStyle} placeholder="Av. de los Pioneros 1234" {...F('direccion')} />
+              </div>
+            </div>
+
+            {buses.length > 0 && (
+              <div>
+                <div style={{ fontSize: 11, color: 'var(--ag-text-3)', marginBottom: 5 }}>Aplica a (sin marcar = todos los buses)</div>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                  {buses.map(b => (
+                    <button key={b.id} type="button"
+                      className={`ag-btn ag-btn-sm ${form.buses.includes(b.id) ? 'ag-btn-primary' : 'ag-btn-ghost'}`}
+                      onClick={() => toggleBus(b.id)}>
+                      {busNombre(b)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div>
+              <div style={{ fontSize: 11, color: 'var(--ag-text-3)', marginBottom: 3 }}>🎒 Info para pasajeros</div>
+              <textarea className="ag-input" rows={2} style={inputStyle} placeholder="ej: Llevar ropa de nieve, guantes y protector solar." {...F('paraPasajeros')} />
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: 'var(--ag-text-3)', marginBottom: 3 }}>🧑‍✈️ Indicaciones para conductores</div>
+              <textarea className="ag-input" rows={2} style={inputStyle} placeholder="ej: Estacionar en playón B. Esperar hasta las 17 h." {...F('paraConductores')} />
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: 'var(--ag-text-3)', marginBottom: 3 }}>📋 Indicaciones para coordinadores</div>
+              <textarea className="ag-input" rows={2} style={inputStyle} placeholder="ej: Retirar vouchers en boletería. Control de presentes." {...F('paraCoordinadores')} />
+            </div>
+
+            <label style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 13, fontWeight: 500 }}>
+              <input type="checkbox" checked={!!form.soloStaff} onChange={e => setForm(f => ({ ...f, soloStaff: e.target.checked }))} />
+              No mostrar a los pasajeros (solo staff)
+            </label>
+
+            {error && <div style={{ color: 'var(--ag-red,#ef4444)', fontSize: 12 }}>{error}</div>}
+          </div>
+          <div className="ag-modal-foot">
+            <button type="button" className="ag-btn ag-btn-ghost ag-btn-sm" onClick={onClose}>Cancelar</button>
+            <button type="submit" className="ag-btn ag-btn-primary ag-btn-sm" disabled={guardando}>
+              {guardando ? 'Guardando…' : '✓ Guardar'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function DiaFormAgencia({ fecha, dia, onClose, onGuardar }) {
+  const [form, setForm] = useState(() => ({ ...DIA_VACIO, ...(dia || {}) }));
+  const [guardando, setGuardando] = useState(false);
+  const [error, setError] = useState('');
+  const inputStyle = { width: '100%', boxSizing: 'border-box' };
+  const F = k => ({ value: form[k] || '', onChange: e => setForm(f => ({ ...f, [k]: e.target.value })) });
+
+  async function guardar(e) {
+    e.preventDefault();
+    setGuardando(true);
+    try {
+      const data = {};
+      Object.keys(DIA_VACIO).forEach(k => { data[k] = String(form[k] ?? '').trim(); });
+      await onGuardar(data);
+    } catch (e) {
+      setError(e?.code === 'permission-denied' ? 'Sin permisos.' : (e.message || 'Error al guardar.'));
+      setGuardando(false);
+    }
+  }
+
+  return (
+    <div className="ag-modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="ag-modal" style={{ maxWidth: 500 }}>
+        <div className="ag-modal-head">
+          <div className="ag-modal-title">📝 Notas · {labelFecha(fecha, { largo: true })}</div>
+          <button className="ag-modal-close" onClick={onClose}>✕</button>
+        </div>
+        <form onSubmit={guardar}>
+          <div className="ag-modal-body" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div>
+              <div style={{ fontSize: 11, color: 'var(--ag-text-3)', marginBottom: 3 }}>Título del día</div>
+              <input className="ag-input" style={inputStyle} placeholder="ej: Día de nieve" autoFocus {...F('titulo')} />
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: 'var(--ag-text-3)', marginBottom: 3 }}>🎒 Resumen para pasajeros</div>
+              <textarea className="ag-input" rows={3} style={inputStyle} placeholder="Qué van a hacer hoy, en pocas palabras." {...F('resumen')} />
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: 'var(--ag-text-3)', marginBottom: 3 }}>💡 Sugerencias para pasajeros</div>
+              <textarea className="ag-input" rows={2} style={inputStyle} placeholder="ej: Abrigarse bien, llevar agua y cargar el celular." {...F('sugerencias')} />
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: 'var(--ag-text-3)', marginBottom: 3 }}>🧑‍✈️ Notas generales para conductores</div>
+              <textarea className="ag-input" rows={2} style={inputStyle} {...F('notasConductores')} />
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: 'var(--ag-text-3)', marginBottom: 3 }}>📋 Notas generales para coordinadores</div>
+              <textarea className="ag-input" rows={2} style={inputStyle} {...F('notasCoordinadores')} />
+            </div>
+            {error && <div style={{ color: 'var(--ag-red,#ef4444)', fontSize: 12 }}>{error}</div>}
+          </div>
+          <div className="ag-modal-foot">
+            <button type="button" className="ag-btn ag-btn-ghost ag-btn-sm" onClick={onClose}>Cancelar</button>
+            <button type="submit" className="ag-btn ag-btn-primary ag-btn-sm" disabled={guardando}>
+              {guardando ? 'Guardando…' : '✓ Guardar'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
 }
 
 // ---- Componente raíz ----
