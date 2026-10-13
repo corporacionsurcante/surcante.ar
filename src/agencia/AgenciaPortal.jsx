@@ -143,6 +143,7 @@ function Dashboard({ sesion, onLogout }) {
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState('');
   const [vista, setVista] = useState(null); // null = lista, objeto = detalle
+  const [mostrarNuevo, setMostrarNuevo] = useState(false);
 
   useEffect(() => {
     const q = query(
@@ -189,6 +190,23 @@ function Dashboard({ sesion, onLogout }) {
 
   return (
     <div className="ag-shell">
+      {mostrarNuevo && (
+        <div className="ag-modal-overlay" onClick={e => e.target === e.currentTarget && setMostrarNuevo(false)}>
+          <div className="ag-modal">
+            <div className="ag-modal-head">
+              <div className="ag-modal-title">Nuevo operativo</div>
+              <button className="ag-modal-close" onClick={() => setMostrarNuevo(false)}>✕</button>
+            </div>
+            <div className="ag-modal-body">
+              <CrearViajeForm
+                agenciaId={sesion.agenciaId}
+                agenciaNombre={sesion.agenciaNombre}
+                onCreado={op => { setMostrarNuevo(false); setVista(op); }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
       <header className="ag-topbar">
         <div className="ag-topbar-brand">🎓 {sesion.agenciaNombre || 'Mi agencia'}</div>
         <div className="ag-topbar-right">
@@ -204,6 +222,9 @@ function Dashboard({ sesion, onLogout }) {
             <div className="ag-title">Operativos</div>
             <div className="ag-sub">{operativos.length} en total · {activos.length} activo{activos.length === 1 ? '' : 's'}</div>
           </div>
+          <button className="ag-btn ag-btn-primary ag-btn-sm" onClick={() => setMostrarNuevo(true)}>
+            + Nuevo operativo
+          </button>
         </div>
 
         {operativos.length === 0 ? (
