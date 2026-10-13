@@ -196,6 +196,7 @@ body {
   border: 1px solid var(--ag-sep);
 }
 .ag-btn-ghost:hover:not(:disabled) { background: var(--ag-sep); }
+.ag-btn-ghost.ag-btn-active { background: transparent; }
 
 .ag-btn-sm {
   padding: 8px 14px;

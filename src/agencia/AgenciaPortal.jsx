@@ -10,7 +10,10 @@ import {
   fechaCorta, hoyISO,
   CAMPOS_PASAJERO, detectarEncabezados, filasAPasajeros, leerArchivoPlanilla, parsearTexto, apellidoNombre,
 } from '../admin/egresados/utils';
-import { guardarPasajerosMasivo } from '../firebase/egresadosService';
+import {
+  guardarPasajerosMasivo, crearOperativo,
+  suscribirAgenciaUsers, crearAgenciaUser,
+} from '../firebase/egresadosService';
 import './agencia.css';
 
 const ESTADOS = {
@@ -81,7 +84,7 @@ function Dashboard({ sesion, onLogout }) {
     );
     const unsub = onSnapshot(q,
       snap => {
-        setOperativos(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+        setOperativos(snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(o => !o.esPrueba));
         setCargando(false);
       },
       err => {
@@ -136,10 +139,7 @@ function Dashboard({ sesion, onLogout }) {
         </div>
 
         {operativos.length === 0 ? (
-          <div className="ag-section" style={{ textAlign: 'center', color: 'var(--ag-text-3)', fontSize: 14 }}>
-            <div style={{ fontSize: 32, marginBottom: 8 }}>🚌</div>
-            No hay operativos cargados para tu agencia todavía.
-          </div>
+          <OnboardingAgencia sesion={sesion} onOperativoCreado={op => setVista(op)} />
         ) : (
           <>
             {activos.length > 0 && (
@@ -195,6 +195,229 @@ function OperativoCard({ op, hoy, onClick, pasado }) {
         {op.estado === 'en_curso' && (
           <span className="ag-chip ag-chip-green">🟢 En curso</span>
         )}
+      </div>
+    </div>
+  );
+}
+
+// ---- Onboarding para agencia nueva (sin operativos) ----
+function OnboardingAgencia({ sesion, onOperativoCreado }) {
+  const [tab, setTab] = useState('bienvenida'); // bienvenida | viaje | coordinadores
+  const [usuarios, setUsuarios] = useState([]);
+
+  useEffect(() => suscribirAgenciaUsers(sesion.agenciaId, setUsuarios, console.error), [sesion.agenciaId]);
+
+  return (
+    <div>
+      {/* Tabs */}
+      <div style={{ display: 'flex', gap: 4, marginBottom: 24, borderBottom: '1px solid var(--ag-sep)' }}>
+        {[
+          { id: 'bienvenida', label: '👋 Bienvenida' },
+          { id: 'viaje',      label: '📋 Primer viaje' },
+          { id: 'coordinadores', label: '👥 Coordinadores' },
+        ].map(t => (
+          <button key={t.id} onClick={() => setTab(t.id)}
+            className={`ag-btn ag-btn-ghost${tab === t.id ? ' ag-btn-active' : ''}`}
+            style={{
+              borderRadius: '8px 8px 0 0', borderBottom: tab === t.id ? '2px solid var(--ag-accent)' : '2px solid transparent',
+              color: tab === t.id ? 'var(--ag-accent)' : 'var(--ag-text-2)', fontWeight: tab === t.id ? 700 : 400,
+              padding: '10px 16px', fontSize: 14,
+            }}>
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'bienvenida' && (
+        <div className="ag-section" style={{ maxWidth: 640 }}>
+          <div style={{ fontSize: 40, marginBottom: 12 }}>🎓</div>
+          <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--ag-text)', marginBottom: 8 }}>
+            ¡Bienvenidos, {sesion.agenciaNombre || sesion.nombre}!
+          </div>
+          <p style={{ color: 'var(--ag-text-2)', lineHeight: 1.7, marginBottom: 20 }}>
+            Este es el sistema de gestión de viajes de egresados de <strong>Surcante</strong>.
+            Desde acá podés ver el estado de cada operativo, gestionar pasajeros, coordinadores e itinerarios.
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {[
+              { n: '1', title: 'Creás tu primer viaje', desc: 'Completás los datos básicos del viaje (nombre, destino, fechas) e importás los pasajeros desde Excel.' },
+              { n: '2', title: 'Sumás coordinadores', desc: 'Invitás a los coordinadores de tu agencia por email. Van a tener acceso al portal en tiempo real.' },
+              { n: '3', title: 'Los pasajeros se conectan', desc: 'Cada pasajero recibe un acceso único para ver su lugar, ómnibus y toda la info del viaje.' },
+            ].map(s => (
+              <div key={s.n} style={{ display: 'flex', gap: 14, alignItems: 'flex-start', background: 'var(--ag-card-2)', borderRadius: 10, padding: '14px 16px' }}>
+                <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'var(--ag-accent)', color: '#fff', fontWeight: 800, fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{s.n}</div>
+                <div>
+                  <div style={{ fontWeight: 700, color: 'var(--ag-text)', marginBottom: 2 }}>{s.title}</div>
+                  <div style={{ fontSize: 13, color: 'var(--ag-text-3)', lineHeight: 1.5 }}>{s.desc}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div style={{ display: 'flex', gap: 10, marginTop: 24 }}>
+            <button className="ag-btn ag-btn-primary" onClick={() => setTab('viaje')}>Crear mi primer viaje →</button>
+            <button className="ag-btn ag-btn-ghost" onClick={() => setTab('coordinadores')}>Gestionar coordinadores</button>
+          </div>
+        </div>
+      )}
+
+      {tab === 'viaje' && (
+        <div className="ag-section" style={{ maxWidth: 560 }}>
+          <div style={{ fontWeight: 700, fontSize: 16, color: 'var(--ag-text)', marginBottom: 4 }}>Crear primer viaje</div>
+          <p style={{ fontSize: 13, color: 'var(--ag-text-3)', marginBottom: 20 }}>
+            Completá los datos básicos. Después podrás importar pasajeros desde Excel dentro del operativo.
+          </p>
+          <CrearViajeForm agenciaId={sesion.agenciaId} agenciaNombre={sesion.agenciaNombre} onCreado={onOperativoCreado} />
+        </div>
+      )}
+
+      {tab === 'coordinadores' && (
+        <div className="ag-section" style={{ maxWidth: 560 }}>
+          <div style={{ fontWeight: 700, fontSize: 16, color: 'var(--ag-text)', marginBottom: 4 }}>Coordinadores de la agencia</div>
+          <p style={{ fontSize: 13, color: 'var(--ag-text-3)', marginBottom: 20 }}>
+            Los coordinadores pueden acceder al portal de seguimiento en tiempo real.
+          </p>
+          <GestionCoordinadores agenciaId={sesion.agenciaId} usuarios={usuarios} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---- Formulario crear primer viaje ----
+function CrearViajeForm({ agenciaId, agenciaNombre, onCreado }) {
+  const [form, setForm] = useState({ nombre: '', destino: '', fechaInicio: '', fechaFin: '', cantBuses: 1 });
+  const [guardando, setGuardando] = useState(false);
+  const [error, setError] = useState('');
+
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+  async function handleCrear() {
+    if (!form.nombre.trim() || !form.destino.trim() || !form.fechaInicio || !form.fechaFin) {
+      setError('Completá nombre, destino y fechas.'); return;
+    }
+    setGuardando(true); setError('');
+    try {
+      const buses = Array.from({ length: Math.max(1, Number(form.cantBuses) || 1) }, (_, i) => ({
+        nombre: `Bus ${i + 1}`, numero: i + 1,
+      }));
+      const ref = await crearOperativo({
+        nombre: form.nombre.trim(),
+        destino: form.destino.trim(),
+        fechaInicio: form.fechaInicio,
+        fechaFin: form.fechaFin,
+        agenciaId,
+        agenciaNombre: agenciaNombre || '',
+        estado: 'planificacion',
+      }, buses);
+      onCreado({ id: ref.id, nombre: form.nombre.trim(), destino: form.destino.trim(), fechaInicio: form.fechaInicio, fechaFin: form.fechaFin, agenciaId, estado: 'planificacion' });
+    } catch (e) {
+      console.error(e); setError('No se pudo crear el viaje. Revisá la conexión.');
+    }
+    setGuardando(false);
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+      {[
+        { label: 'Nombre del viaje', key: 'nombre', type: 'text', placeholder: 'ej: Egresados CENS 35 — 2025' },
+        { label: 'Destino',          key: 'destino', type: 'text', placeholder: 'ej: Bariloche' },
+        { label: 'Fecha de inicio',  key: 'fechaInicio', type: 'date', placeholder: '' },
+        { label: 'Fecha de fin',     key: 'fechaFin',    type: 'date', placeholder: '' },
+      ].map(f => (
+        <div key={f.key}>
+          <label className="ag-label">{f.label}</label>
+          <input className="ag-input" type={f.type} placeholder={f.placeholder}
+            value={form[f.key]} onChange={e => set(f.key, e.target.value)} />
+        </div>
+      ))}
+      <div>
+        <label className="ag-label">Cantidad de ómnibus</label>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <button className="ag-btn ag-btn-ghost ag-btn-sm"
+            onClick={() => set('cantBuses', Math.max(1, form.cantBuses - 1))}>−</button>
+          <span style={{ fontWeight: 700, fontSize: 18, minWidth: 24, textAlign: 'center', color: 'var(--ag-text)' }}>{form.cantBuses}</span>
+          <button className="ag-btn ag-btn-ghost ag-btn-sm"
+            onClick={() => set('cantBuses', form.cantBuses + 1)}>+</button>
+        </div>
+      </div>
+      {error && <div className="ag-alert ag-alert-error">{error}</div>}
+      <button className="ag-btn ag-btn-primary" onClick={handleCrear} disabled={guardando}>
+        {guardando ? 'Creando...' : '✓ Crear viaje y continuar'}
+      </button>
+    </div>
+  );
+}
+
+// ---- Gestión de coordinadores ----
+function GestionCoordinadores({ agenciaId, usuarios }) {
+  const [nombre, setNombre] = useState('');
+  const [email, setEmail] = useState('');
+  const [guardando, setGuardando] = useState(false);
+  const [error, setError] = useState('');
+  const [ok, setOk] = useState('');
+
+  async function agregar() {
+    if (!email.trim() || !nombre.trim()) { setError('Completá nombre y email.'); return; }
+    const emailLower = email.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailLower)) { setError('Email no válido.'); return; }
+    setGuardando(true); setError(''); setOk('');
+    try {
+      await crearAgenciaUser(emailLower, agenciaId, nombre.trim());
+      setNombre(''); setEmail('');
+      setOk(`✓ ${emailLower} agregado correctamente.`);
+    } catch (e) {
+      console.error(e); setError('No se pudo guardar. Revisá la conexión.');
+    }
+    setGuardando(false);
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      {/* Lista actual */}
+      {usuarios.length > 0 && (
+        <div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--ag-text-3)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Coordinadores actuales</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {usuarios.map(u => (
+              <div key={u.id} style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--ag-card-2)', borderRadius: 8, padding: '10px 14px' }}>
+                <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(var(--ag-accent-rgb),.15)', color: 'var(--ag-accent)', fontWeight: 800, fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {(u.nombre || u.id)[0].toUpperCase()}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontWeight: 600, color: 'var(--ag-text)', fontSize: 14 }}>{u.nombre || '—'}</div>
+                  <div style={{ fontSize: 12, color: 'var(--ag-text-3)' }}>{u.id}</div>
+                </div>
+                <span style={{ fontSize: 11, fontWeight: 700, background: u.activa !== false ? 'rgba(16,185,129,.12)' : 'rgba(239,68,68,.10)', color: u.activa !== false ? '#059669' : '#DC2626', padding: '2px 8px', borderRadius: 20 }}>
+                  {u.activa !== false ? 'Activo' : 'Inactivo'}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Agregar nuevo */}
+      <div>
+        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--ag-text-3)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 10 }}>Agregar coordinador</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div>
+            <label className="ag-label">Nombre completo</label>
+            <input className="ag-input" type="text" placeholder="ej: Ana García" value={nombre} onChange={e => setNombre(e.target.value)} />
+          </div>
+          <div>
+            <label className="ag-label">Email</label>
+            <input className="ag-input" type="email" placeholder="ej: ana@miagencia.com" value={email} onChange={e => setEmail(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && agregar()} />
+          </div>
+          {error && <div className="ag-alert ag-alert-error">{error}</div>}
+          {ok    && <div style={{ background: 'rgba(16,185,129,.10)', color: '#059669', borderRadius: 8, padding: '8px 12px', fontSize: 13, fontWeight: 600 }}>{ok}</div>}
+          <button className="ag-btn ag-btn-primary" onClick={agregar} disabled={guardando}>
+            {guardando ? 'Guardando...' : '+ Agregar coordinador'}
+          </button>
+        </div>
+        <p style={{ fontSize: 12, color: 'var(--ag-text-3)', marginTop: 10, lineHeight: 1.5 }}>
+          El coordinador podrá ingresar con su cuenta de Google usando este email. Le avisale para que acceda a <strong>surcante.ar/agencia</strong>.
+        </p>
       </div>
     </div>
   );
