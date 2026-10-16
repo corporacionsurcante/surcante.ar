@@ -61,16 +61,18 @@ export default async function handler(req, res) {
       if (agenciaSnap.exists) agenciaNombre = agenciaSnap.data().nombre || '';
     } catch (_) { /* continuar sin nombre de agencia */ }
 
+    const rolAgencia = userData.rolAgencia || 'gerente';
     const claims = { rol: 'agencia', agenciaId };
     if (nombre) claims.nombre = nombre;
     if (agenciaNombre) claims.agenciaNombre = agenciaNombre;
+    if (rolAgencia !== 'gerente') claims.rolAgencia = rolAgencia;
 
     const uid = `agencia_${email.toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
     const customToken = await admin.auth().createCustomToken(uid, claims);
 
     snap.ref.update({ ultimoAcceso: admin.firestore.FieldValue.serverTimestamp() }).catch(() => {});
 
-    return res.status(200).json({ customToken, agenciaId, nombre, agenciaNombre });
+    return res.status(200).json({ customToken, agenciaId, nombre, agenciaNombre, rolAgencia });
   } catch (err) {
     console.error('[api/agencia-auth]', err.message);
     if (err.code === 'auth/argument-error' || err.code === 'auth/id-token-expired') {

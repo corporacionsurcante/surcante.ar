@@ -79,8 +79,10 @@ export default async function handler(req, res) {
 
     // UID vinculado al dispositivo + agencia para mantener sesión entre recargas
     const uid = `agencia_dev_${agenciaId}_${dispositivoId.replace(/[^a-z0-9_-]/gi, '').slice(0, 24)}`;
+    const rolAgencia = cd.rolAgencia || 'gerente';
     const claims = { rol: 'agencia', agenciaId };
     if (agenciaNombre) claims.agenciaNombre = agenciaNombre;
+    if (rolAgencia !== 'gerente') claims.rolAgencia = rolAgencia;
 
     const customToken = await admin.auth().createCustomToken(uid, claims);
 
@@ -90,7 +92,7 @@ export default async function handler(req, res) {
       dispositivoId,
     });
 
-    return res.status(200).json({ customToken, agenciaId, agenciaNombre });
+    return res.status(200).json({ customToken, agenciaId, agenciaNombre, rolAgencia });
   } catch (err) {
     console.error('[api/agencia-codigo]', err.message);
     return res.status(500).json({ error: 'Error interno. Intentá de nuevo.' });

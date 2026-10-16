@@ -44,6 +44,23 @@ service cloud.firestore {
            == request.auth.token.agenciaId;
     }
 
+    // Visor de agencia: puede leer pero no escribir
+    function agenciaIsVisor() {
+      return isAgenciaUser()
+        && 'rolAgencia' in request.auth.token
+        && request.auth.token.rolAgencia == 'visor';
+    }
+
+    // Agencia con permiso de escritura (no visor)
+    function agenciaCanWrite() {
+      return isAgenciaUser() && !agenciaIsVisor();
+    }
+
+    // Agencia con permiso de escritura en un operativo concreto
+    function agenciaEnOpCanWrite(opId) {
+      return agenciaEnOp(opId) && !agenciaIsVisor();
+    }
+
     match /admins/{email} {
       // Cada usuario puede consultar SOLO su propio documento: así el login
       // distingue "no autorizado" de un error de conexión.
@@ -142,24 +159,24 @@ service cloud.firestore {
         || (isAgenciaUser() && resource.data.agenciaId == request.auth.token.agenciaId);
       // Agencias pueden crear y actualizar sus propios operativos; solo admin puede borrar
       allow create: if isAdmin()
-        || (isAgenciaUser() && request.resource.data.agenciaId == request.auth.token.agenciaId);
+        || (agenciaCanWrite() && request.resource.data.agenciaId == request.auth.token.agenciaId);
       allow update: if isAdmin()
-        || (isAgenciaUser() && resource.data.agenciaId == request.auth.token.agenciaId);
+        || (agenciaCanWrite() && resource.data.agenciaId == request.auth.token.agenciaId);
       allow delete: if isAdmin();
 
       match /buses/{busId} {
         allow read: if isAdmin() || portalEnOp(opId) || agenciaEnOp(opId);
-        allow write: if isAdmin() || agenciaEnOp(opId);
+        allow write: if isAdmin() || agenciaEnOpCanWrite(opId);
       }
 
       match /staff/{staffId} {
         allow read: if isAdmin() || portalEnOp(opId) || agenciaEnOp(opId);
-        allow write: if isAdmin() || agenciaEnOp(opId);
+        allow write: if isAdmin() || agenciaEnOpCanWrite(opId);
       }
 
       match /itinerario/{dia} {
         allow read: if isAdmin() || portalEnOp(opId) || agenciaEnOp(opId);
-        allow write: if isAdmin() || agenciaEnOp(opId);
+        allow write: if isAdmin() || agenciaEnOpCanWrite(opId);
       }
 
       match /avisos/{avisId} {
@@ -173,7 +190,7 @@ service cloud.firestore {
           || (portalEnOp(opId) && request.auth.token.rol in ['conductor', 'coordinador'])
           || (portalEnOp(opId) && request.auth.token.rol == 'pasajero' && request.auth.token.refId == paxId)
           || agenciaEnOp(opId);
-        allow write: if isAdmin() || agenciaEnOp(opId);
+        allow write: if isAdmin() || agenciaEnOpCanWrite(opId);
       }
 
       match /ubicaciones/{busId} {
@@ -223,12 +240,12 @@ service cloud.firestore {
 
     match /accesos/{token} {
       allow read, update: if isAdmin();
-      // Agencias pueden crear accesos para sus propios operativos
+      // Agencias pueden crear accesos para sus propios operativos (no visor)
       allow create: if isAdmin()
-        || (isAgenciaUser() && request.resource.data.agenciaId == request.auth.token.agenciaId);
-      // Agencias pueden eliminar accesos de sus propios operativos (para regenerar)
+        || (agenciaCanWrite() && request.resource.data.agenciaId == request.auth.token.agenciaId);
+      // Agencias pueden eliminar accesos de sus propios operativos (para regenerar, no visor)
       allow delete: if isAdmin()
-        || (isAgenciaUser() && resource.data.agenciaId == request.auth.token.agenciaId);
+        || (agenciaCanWrite() && resource.data.agenciaId == request.auth.token.agenciaId);
     }
 
     // Códigos de acceso de un solo uso para el portal de agencias.

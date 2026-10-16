@@ -148,6 +148,7 @@ function Dashboard({ sesion, onLogout }) {
   const [vista, setVista] = useState(null); // null = lista, objeto = detalle
   const [mostrarNuevo, setMostrarNuevo] = useState(false);
   const [cupoMaxBuses, setCupoMaxBuses] = useState(null); // null = sin límite
+  const soloLectura = sesion.rolAgencia === 'visor';
 
   useEffect(() => {
     getDoc(doc(db, 'agencias', sesion.agenciaId))
@@ -195,6 +196,7 @@ function Dashboard({ sesion, onLogout }) {
         operativo={vista}
         agenciaId={sesion.agenciaId}
         onVolver={() => setVista(null)}
+        soloLectura={soloLectura}
       />
     );
   }
@@ -205,7 +207,7 @@ function Dashboard({ sesion, onLogout }) {
 
   return (
     <div className="ag-shell">
-      {mostrarNuevo && (
+      {mostrarNuevo && !soloLectura && (
         <div className="ag-modal-overlay" onClick={e => e.target === e.currentTarget && setMostrarNuevo(false)}>
           <div className="ag-modal">
             <div className="ag-modal-head">
@@ -226,6 +228,7 @@ function Dashboard({ sesion, onLogout }) {
       <header className="ag-topbar">
         <div className="ag-topbar-brand">🎓 {sesion.agenciaNombre || 'Mi agencia'}</div>
         <div className="ag-topbar-right">
+          {soloLectura && <span style={{ fontSize: 11, background: 'rgba(99,102,241,.15)', color: 'var(--ag-accent)', borderRadius: 6, padding: '3px 8px', fontWeight: 600 }}>Solo lectura</span>}
           <span>{sesion.nombre}</span>
           <button className="ag-btn ag-btn-ghost ag-btn-sm" onClick={onLogout}>Salir</button>
         </div>
@@ -238,13 +241,15 @@ function Dashboard({ sesion, onLogout }) {
             <div className="ag-title">Operativos</div>
             <div className="ag-sub">{operativos.length} en total · {activos.length} activo{activos.length === 1 ? '' : 's'}</div>
           </div>
-          <button className="ag-btn ag-btn-primary ag-btn-sm" onClick={() => setMostrarNuevo(true)}>
-            + Nuevo operativo
-          </button>
+          {!soloLectura && (
+            <button className="ag-btn ag-btn-primary ag-btn-sm" onClick={() => setMostrarNuevo(true)}>
+              + Nuevo operativo
+            </button>
+          )}
         </div>
 
         {operativos.length === 0 ? (
-          <OnboardingAgencia sesion={sesion} cupoMaxBuses={cupoMaxBuses} onOperativoCreado={op => setVista(op)} />
+          <OnboardingAgencia sesion={sesion} cupoMaxBuses={cupoMaxBuses} soloLectura={soloLectura} onOperativoCreado={op => setVista(op)} />
         ) : (
           <>
             {activos.length > 0 && (
@@ -306,7 +311,7 @@ function OperativoCard({ op, hoy, onClick, pasado }) {
 }
 
 // ---- Onboarding para agencia nueva (sin operativos) ----
-function OnboardingAgencia({ sesion, cupoMaxBuses, onOperativoCreado }) {
+function OnboardingAgencia({ sesion, cupoMaxBuses, soloLectura, onOperativoCreado }) {
   const [tab, setTab] = useState('bienvenida'); // bienvenida | viaje
 
   return (
@@ -355,7 +360,7 @@ function OnboardingAgencia({ sesion, cupoMaxBuses, onOperativoCreado }) {
             ))}
           </div>
           <div style={{ display: 'flex', gap: 10, marginTop: 24 }}>
-            <button className="ag-btn ag-btn-primary" onClick={() => setTab('viaje')}>Crear mi primer viaje →</button>
+            {!soloLectura && <button className="ag-btn ag-btn-primary" onClick={() => setTab('viaje')}>Crear mi primer viaje →</button>}
           </div>
         </div>
       )}
@@ -708,7 +713,7 @@ function EditarOperativoModal({ op, onClose, onGuardado }) {
 }
 
 // ---- Detalle de operativo ----
-function DetalleOperativo({ operativo: opInicial, agenciaId, onVolver }) {
+function DetalleOperativo({ operativo: opInicial, agenciaId, onVolver, soloLectura = false }) {
   const [op, setOp] = useState(opInicial);
   const [tab, setTab] = useState('buses');
   const [buses, setBuses] = useState([]);
@@ -770,11 +775,13 @@ function DetalleOperativo({ operativo: opInicial, agenciaId, onVolver }) {
           <div>
             <div className="ag-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               {op.nombre}
-              <button
-                className="ag-btn ag-btn-ghost ag-btn-sm"
-                style={{ fontSize: 12, padding: '2px 8px' }}
-                onClick={() => setEditarOp(true)}
-              >✏️ Editar</button>
+              {!soloLectura && (
+                <button
+                  className="ag-btn ag-btn-ghost ag-btn-sm"
+                  style={{ fontSize: 12, padding: '2px 8px' }}
+                  onClick={() => setEditarOp(true)}
+                >✏️ Editar</button>
+              )}
             </div>
             <div className="ag-sub">
               {op.destino && `${op.destino} · `}
@@ -816,6 +823,7 @@ function DetalleOperativo({ operativo: opInicial, agenciaId, onVolver }) {
                 buses={buses}
                 opId={op.id}
                 pasajeros={pasajeros}
+                soloLectura={soloLectura}
               />
             )}
             {tab === 'pasajeros' && (
@@ -825,9 +833,10 @@ function DetalleOperativo({ operativo: opInicial, agenciaId, onVolver }) {
                 staff={staff}
                 opId={op.id}
                 agenciaId={agenciaId}
+                soloLectura={soloLectura}
               />
             )}
-            {tab === 'itinerario' && <TabItinerario itinerario={itinerario} op={op} buses={buses} opId={op.id} />}
+            {tab === 'itinerario' && <TabItinerario itinerario={itinerario} op={op} buses={buses} opId={op.id} soloLectura={soloLectura} />}
           </>
         )}
       </div>
@@ -880,7 +889,7 @@ function TabBuses({ buses, staff, pasajeros }) {
 
 const FORM_STAFF_VACIO = { apellido: '', nombre: '', dni: '', telefono: '', email: '', busId: '', grupo: '' };
 
-function TabPersonal({ conductores, coordinadores, buses, opId, pasajeros }) {
+function TabPersonal({ conductores, coordinadores, buses, opId, pasajeros, soloLectura = false }) {
   const [mostrarForm, setMostrarForm] = useState(false);
   const [form, setForm] = useState(FORM_STAFF_VACIO);
   const [guardando, setGuardando] = useState(false);
@@ -1023,11 +1032,13 @@ function TabPersonal({ conductores, coordinadores, buses, opId, pasajeros }) {
         </div>
       )}
 
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 10 }}>
-        <button className="ag-btn ag-btn-primary ag-btn-sm" onClick={() => { setMostrarForm(v => !v); setError(''); setEditandoId(null); }}>
-          {mostrarForm ? '✕ Cancelar' : '+ Agregar coordinador'}
-        </button>
-      </div>
+      {!soloLectura && (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 10 }}>
+          <button className="ag-btn ag-btn-primary ag-btn-sm" onClick={() => { setMostrarForm(v => !v); setError(''); setEditandoId(null); }}>
+            {mostrarForm ? '✕ Cancelar' : '+ Agregar coordinador'}
+          </button>
+        </div>
+      )}
 
       {mostrarForm && (
         <form onSubmit={guardarNuevo} style={{ background: 'var(--ag-bg-2,rgba(255,255,255,.06))', borderRadius: 10, padding: '14px 16px', marginBottom: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -1053,12 +1064,12 @@ function TabPersonal({ conductores, coordinadores, buses, opId, pasajeros }) {
                 <th>Rol</th>
                 <th>Bus</th>
                 <th>Teléfono</th>
-                <th style={{ width: 90 }}></th>
+                {!soloLectura && <th style={{ width: 90 }}></th>}
               </tr>
             </thead>
             <tbody>
               {todos.map(p => (
-                editandoId === p.id ? (
+                editandoId === p.id && !soloLectura ? (
                   <tr key={p.id} style={{ background: 'rgba(124,58,237,.07)' }}>
                     <td colSpan={5}>
                       <form onSubmit={guardarEdicion} style={{ padding: '8px 0', display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -1079,13 +1090,15 @@ function TabPersonal({ conductores, coordinadores, buses, opId, pasajeros }) {
                     <td><span className={`ag-chip ${p._rol === 'conductor' ? 'ag-chip-blue' : 'ag-chip-amber'}`}>{p._rol === 'conductor' ? 'Conductor' : 'Coordinador'}</span></td>
                     <td>{p.busId ? busLabel(p.busId) : '—'}</td>
                     <td>{p.telefono || '—'}</td>
-                    <td>
-                      <div style={{ display: 'flex', gap: 4 }}>
-                        <button className="ag-btn ag-btn-ghost ag-btn-sm" style={{ fontSize: 11 }} onClick={() => iniciarEdicion(p)}>✏️</button>
-                        <button className="ag-btn ag-btn-ghost ag-btn-sm" style={{ fontSize: 11, color: 'var(--ag-red,#ef4444)' }}
-                          onClick={() => setConfirmElim(p)} disabled={eliminando === p.id}>🗑️</button>
-                      </div>
-                    </td>
+                    {!soloLectura && (
+                      <td>
+                        <div style={{ display: 'flex', gap: 4 }}>
+                          <button className="ag-btn ag-btn-ghost ag-btn-sm" style={{ fontSize: 11 }} onClick={() => iniciarEdicion(p)}>✏️</button>
+                          <button className="ag-btn ag-btn-ghost ag-btn-sm" style={{ fontSize: 11, color: 'var(--ag-red,#ef4444)' }}
+                            onClick={() => setConfirmElim(p)} disabled={eliminando === p.id}>🗑️</button>
+                        </div>
+                      </td>
+                    )}
                   </tr>
                 )
               ))}
@@ -1099,7 +1112,7 @@ function TabPersonal({ conductores, coordinadores, buses, opId, pasajeros }) {
 
 const FORM_PAX_VACIO = { apellido: '', nombre: '', dni: '', telefono: '', email: '', busId: '', asiento: '', habitacion: '' };
 
-function TabPasajeros({ pasajeros, buses, staff, opId, agenciaId }) {
+function TabPasajeros({ pasajeros, buses, staff, opId, agenciaId, soloLectura = false }) {
   const [busca, setBusca] = useState('');
   const [mostrarImport, setMostrarImport] = useState(false);
   const [editandoId, setEditandoId] = useState(null);
@@ -1286,9 +1299,11 @@ function TabPasajeros({ pasajeros, buses, staff, opId, agenciaId }) {
               {generandoLinks ? '⏳ Generando…' : `🔗 Generar links para todos (${pasajeros.filter(p => !linksGenerados[p.id]).length} sin link)`}
             </button>
           )}
-          <button className="ag-btn ag-btn-primary ag-btn-sm" onClick={() => setMostrarImport(true)}>
-            📥 Importar desde Excel
-          </button>
+          {!soloLectura && (
+            <button className="ag-btn ag-btn-primary ag-btn-sm" onClick={() => setMostrarImport(true)}>
+              📥 Importar desde Excel
+            </button>
+          )}
         </div>
       </div>
 
@@ -1317,12 +1332,12 @@ function TabPasajeros({ pasajeros, buses, staff, opId, agenciaId }) {
                 <th>DNI</th>
                 <th>Bus / Asiento</th>
                 <th>Link</th>
-                <th style={{ width: 70 }}></th>
+                {!soloLectura && <th style={{ width: 70 }}></th>}
               </tr>
             </thead>
             <tbody>
               {filtrados.map((p, i) => (
-                editandoId === p.id ? (
+                editandoId === p.id && !soloLectura ? (
                   <tr key={p.id} style={{ background: 'rgba(124,58,237,.07)' }}>
                     <td colSpan={6}>
                       <form onSubmit={guardarEdicion} style={{ padding: '8px 0', display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -1362,13 +1377,15 @@ function TabPasajeros({ pasajeros, buses, staff, opId, agenciaId }) {
                         </button>
                       )}
                     </td>
-                    <td>
-                      <div style={{ display: 'flex', gap: 4 }}>
-                        <button className="ag-btn ag-btn-ghost ag-btn-sm" style={{ fontSize: 11 }} onClick={() => iniciarEdicion(p)}>✏️</button>
-                        <button className="ag-btn ag-btn-ghost ag-btn-sm" style={{ fontSize: 11, color: 'var(--ag-red,#ef4444)' }}
-                          onClick={() => setConfirmElim(p)}>🗑️</button>
-                      </div>
-                    </td>
+                    {!soloLectura && (
+                      <td>
+                        <div style={{ display: 'flex', gap: 4 }}>
+                          <button className="ag-btn ag-btn-ghost ag-btn-sm" style={{ fontSize: 11 }} onClick={() => iniciarEdicion(p)}>✏️</button>
+                          <button className="ag-btn ag-btn-ghost ag-btn-sm" style={{ fontSize: 11, color: 'var(--ag-red,#ef4444)' }}
+                            onClick={() => setConfirmElim(p)}>🗑️</button>
+                        </div>
+                      </td>
+                    )}
                   </tr>
                 )
               ))}
@@ -1670,7 +1687,7 @@ const ACT_VACIA = { hora: '', horaFin: '', titulo: '', lugar: '', direccion: '',
 const DIA_VACIO = { titulo: '', resumen: '', sugerencias: '', notasConductores: '', notasCoordinadores: '' };
 const porHora = (a, b) => String(a.hora || '99:99').localeCompare(String(b.hora || '99:99'));
 
-function TabItinerario({ itinerario, op, buses, opId }) {
+function TabItinerario({ itinerario, op, buses, opId, soloLectura = false }) {
   const [abiertos, setAbiertos] = useState(() => new Set());
   const [editAct, setEditAct] = useState(null);   // { fecha, act? }
   const [editDia, setEditDia] = useState(null);    // fecha
@@ -1779,24 +1796,28 @@ function TabItinerario({ itinerario, op, buses, opId }) {
                         </div>
                       )}
                     </div>
-                    <div style={{ display: 'flex', gap: 4 }}>
-                      <button className="ag-btn ag-btn-ghost ag-btn-sm" style={{ fontSize: 11 }} onClick={() => setEditAct({ fecha, act: a })}>✏️</button>
-                      <button className="ag-btn ag-btn-ghost ag-btn-sm" style={{ fontSize: 11, color: 'var(--ag-red,#ef4444)' }} onClick={() => setEliminandoAct({ fecha, actId: a.id, titulo: a.titulo })}>🗑️</button>
-                    </div>
+                    {!soloLectura && (
+                      <div style={{ display: 'flex', gap: 4 }}>
+                        <button className="ag-btn ag-btn-ghost ag-btn-sm" style={{ fontSize: 11 }} onClick={() => setEditAct({ fecha, act: a })}>✏️</button>
+                        <button className="ag-btn ag-btn-ghost ag-btn-sm" style={{ fontSize: 11, color: 'var(--ag-red,#ef4444)' }} onClick={() => setEliminandoAct({ fecha, actId: a.id, titulo: a.titulo })}>🗑️</button>
+                      </div>
+                    )}
                   </div>
                 ))}
 
                 {/* acciones del día */}
-                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 12 }}>
-                  <button className="ag-btn ag-btn-primary ag-btn-sm" onClick={() => setEditAct({ fecha })}>+ Actividad</button>
-                  <button className="ag-btn ag-btn-ghost ag-btn-sm" onClick={() => setEditDia(fecha)}>📝 Notas del día</button>
-                  {porFecha[fecha] && (
-                    <button className="ag-btn ag-btn-ghost ag-btn-sm" style={{ color: 'var(--ag-red,#ef4444)', marginLeft: 'auto' }}
-                      onClick={async () => { if (window.confirm('¿Vaciar todas las actividades de este día?')) await eliminarEnSub(opId, 'itinerario', fecha); }}>
-                      Vaciar día
-                    </button>
-                  )}
-                </div>
+                {!soloLectura && (
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 12 }}>
+                    <button className="ag-btn ag-btn-primary ag-btn-sm" onClick={() => setEditAct({ fecha })}>+ Actividad</button>
+                    <button className="ag-btn ag-btn-ghost ag-btn-sm" onClick={() => setEditDia(fecha)}>📝 Notas del día</button>
+                    {porFecha[fecha] && (
+                      <button className="ag-btn ag-btn-ghost ag-btn-sm" style={{ color: 'var(--ag-red,#ef4444)', marginLeft: 'auto' }}
+                        onClick={async () => { if (window.confirm('¿Vaciar todas las actividades de este día?')) await eliminarEnSub(opId, 'itinerario', fecha); }}>
+                        Vaciar día
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -2043,6 +2064,7 @@ export default function AgenciaPortal() {
               agenciaId: claims.agenciaId,
               nombre: claims.nombre || '',
               agenciaNombre: claims.agenciaNombre || '',
+              rolAgencia: claims.rolAgencia || 'gerente',
             });
             setEstado('ok');
           } else {
@@ -2089,6 +2111,7 @@ export default function AgenciaPortal() {
         agenciaId: data.agenciaId,
         nombre: data.agenciaNombre || '',
         agenciaNombre: data.agenciaNombre || '',
+        rolAgencia: data.rolAgencia || 'gerente',
       });
       setEstado('ok');
     } catch (e) {
@@ -2125,6 +2148,7 @@ export default function AgenciaPortal() {
         agenciaId: data.agenciaId,
         nombre: data.nombre || result.user.displayName || '',
         agenciaNombre: data.agenciaNombre || '',
+        rolAgencia: data.rolAgencia || 'gerente',
       });
       setEstado('ok');
     } catch (e) {

@@ -107,3 +107,17 @@ export async function isAdminAutorizado(email) {
     throw e;
   }
 }
+
+// Devuelve { ok, rol } — rol puede ser 'superadmin' | 'admin' | 'operador' | 'auditor'.
+// Si no tiene campo 'rol', se asume 'admin' para no romper cuentas existentes.
+export async function verificarAdmin(email) {
+  if (!email) return { ok: false, rol: '' };
+  try {
+    const snap = await getDoc(doc(db, 'admins', email));
+    if (!snap.exists()) return { ok: false, rol: '' };
+    return { ok: true, rol: snap.data().rol || 'admin' };
+  } catch (e) {
+    if (e?.code === 'permission-denied') return { ok: false, rol: '' };
+    throw e;
+  }
+}

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth } from '../../firebase/config';
-import { isAdminAutorizado } from '../../firebase/services';
+import { verificarAdmin } from '../../firebase/services';
 import AdminLogin from './AdminLogin';
 import Dashboard from './Dashboard';
 import Reservas from './Reservas';
@@ -38,6 +38,7 @@ export default function AdminApp() {
   const [checking, setChecking] = useState(true);
   const [sinAcceso, setSinAcceso] = useState('');
   const [errorVerificacion, setErrorVerificacion] = useState('');
+  const [rolAdmin, setRolAdmin] = useState('admin');
   const [tab, setTab] = useState('dashboard');
   const [notificacionesPendientes, setNotificacionesPendientes] = useState(0);
   const [notifEgresados, setNotifEgresados] = useState(0);
@@ -72,9 +73,10 @@ export default function AdminApp() {
         return;
       }
       try {
-        const ok = await isAdminAutorizado(u.email);
+        const { ok, rol } = await verificarAdmin(u.email);
         if (ok) {
           setUser(u);
+          setRolAdmin(rol);
           setSinAcceso('');
         } else {
           // Sesión de Google sin permiso de admin: se cierra y se avisa
@@ -163,7 +165,10 @@ export default function AdminApp() {
       </div>
 
       <div className="admin-nav">
-        {NAV.map(n => (
+        {NAV.filter(n => {
+          if (rolAdmin === 'operador') return ['dashboard', 'gantt', 'egresados'].includes(n.id);
+          return true;
+        }).map(n => (
           <div key={n.id} className={`admin-nav-item ${tab === n.id ? 'active' : ''}`} onClick={() => setTab(n.id)}>
             <span className="nav-icon">{n.icon}</span>
             {n.label}
@@ -208,6 +213,11 @@ export default function AdminApp() {
       </div>
 
       <div className={tab === 'gantt' ? '' : 'admin-content'} style={tab === 'gantt' ? { padding: '20px 16px', overflowX: 'auto' } : {}}>
+        {rolAdmin === 'auditor' && (
+          <div style={{ background: 'rgba(245,158,11,.1)', border: '1px solid rgba(245,158,11,.3)', borderRadius: 8, padding: '8px 16px', marginBottom: 16, fontSize: 13, color: '#d97706', fontWeight: 600 }}>
+            🔍 Modo auditoría — solo lectura
+          </div>
+        )}
         {tab === 'dashboard' && <Dashboard />}
         {tab === 'gantt'     && <Gantt />}
         {tab === 'reservas'  && <Reservas />}
