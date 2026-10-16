@@ -6,6 +6,7 @@ const VACIO = {
   nombre: '', razonSocial: '', cuit: '', legajoEVT: '',
   contactoNombre: '', telefono: '', email: '',
   direccion: '', localidad: '', provincia: '', notas: '',
+  cupoMaxBuses: '',
 };
 
 export default function AgenciaForm({ agencia, onClose, onGuardada }) {
@@ -18,7 +19,11 @@ export default function AgenciaForm({ agencia, onClose, onGuardada }) {
     setGuardando(true);
     setError('');
     const data = {};
-    Object.keys(VACIO).forEach(k => { data[k] = String(form[k] ?? '').trim(); });
+    Object.keys(VACIO).forEach(k => {
+      if (k === 'cupoMaxBuses') return;
+      data[k] = String(form[k] ?? '').trim();
+    });
+    data.cupoMaxBuses = parseInt(String(form.cupoMaxBuses)) > 0 ? parseInt(String(form.cupoMaxBuses)) : 0;
     try {
       if (agencia?.id) {
         await actualizarAgencia(agencia.id, data);
@@ -62,6 +67,11 @@ export default function AgenciaForm({ agencia, onClose, onGuardada }) {
         <Campo label="Localidad"><Input form={form} set={setForm} campo="localidad" /></Campo>
         <Campo label="Provincia"><Input form={form} set={setForm} campo="provincia" /></Campo>
         <Campo label="Notas internas" full><TextArea form={form} set={setForm} campo="notas" /></Campo>
+
+        <div className="eg-form-section full">Configuración operativa</div>
+        <Campo label="Cupo máximo de ómnibus" hint="0 = sin límite. Máximo de buses que la agencia puede pedir por operativo.">
+          <Input form={form} set={setForm} campo="cupoMaxBuses" type="number" placeholder="0 = sin límite" />
+        </Campo>
       </div>
       {error && <div className="eg-alert eg-alert-error" style={{ marginTop: 12 }}>{error}</div>}
     </Modal>

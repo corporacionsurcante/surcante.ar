@@ -13,7 +13,7 @@ import ConfigModulos from './ConfigModulos';
 import Cotizaciones from './Cotizaciones';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '../../firebase/config';
-import { marcarNotificacionesComoLeidas } from '../../firebase/notificacionesService';
+import { marcarNotificacionesComoLeidas, marcarNotificacionesEgresadosLeidas } from '../../firebase/notificacionesService';
 import { activarNotificacionesPush, pushYaActivado } from '../../firebase/pushService';
 import ThemeToggle from '../ThemeToggle';
 import '../admin.css';
@@ -40,6 +40,7 @@ export default function AdminApp() {
   const [errorVerificacion, setErrorVerificacion] = useState('');
   const [tab, setTab] = useState('dashboard');
   const [notificacionesPendientes, setNotificacionesPendientes] = useState(0);
+  const [notifEgresados, setNotifEgresados] = useState(0);
   const [pushActivo, setPushActivo] = useState(() => pushYaActivado());
   const [pushLoading, setPushLoading] = useState(false);
 
@@ -96,13 +97,20 @@ export default function AdminApp() {
     if (!user) return undefined;
     const q = query(collection(db, 'notificaciones'), where('leida', '==', false));
     return onSnapshot(q, snap => {
-      setNotificacionesPendientes(snap.size);
+      const docs = snap.docs.map(d => d.data());
+      setNotifEgresados(docs.filter(d => d.tipo === 'operativo_agencia').length);
+      setNotificacionesPendientes(docs.filter(d => d.tipo !== 'operativo_agencia').length);
     }, e => console.error('[Firestore] notificaciones:', e));
   }, [user]);
 
   useEffect(() => {
     if (tab !== 'reservas' || !user) return;
     marcarNotificacionesComoLeidas().catch(e => console.error('Marcando notificaciones:', e));
+  }, [tab, user]);
+
+  useEffect(() => {
+    if (tab !== 'egresados' || !user) return;
+    marcarNotificacionesEgresadosLeidas().catch(e => console.error('Marcando notificaciones egresados:', e));
   }, [tab, user]);
 
   if (checking) return (
@@ -175,6 +183,24 @@ export default function AdminApp() {
                 fontWeight: 700,
               }}>
                 {notificacionesPendientes}
+              </span>
+            )}
+            {n.id === 'egresados' && notifEgresados > 0 && (
+              <span style={{
+                marginLeft: 8,
+                background: '#7c3aed',
+                color: '#fff',
+                borderRadius: 999,
+                minWidth: 18,
+                height: 18,
+                padding: '0 6px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 10,
+                fontWeight: 700,
+              }}>
+                {notifEgresados}
               </span>
             )}
           </div>

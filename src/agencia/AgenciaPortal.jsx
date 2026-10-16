@@ -3,7 +3,7 @@ import {
   signInWithPopup, signInWithCustomToken, signOut, onAuthStateChanged,
 } from 'firebase/auth';
 import {
-  collection, query, where, orderBy, onSnapshot,
+  collection, query, where, orderBy, onSnapshot, doc, getDoc,
 } from 'firebase/firestore';
 import { auth, db, googleProvider } from '../firebase/config';
 import {
@@ -14,6 +14,7 @@ import {
   guardarPasajerosMasivo, crearOperativo, importarMaestro, crearEnSub,
   actualizarEnSub, eliminarStaff, eliminarPasajerosMasivo,
   generarAccesos, actualizarOperativo, guardarEnSub, eliminarEnSub,
+  crearNotificacionOperativo,
 } from '../firebase/egresadosService';
 import { parsearExcelMaestro } from '../admin/egresados/ImportarMaestro';
 import './agencia.css';
@@ -146,6 +147,18 @@ function Dashboard({ sesion, onLogout }) {
   const [error, setError] = useState('');
   const [vista, setVista] = useState(null); // null = lista, objeto = detalle
   const [mostrarNuevo, setMostrarNuevo] = useState(false);
+  const [cupoMaxBuses, setCupoMaxBuses] = useState(null); // null = sin límite
+
+  useEffect(() => {
+    getDoc(doc(db, 'agencias', sesion.agenciaId))
+      .then(d => {
+        if (d.exists()) {
+          const cupo = Number(d.data().cupoMaxBuses);
+          setCupoMaxBuses(cupo > 0 ? cupo : null);
+        }
+      })
+      .catch(() => {});
+  }, [sesion.agenciaId]);
 
   useEffect(() => {
     const q = query(
@@ -203,6 +216,7 @@ function Dashboard({ sesion, onLogout }) {
               <CrearViajeForm
                 agenciaId={sesion.agenciaId}
                 agenciaNombre={sesion.agenciaNombre}
+                cupoMaxBuses={cupoMaxBuses}
                 onCreado={op => { setMostrarNuevo(false); setVista(op); }}
               />
             </div>
@@ -230,7 +244,7 @@ function Dashboard({ sesion, onLogout }) {
         </div>
 
         {operativos.length === 0 ? (
-          <OnboardingAgencia sesion={sesion} onOperativoCreado={op => setVista(op)} />
+          <OnboardingAgencia sesion={sesion} cupoMaxBuses={cupoMaxBuses} onOperativoCreado={op => setVista(op)} />
         ) : (
           <>
             {activos.length > 0 && (
@@ -292,7 +306,7 @@ function OperativoCard({ op, hoy, onClick, pasado }) {
 }
 
 // ---- Onboarding para agencia nueva (sin operativos) ----
-function OnboardingAgencia({ sesion, onOperativoCreado }) {
+function OnboardingAgencia({ sesion, cupoMaxBuses, onOperativoCreado }) {
   const [tab, setTab] = useState('bienvenida'); // bienvenida | viaje
 
   return (
@@ -352,7 +366,7 @@ function OnboardingAgencia({ sesion, onOperativoCreado }) {
           <p style={{ fontSize: 13, color: 'var(--ag-text-3)', marginBottom: 20 }}>
             Completá los datos básicos. Después podrás importar pasajeros desde Excel dentro del operativo.
           </p>
-          <CrearViajeForm agenciaId={sesion.agenciaId} agenciaNombre={sesion.agenciaNombre} onCreado={onOperativoCreado} />
+          <CrearViajeForm agenciaId={sesion.agenciaId} agenciaNombre={sesion.agenciaNombre} cupoMaxBuses={cupoMaxBuses} onCreado={onOperativoCreado} />
         </div>
       )}
     </div>
@@ -360,7 +374,7 @@ function OnboardingAgencia({ sesion, onOperativoCreado }) {
 }
 
 // ---- Formulario crear primer viaje ----
-function CrearViajeForm({ agenciaId, agenciaNombre, onCreado }) {
+function CrearViajeForm({ agenciaId, agenciaNombre, cupoMaxBuses, onCreado }) {
   const [modo, setModo] = useState('manual');
   const [form, setForm] = useState({ nombre: '', destino: '', fechaInicio: '', fechaFin: '', cantBuses: 1 });
   const [guardando, setGuardando] = useState(false);
@@ -394,6 +408,9 @@ function CrearViajeForm({ agenciaId, agenciaNombre, onCreado }) {
       setError('Completá nombre, destino y fechas.'); return;
     }
     if (modo === 'excel' && !excelDatos) { setError('Subí el archivo Excel Maestro antes de continuar.'); return; }
+    if (cupoMaxBuses && modo === 'manual' && form.cantBuses > cupoMaxBuses) {
+      setError(`El cupo máximo de tu agencia es de ${cupoMaxBuses} ómnibus por operativo.`); return;
+    }
     setGuardando(true); setError('');
     try {
       let buses;
@@ -416,6 +433,12 @@ function CrearViajeForm({ agenciaId, agenciaNombre, onCreado }) {
       if (modo === 'excel' && excelDatos) {
         await importarMaestro(ref.id, excelDatos, {});
       }
+      crearNotificacionOperativo({
+        agenciaId,
+        agenciaNombre: agenciaNombre || '',
+        opId: ref.id,
+        opNombre: form.nombre.trim(),
+      }).catch(() => {});
       onCreado({ id: ref.id, nombre: form.nombre.trim(), destino: form.destino.trim(), fechaInicio: form.fechaInicio, fechaFin: form.fechaFin, agenciaId, estado: 'planificacion' });
     } catch (e) {
       console.error(e); setError('No se pudo crear el viaje. Revisá la conexión.');
@@ -456,13 +479,16 @@ function CrearViajeForm({ agenciaId, agenciaNombre, onCreado }) {
           </div>
         ))}
         <div>
-          <label className="ag-label">Cantidad de ómnibus</label>
+          <label className="ag-label">
+            Cantidad de ómnibus
+            {cupoMaxBuses && <span style={{ marginLeft: 6, fontSize: 11, fontWeight: 400, color: 'var(--ag-text-3)' }}>cupo máx: {cupoMaxBuses}</span>}
+          </label>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <button className="ag-btn ag-btn-ghost ag-btn-sm"
               onClick={() => set('cantBuses', Math.max(1, form.cantBuses - 1))}>−</button>
             <span style={{ fontWeight: 700, fontSize: 18, minWidth: 24, textAlign: 'center', color: 'var(--ag-text)' }}>{form.cantBuses}</span>
             <button className="ag-btn ag-btn-ghost ag-btn-sm"
-              onClick={() => set('cantBuses', form.cantBuses + 1)}>+</button>
+              onClick={() => set('cantBuses', cupoMaxBuses ? Math.min(cupoMaxBuses, form.cantBuses + 1) : form.cantBuses + 1)}>+</button>
           </div>
         </div>
       </>}
@@ -836,6 +862,14 @@ function TabBuses({ buses, staff, pasajeros }) {
               {conductor && <div>🧑‍✈️ Conductor: {conductor.apellido} {conductor.nombre}</div>}
               {coordinador && <div>📋 Coordinador: {coordinador.apellido} {coordinador.nombre}</div>}
               {bus.modelo && <div>🚍 {bus.modelo}</div>}
+              {bus.unidadId && (
+                <div style={{ marginTop: 6, paddingTop: 6, borderTop: '1px solid var(--ag-sep)', fontSize: 12, color: 'var(--ag-text-3)' }}>
+                  🔧 Unidad asignada por Surcante
+                  {bus.interno && <span> · Int. {bus.interno}</span>}
+                  {bus.tipo && <span> · {bus.tipo}</span>}
+                  {bus.empresa && <span> · {bus.empresa}</span>}
+                </div>
+              )}
             </div>
           </div>
         );

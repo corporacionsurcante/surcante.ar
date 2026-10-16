@@ -62,10 +62,15 @@ service cloud.firestore {
       allow read, update, delete: if isAdmin();
     }
 
-    // Avisos del panel: los crea el servidor (api/notificar, firebase-admin).
+    // Avisos del panel: los crea el servidor (api/notificar, firebase-admin)
+    // o una agencia para avisar que creó un nuevo operativo.
     match /notificaciones/{id} {
       allow read, update, delete: if isAdmin();
-      allow create: if false;
+      allow create: if isAdmin()
+        || (isAgenciaUser()
+            && request.resource.data.tipo == 'operativo_agencia'
+            && request.resource.data.agenciaId == request.auth.token.agenciaId
+            && request.resource.data.leida == false);
     }
 
     // Diagrama de ocupación (Gantt) — una colección por año: gantt_2026, gantt_2027...
@@ -119,7 +124,9 @@ service cloud.firestore {
     // Acceso acotado para pasajeros, conductores y coordinadores vía links personales.
 
     match /agencias/{id} {
-      allow read, write: if isAdmin();
+      allow read: if isAdmin()
+        || (isAgenciaUser() && request.auth.token.agenciaId == id);
+      allow write: if isAdmin();
     }
 
     // Usuarios de agencias: el admin gestiona; la agencia puede leer sus propios usuarios.

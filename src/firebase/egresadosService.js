@@ -75,6 +75,19 @@ export function actualizarOperativo(opId, data) {
   return updateDoc(doc(db, 'operativos', opId), { ...data, actualizadoEn: serverTimestamp() });
 }
 
+export function crearNotificacionOperativo({ agenciaId, agenciaNombre, opId, opNombre }) {
+  return addDoc(collection(db, 'notificaciones'), {
+    tipo: 'operativo_agencia',
+    agenciaId,
+    agenciaNombre: agenciaNombre || '',
+    opId,
+    opNombre,
+    mensaje: `${agenciaNombre || 'Una agencia'} creó el operativo "${opNombre}"`,
+    leida: false,
+    creadoEn: serverTimestamp(),
+  });
+}
+
 // Borra el operativo con todas sus subcolecciones y sus links de acceso
 export async function eliminarOperativo(opId) {
   const ops = [];
